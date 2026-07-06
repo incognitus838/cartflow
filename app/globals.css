@@ -262,7 +262,7 @@ body {
   display: inline-block;
 }
 
-/* 8 phrases: each visible for 12.5% of the full cycle */
+/* 6 phrases: each visible for ~16.7% of the full cycle */
 @keyframes cf-hero-chatter-cycle {
   0% {
     opacity: 0;
@@ -274,12 +274,12 @@ body {
     transform: translateY(0);
   }
 
-  11% {
+  15% {
     opacity: 1;
     transform: translateY(0);
   }
 
-  12.5% {
+  16.7% {
     opacity: 0;
     transform: translateY(-8px);
   }

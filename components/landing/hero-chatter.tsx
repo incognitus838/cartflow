@@ -4,9 +4,7 @@ export const sellerChatter = [
   "Last price abeg.",
   "Which size you want?",
   "You get this one?",
-  "Customer serious? He no serious!",
-  "My time no waste.",
-  "I dey sleep — my shop still open.",
+  "I dey travel but my shop dey open.",
 ] as const;
 
 const HOLD_SECONDS = 2.8;
