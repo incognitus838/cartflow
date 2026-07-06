@@ -1,0 +1,213 @@
+# Hire: Platform Analytics Lead — CartFlow Admin Dashboard
+
+Use this document as a job brief, recruiter handoff, interview scorecard, and onboarding charter. The hire owns **data-proven intelligence** across the whole admin dashboard — sellers (stores) and customers — not vanity charts.
+
+---
+
+## Company context
+
+**CartFlow** is a multi-tenant commerce platform for African sellers (WhatsApp/Instagram-first). Sellers run storefronts; customers checkout via manual bank transfer today (Paystack deferred). Stack: **Next.js 16, React 19, Prisma 6, PostgreSQL (Neon)**.
+
+We already have:
+- Seller-facing analytics (30-day revenue, orders, top products) on Starter+ plans
+- Admin dashboard: overview KPIs, stores, orders, users (with expandable seller/membership detail)
+- Rich operational data: orders, customers, promotions, inventory logs, payment receipts, notifications
+
+**What we lack:** a coherent **platform-wide analytics layer** — cohort views, seller health scores, customer lifetime value, funnel drop-off, promotion ROI, geographic/contact patterns, and decisions backed by evidence, not intuition.
+
+---
+
+## Role title options
+- Platform Analytics Lead
+- Admin Analytics & Insights Engineer
+- Data Analyst — Marketplace Intelligence
+
+---
+
+## Mission (one sentence)
+Turn CartFlow’s admin dashboard into a **single source of truth** for seller performance and customer behavior, where every metric is **defined, auditable, and actionable**.
+
+---
+
+## Philosophy: data-proven analysis (non-negotiable)
+
+We do not ship charts because they look good. Every number must pass:
+
+1. **Definition** — written metric spec (numerator, denominator, filters, timezone, currency handling)
+2. **Source** — which table/field; SQL or Prisma query reproducible by another engineer
+3. **Validation** — spot-check against raw exports; document known edge cases (refunds, cancelled orders, duplicate phones)
+4. **Decision link** — “so what?” — what action does this metric enable (churn intervention, plan upgrade, support priority)?
+5. **Drift watch** — alert or review cadence when definitions or data pipelines change
+
+Reject: undefined “engagement,” blended averages without segmentation, totals without time bounds, metrics that cannot be reconciled to order lines.
+
+---
+
+## Scope: what you own
+
+### A. Seller (store) intelligence — admin `/admin` ecosystem
+Track and surface, at minimum:
+
+| Domain | Questions we must answer with data |
+|--------|-----------------------------------|
+| Acquisition | Which sellers activate? Time-to-first-product, time-to-first-order, signup → bank-details → first sale |
+| Health | Active vs dormant stores; order velocity; catalog completeness; low-stock risk; bank details on file |
+| Revenue | GMV by store, plan, category, period; fulfilled vs pending; manual payment confirmation lag |
+| Retention | Seller churn (no orders in 30/60/90d); plan downgrade signals; reactivation candidates |
+| Operations | Pending receipt backlog; avg time PENDING → PAID; cancellation/refund rates by store |
+| Plans | FREE → STARTER conversion; feature usage (analytics, promotions) vs plan tier |
+| Staff | Owners vs staff memberships; multi-store owners; support load proxies |
+
+**Existing schema anchors:** `Business`, `User`, `BusinessMember`, `Product`, `Order`, `Promotion`, `InventoryLog`, `NotificationLog`.
+
+### B. Customer intelligence — per-store and platform rollup
+Customers are **per-business** (`Customer` scoped to `businessId`, unique on phone). Track:
+
+| Domain | Questions we must answer with data |
+|--------|-----------------------------------|
+| Identity | Repeat vs one-time buyers; phone/email coverage; address completeness |
+| Value | LTV per customer per store; AOV; order frequency; discount sensitivity (promo usage) |
+| Behavior | Category/product affinities; delivery vs pickup patterns; notes/complaint signals |
+| Funnel | Browse-to-checkout proxies (where data exists); cart abandonment if instrumented later |
+| Cohorts | First-order month cohorts — retention at 30/60/90 days |
+| Cross-store | Same phone across stores (privacy-safe aggregates only) — marketplace reach |
+
+**Existing schema anchors:** `Customer`, `Order`, `OrderItem`, `Promotion`, order snapshot fields (`customerName`, `customerPhone`, `customerAddress`).
+
+### C. Admin dashboard delivery
+You do not only write SQL — you partner with engineering to ship:
+
+- New admin routes: `/admin/analytics`, `/admin/customers`, `/admin/sellers` (or equivalent)
+- Metric cards, filters, exports (CSV), date ranges, store segmentation
+- Documentation: `docs/metrics/` — one page per metric
+- Optional: dbt/SQL views, Metabase/Lightdash, or in-app Prisma aggregates (team decides)
+
+Align UI with existing **Apple-inspired admin shell** (`cf-stat-card`, `FilterToolbar`, semantic HTML). See `prompts/admin-dashboard-ux-audit.txt`.
+
+---
+
+## Current admin baseline (starting point)
+
+| Route | Today | Gap |
+|-------|-------|-----|
+| `/admin` | Counts, plan/status breakdown, recent lists | No trends, no cohorts, no health scores |
+| `/admin/stores` | Search, plan, active, impersonate | No GMV rank, velocity, activation funnel |
+| `/admin/orders` | Search, status, store filter, impersonate | No lag analytics, no receipt SLA |
+| `/admin/users` | Expandable owned stores + staff memberships | No seller LTV rollup, no churn flags |
+| Seller `/dashboard/analytics` | 30d revenue, daily series, top products | Not replicated at platform level |
+
+**Your job:** close the gap with a prioritized metric roadmap, not a one-off report.
+
+---
+
+## Deliverables (first 90 days)
+
+### Days 1–30 — Discover & define
+- [ ] Metric dictionary v1 (seller + customer, min 25 metrics defined)
+- [ ] Data quality audit: null rates, orphan orders, customerId linkage, currency consistency
+- [ ] 3 executive dashboards spec (wireframes + SQL prototypes): Platform Pulse, Seller Health, Customer Value
+- [ ] Baseline report: current GMV, active sellers, repeat customer rate (with methodology appendix)
+
+### Days 31–60 — Build & validate
+- [ ] Ship **Platform Pulse** on `/admin` (or `/admin/analytics`) — trend lines, period compare, export
+- [ ] Ship **Seller Health table** — scored or tiered (e.g. thriving / at-risk / dormant) with evidence columns
+- [ ] Ship **Customer insights** — repeat rate, top customers per store (admin-only), cohort snapshot
+- [ ] Reconciliation tests: dashboard totals = raw SQL within 0.1%
+
+### Days 61–90 — Leverage & iterate
+- [ ] Weekly insight memo template (automated or semi-automated)
+- [ ] 5 decision playbooks (e.g. “dormant seller → outreach,” “high LTV customer → promo test”)
+- [ ] Instrumentation backlog for missing events (if gaps block analysis)
+- [ ] Handoff doc for engineering: query layer, caching, refresh cadence
+
+---
+
+## Required skills
+
+**Must have**
+- SQL fluency (PostgreSQL); comfortable with joins across transactional schemas
+- Experience defining KPIs for marketplaces, SaaS, or e-commerce — **with written definitions**
+- Statistical literacy: cohorts, retention curves, percentiles, not just averages
+- Ability to communicate to founders, support, and engineers — charts + narrative + SQL appendix
+- Pragmatism: ship 80% correct fast, document assumptions, iterate
+
+**Strong plus**
+- dbt, Metabase, Lightdash, Hex, or similar
+- TypeScript/Next.js — can open PRs on `lib/admin/queries.ts` and admin components
+- African market context (NGN, mobile-first, WhatsApp commerce, manual payments)
+- Experiment design (A/B) when we run seller interventions
+
+**Not the role**
+- Pure data engineering (pipelines at scale) — though you’ll specify requirements
+- ML/AI research without product tie-in
+- Dashboard design without metric ownership
+
+---
+
+## Interview scorecard (use in hiring)
+
+Ask candidates to **do, not tell**:
+
+1. **Metric definition (30 min)**  
+   “Define *active seller* for CartFlow. Write the SQL. List 3 edge cases.”  
+   Pass: precise time window, excludes test stores, handles zero-order stores.
+
+2. **Reconciliation (take-home, 2–3 hrs)**  
+   Given sample schema (or read-only Neon access): compute 30-day GMV and repeat customer rate; deliver SQL + one-page memo with caveats.  
+   Pass: numbers match independent check; caveats are honest.
+
+3. **So-what presentation (45 min)**  
+   Present 3 insights from take-home as if to CEO: insight → evidence → recommended action → how to measure impact.  
+   Pass: actions are specific; no chart without a decision.
+
+4. **Admin UX sense (15 min)**  
+   Walk through `/admin` today. What would you ship first and why?  
+   Pass: prioritizes seller health + customer repeat over vanity totals.
+
+**Red flags:** cannot explain denominator; hand-waves “we’ll use AI”; no experience with messy operational data; wants only external BI with no in-product integration.
+
+---
+
+## How to post this role (short version)
+
+**Platform Analytics Lead — CartFlow**
+
+We’re building the admin nerve center for a seller platform used across WhatsApp and Instagram. You’ll own **seller and customer intelligence** end-to-end: metric definitions, SQL, validation, and shipping insights inside our admin dashboard.
+
+We believe in **data-proven analysis** — every KPI has a spec, a query, and a decision it drives. You’ll answer: Which sellers are thriving vs dying? Who are our repeat customers? Where does checkout fail? What should support do Monday morning?
+
+Stack: PostgreSQL, Prisma, Next.js. You’ll work with product and engineering on `/admin/analytics`, health scores, cohorts, and exports. African e-commerce experience a plus.
+
+Send: CV + one example of a metric you defined and how it changed a decision.
+
+---
+
+## Onboarding resources (repo)
+
+| Resource | Path |
+|----------|------|
+| Prisma schema | `prisma/schema.prisma` |
+| Admin queries | `lib/admin/queries.ts` |
+| Seller analytics (reference) | `lib/analytics/business.ts` |
+| Admin UX standards | `prompts/admin-dashboard-ux-audit.txt` |
+| Admin routes | `app/admin/*` |
+| Dev setup | `npm run dev` → http://localhost:3001 |
+| Admin login | `admin@cartflow.app` / `demo12345` → `/admin` |
+
+---
+
+## Success metrics for this hire (meta)
+
+After 90 days we should be able to say:
+- Every admin KPI on the new analytics pages has a doc in `docs/metrics/`
+- Leadership can name **top 10 at-risk sellers** and **platform repeat-customer rate** without ad-hoc SQL
+- Product decisions in admin/seller roadmap cite at least one dashboard from this work
+- Engineering trusts the numbers enough to automate alerts from them
+
+---
+
+## Prompt for AI / contractor kickoff
+
+When briefing an analyst or agency, paste:
+
+> You are the Platform Analytics Lead for CartFlow. Read `prisma/schema.prisma` and `lib/admin/queries.ts`. Propose a metric dictionary for **sellers** and **customers**, then implement Phase 1: Platform Pulse + Seller Health + Customer repeat rate on the admin dashboard. Every metric needs: definition, SQL, validation steps, and the business action it enables. Follow `prompts/admin-dashboard-ux-audit.txt` for UI. No chart without a written spec. Reconcile all totals to raw order data.

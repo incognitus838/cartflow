@@ -1,0 +1,1 @@
+export { SKINCARE_IMAGES } from "./skincare-images.mjs";

@@ -1,0 +1,105 @@
+# CartFlow Admin Dashboard — Semantic UX Audit Prompt
+
+Use this prompt to audit admin surfaces, then sync the same patterns to the seller dashboard (which drives storefront profiles and what customers see).
+
+## Role
+You are a senior product designer + frontend engineer auditing CartFlow's platform admin.
+Goal: functional, accessible, semantically correct UI that becomes the source of truth for seller dashboard, storefront data, and **platform intelligence for record keeping**.
+
+## Audit checklist
+
+### 1. Document structure (HTML semantics)
+- One `<h1>` per page inside `<header>` (via `PageHeader`) — never duplicate titles in random divs.
+- Primary layout: `<aside>` (nav) + `<main>` (content). No nav inside main.
+- Tables live in `<section aria-labelledby="...">` with `<table>`, `<caption>`, `<thead>`, `<tbody>`.
+- Stats/metrics: `<section>` with `<ul role="list">` of `<article>` cards — not nested div grids pretending to be lists.
+- Filters: `<form role="search">` or `<fieldset>` + `<legend>` for filter groups — not loose buttons in content body.
+- Actions on rows: `<td>` with `<button>` / `<a>` — never block-level cards inside table cells unless responsive card fallback.
+- Expandable detail rows: second `<tr>` with `colSpan`, `aria-expanded` on toggle, `aria-controls` pointing to detail row `id`.
+- Record metadata: `<dl>` with `<dt>` / `<dd>` inside expanded panels — not loose label/value divs.
+- Empty states: `<p>` or `<output>` inside the section they belong to — not a sibling of unrelated sections.
+- Search inputs use React `useId()` — never hardcode duplicate `id` attributes across toolbars.
+
+### 2. Placement rules (nothing in the wrong block)
+| Content | Belongs in | Never in |
+|---------|------------|----------|
+| Global nav | `<aside><nav aria-label="Admin">` | `<main>`, page header |
+| Page title + description | `<header>` (`PageHeader`) | sidebar, table footer |
+| KPI stats | page-level `<section>` (overview or users) | inside expanded row only |
+| Glossary / field explanations | `PageHeader` alert slot or expanded panel intro | sidebar |
+| Search + role/status/store filters | toolbar directly above the list/table | overview snapshots, page header subtitle |
+| Row actions (impersonate, toggle) | table actions column or expanded store cards | page header |
+| Full store/user detail (IDs, counts, bank status) | expanded row panel | collapsed summary column |
+| Impersonation warning | top of seller `<main>` below header, full width | sidebar |
+| Platform-wide copy | admin only | seller dashboard verbatim |
+| Full management tables (search, plan edit) | `/admin/stores`, `/admin/orders`, `/admin/users` | overview recent snapshots |
+
+### 3. Functionality requirements (admin)
+- **Overview** (`/admin`): platform KPIs, plan/status breakdown, recent orders/stores with links — **read-only snapshots** (`RecentStoresTable`, `AdminOrdersTable`). No filters or impersonate on overview.
+- **Stores** (`/admin/stores`): search, plan change, activate/deactivate, view storefront, **impersonate seller** → seller dashboard as that store.
+- **Orders** (`/admin/orders`): search (order #, customer, store), status filter pills, **store dropdown filter**, **impersonate seller** per row (opens that store's dashboard). Mirrors seller orders UX.
+- **Users** (`/admin/users`) — **platform intelligence hub**:
+  - KPI strip: total accounts, admins, owners, staff, owners-with-stores.
+  - Search: name, email, user ID, owned store name/slug, staff store name.
+  - Role filter pills (All / Admin / Owner / Staff).
+  - Collapsed row summary: role badge, owned count, staff-access count, activity totals (products/orders/customers), bank-on-file flag, joined/updated dates, user ID.
+  - **Expanded row** must show:
+    - **Record block** (`<dl>`): user ID, account created, last updated, platform totals across owned stores.
+    - **Owned stores** (`<section>` + `<ul>`): per store — ID, slug, plan, active status, product/order/customer/promo counts, currency, contact, bank on file, created date, impersonate + storefront links.
+    - **Staff memberships** (`<section>` + `<ul>`): explain that `BusinessMember` = invited team access to someone else's store (not ownership). Per membership — store name/slug, member role, store owner name/email, invited date, catalog/order counts, store plan/status, impersonate link.
+  - Goal: track every account relationship for support, compliance, and growth leverage — not a minimal name/email list.
+- **Impersonation**: `POST /api/admin/impersonate` + banner on seller layout with "Exit to admin"; admin session preserved via `impersonatorId`.
+
+### 4. Data model reference (users page)
+| Term | Schema | Meaning |
+|------|--------|---------|
+| Owner | `User.role = OWNER` + `Business.ownerId` | Account that created/owns a store |
+| Owned store | `User.ownedBusinesses` | Stores where this user is `ownerId` |
+| Staff membership | `BusinessMember` | Invited access to another user's store dashboard |
+| Staff account | `User.role = STAFF` or user with `memberships` | May own nothing but access one+ stores |
+| Platform role | `User.role` | ADMIN / OWNER / STAFF — global account type |
+
+### 5. Sync to seller dashboard
+After admin passes audit, apply the same building blocks:
+- `PageHeader` (title, description, optional alert/actions slots)
+- `FilterToolbar` (search + status/role pills) on list pages
+- Semantic layout shell (`cf-dash-shell`, sidebar + main)
+- `cf-stat-card`, `cf-table-shell`, `cf-page-title` — no `slate-*` / `emerald-*` one-offs
+- Settings changes on seller side = what customers see (bank details, logo, slug, products, promotions)
+
+Pages to sync: overview, products, orders, settings, promotions, analytics, billing.
+
+### 6. Accessibility
+- `aria-current="page"` on active nav link
+- `aria-label` on icon-only buttons (impersonate, view store, expand row)
+- `aria-expanded` + `aria-controls` on expandable row toggles
+- `aria-pressed` on filter pills
+- Focus visible on filters and table controls
+- Table headers scoped with `scope="col"`
+- `aria-live="polite"` on filter result counts (`<output>`)
+
+### 7. Visual system (Apple HIG — CartFlow)
+- Font stack: Geist + `-apple-system` / SF Pro Text fallbacks (`globals.css`).
+- Palette: `#1d1d1f` text, `#86868b` secondary, `#fbfbfd` background, `#b8956a` accent gold.
+- Surfaces: `cf-stat-card`, `cf-table-shell`, `cf-dash-sidebar`, `cf-dash-nav-link`.
+- Controls: pill buttons (`cf-pill`, `cf-pill-active`), rounded-full primary (`btn-primary`), inputs (`cf-input`).
+- Seller and admin must share the same shell so impersonation feels seamless.
+
+### 8. Output format when auditing
+For each page (`/admin`, `/admin/stores`, `/admin/users`, `/admin/orders`):
+1. Violations found (semantic + placement)
+2. Fixed structure (element tree)
+3. Functional gaps (especially missing record-keeping fields on users)
+4. Seller sync items
+
+Then implement fixes in code — do not only report.
+
+### 9. Shared components (reference)
+| Component | Path | Used on |
+|-----------|------|---------|
+| PageHeader | `components/shared/page-header.tsx` | All dashboard pages |
+| FilterToolbar | `components/shared/filter-toolbar.tsx` | Admin + seller orders, stores, users |
+| ImpersonateButton | `components/admin/impersonate-button.tsx` | Admin stores, orders, users (expanded) |
+| UsersPanel | `components/admin/users-panel.tsx` | Admin users |
+| RecentStoresTable | `components/admin/recent-stores-table.tsx` | Admin overview only |
+| ImpersonationBanner | `components/dashboard/impersonation-banner.tsx` | Seller layout when impersonating |

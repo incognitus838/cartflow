@@ -1,0 +1,419 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  schemas  = ["cartflow"]
+}
+
+enum UserRole {
+  OWNER
+  STAFF
+  ADMIN
+
+  @@schema("cartflow")
+}
+
+enum BusinessPlan {
+  FREE
+  STARTER
+  PRO
+  ENTERPRISE
+
+  @@schema("cartflow")
+}
+
+enum ProductStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+
+  @@schema("cartflow")
+}
+
+enum ProductMediaType {
+  IMAGE
+  VIDEO
+  GIF
+
+  @@schema("cartflow")
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+
+  @@schema("cartflow")
+}
+
+enum PaymentProvider {
+  PAYSTACK
+  FLUTTERWAVE
+  STRIPE
+  MANUAL
+
+  @@schema("cartflow")
+}
+
+enum PromotionType {
+  PERCENT_OFF
+  FIXED_OFF
+  FREE_GIFT
+
+  @@schema("cartflow")
+}
+
+enum NotificationChannel {
+  EMAIL
+  SMS
+
+  @@schema("cartflow")
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+
+  @@schema("cartflow")
+}
+
+enum StorefrontTheme {
+  CLASSIC
+  WARM
+  DARK
+
+  @@schema("cartflow")
+}
+
+enum CatalogLayout {
+  GRID
+  LIST
+
+  @@schema("cartflow")
+}
+
+enum SubscriptionStatus {
+  TRIAL
+  ACTIVE
+  PAST_DUE
+  CANCELLED
+
+  @@schema("cartflow")
+}
+
+enum StoreApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+
+  @@schema("cartflow")
+}
+
+enum ApprovalPriority {
+  NORMAL
+  HIGH
+
+  @@schema("cartflow")
+}
+
+model User {
+  id             String    @id @default(cuid())
+  email          String    @unique
+  name           String
+  passwordHash   String?
+  role           UserRole  @default(OWNER)
+  isSuspended    Boolean   @default(false)
+  suspendedAt    DateTime?
+  suspendReason  String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  ownedBusinesses Business[]       @relation("BusinessOwner")
+  memberships     BusinessMember[]
+
+  @@schema("cartflow")
+}
+
+model Business {
+  id          String       @id @default(cuid())
+  name        String
+  slug        String       @unique
+  description String?
+  logoUrl     String?
+  currency    String       @default("NGN")
+  deliveryFee Decimal      @default(0) @db.Decimal(12, 2)
+  phone       String?
+  whatsapp    String?
+  address     String?
+  plan                  BusinessPlan @default(FREE)
+  planStartedAt         DateTime?
+  subscriptionStatus    SubscriptionStatus @default(ACTIVE)
+  autoDeductInventory      Boolean      @default(true)
+  notifyOnNewOrder         Boolean      @default(true)
+  notifyCustomerOnStatus   Boolean      @default(true)
+  ownerNotifyEmail         String?
+  bankName                 String?
+  bankAccountName          String?
+  bankAccountNumber        String?
+  storefrontTheme          StorefrontTheme @default(CLASSIC)
+  accentColor              String?
+  heroTagline              String?
+  welcomeMessage           String?
+  showContactButton        Boolean         @default(true)
+  catalogLayout            CatalogLayout   @default(GRID)
+  isActive                 Boolean      @default(true)
+  approvalStatus           StoreApprovalStatus @default(APPROVED)
+  submittedAt              DateTime?
+  approvalReviewedAt       DateTime?
+  approvalReviewedBy       String?
+  rejectionReason          String?
+  approvalNotes            String?
+  resubmissionAllowed      Boolean      @default(true)
+  bankVerified             Boolean      @default(false)
+  catalogVerified          Boolean      @default(false)
+  contactVerified          Boolean      @default(false)
+  approvalPriority         ApprovalPriority @default(NORMAL)
+  ownerId                  String
+  createdAt                DateTime     @default(now())
+  updatedAt                DateTime     @updatedAt
+
+  owner            User              @relation("BusinessOwner", fields: [ownerId], references: [id])
+  members          BusinessMember[]
+  products         Product[]
+  promotions       Promotion[]
+  orders           Order[]
+  customers        Customer[]
+  inventoryLogs    InventoryLog[]
+  notifications    NotificationLog[]
+
+  @@index([ownerId])
+  @@index([slug])
+  @@schema("cartflow")
+}
+
+model BusinessMember {
+  id         String   @id @default(cuid())
+  businessId String
+  userId     String
+  role       UserRole @default(STAFF)
+  createdAt  DateTime @default(now())
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([businessId, userId])
+  @@index([userId])
+  @@schema("cartflow")
+}
+
+model Product {
+  id                String        @id @default(cuid())
+  businessId        String
+  title             String
+  description       String?
+  category          String        @default("General")
+  price             Decimal       @db.Decimal(12, 2)
+  compareAtPrice    Decimal?      @db.Decimal(12, 2)
+  status            ProductStatus @default(DRAFT)
+  stock             Int           @default(0)
+  lowStockThreshold Int           @default(5)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  business       Business         @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  images         ProductImage[]
+  variants       ProductVariant[]
+  orderItems     OrderItem[]
+  inventoryLogs  InventoryLog[]
+  giftPromotions Promotion[]      @relation("GiftProduct")
+
+  @@index([businessId])
+  @@index([status])
+  @@index([businessId, category])
+  @@schema("cartflow")
+}
+
+model ProductVariant {
+  id        String   @id @default(cuid())
+  productId String
+  name      String
+  sku       String?
+  price     Decimal? @db.Decimal(12, 2)
+  stock     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  product       Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  orderItems    OrderItem[]
+  inventoryLogs InventoryLog[]
+
+  @@index([productId])
+  @@schema("cartflow")
+}
+
+model ProductImage {
+  id        String           @id @default(cuid())
+  productId String
+  url       String
+  alt       String?
+  mediaType ProductMediaType @default(IMAGE)
+  sortOrder Int              @default(0)
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@schema("cartflow")
+}
+
+model Customer {
+  id         String   @id @default(cuid())
+  businessId String
+  name       String
+  phone      String
+  email      String?
+  address    String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  orders   Order[]
+
+  @@unique([businessId, phone])
+  @@index([businessId])
+  @@schema("cartflow")
+}
+
+model Promotion {
+  id             String        @id @default(cuid())
+  businessId     String
+  title          String
+  code           String
+  type           PromotionType
+  value          Decimal?      @db.Decimal(12, 2)
+  minOrderAmount Decimal?      @db.Decimal(12, 2)
+  maxUses        Int?
+  usedCount      Int           @default(0)
+  giftProductId  String?
+  startsAt       DateTime?
+  endsAt         DateTime?
+  isActive       Boolean       @default(true)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  business    Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  giftProduct Product?  @relation("GiftProduct", fields: [giftProductId], references: [id], onDelete: SetNull)
+  orders      Order[]
+
+  @@unique([businessId, code])
+  @@index([businessId])
+  @@index([isActive])
+  @@schema("cartflow")
+}
+
+model Order {
+  id              String          @id @default(cuid())
+  businessId      String
+  customerId      String?
+  orderNumber     String
+  status          OrderStatus     @default(PENDING)
+  subtotal        Decimal         @db.Decimal(12, 2)
+  discountAmount  Decimal         @default(0) @db.Decimal(12, 2)
+  deliveryFee     Decimal         @default(0) @db.Decimal(12, 2)
+  total           Decimal         @db.Decimal(12, 2)
+  promotionId     String?
+  promotionCode   String?
+  paymentProvider           PaymentProvider @default(MANUAL)
+  paymentRef                String?
+  paymentReceiptData        Bytes?
+  paymentReceiptMimeType    String?
+  paymentReceiptFilename    String?
+  paymentReceiptSubmittedAt DateTime?
+  customerName              String
+  customerPhone   String
+  customerAddress String?
+  notes           String?
+  internalNotes   String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  business      Business          @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  customer      Customer?         @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  promotion     Promotion?        @relation(fields: [promotionId], references: [id], onDelete: SetNull)
+  items         OrderItem[]
+  notifications NotificationLog[]
+
+  @@unique([businessId, orderNumber])
+  @@index([businessId])
+  @@index([status])
+  @@index([createdAt])
+  @@schema("cartflow")
+}
+
+model OrderItem {
+  id          String  @id @default(cuid())
+  orderId     String
+  productId   String?
+  variantId   String?
+  title       String
+  variantName String?
+  sku         String?
+  quantity    Int
+  unitPrice   Decimal @db.Decimal(12, 2)
+  total       Decimal @db.Decimal(12, 2)
+
+  order   Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product?        @relation(fields: [productId], references: [id], onDelete: SetNull)
+  variant ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
+  @@schema("cartflow")
+}
+
+model InventoryLog {
+  id         String   @id @default(cuid())
+  businessId String
+  productId  String
+  variantId  String?
+  change     Int
+  reason     String
+  reference  String?
+  createdAt  DateTime @default(now())
+
+  business Business        @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  product  Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variant  ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+
+  @@index([businessId])
+  @@index([productId])
+  @@index([createdAt])
+  @@schema("cartflow")
+}
+
+model NotificationLog {
+  id         String               @id @default(cuid())
+  businessId String?
+  orderId    String?
+  channel    NotificationChannel
+  recipient  String
+  subject    String?
+  body       String
+  status     NotificationStatus   @default(PENDING)
+  error      String?
+  createdAt  DateTime             @default(now())
+
+  business Business? @relation(fields: [businessId], references: [id], onDelete: SetNull)
+  order    Order?    @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  @@index([businessId])
+  @@index([orderId])
+  @@index([createdAt])
+  @@schema("cartflow")
+}

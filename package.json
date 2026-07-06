@@ -1,0 +1,51 @@
+{
+  "name": "cartflow",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "npx prisma generate && npx next dev --webpack -p 3001",
+    "build": "npx next build",
+    "vercel-build": "prisma generate && next build",
+    "start": "npx next start",
+    "lint": "eslint",
+    "postinstall": "prisma generate",
+    "db:push": "npx dotenv-cli -e .env.local -- prisma db push",
+    "db:migrate": "npx dotenv-cli -e .env.local -- prisma migrate dev",
+    "db:studio": "npx dotenv-cli -e .env.local -- prisma studio",
+    "db:seed": "npx dotenv-cli -e .env.local -- node prisma/seed.mjs",
+    "db:ensure-users": "npx dotenv-cli -e .env.local -- node scripts/ensure-demo-users.mjs",
+    "db:ensure-bank": "npx dotenv-cli -e .env.local -- node scripts/ensure-demo-bank.mjs",
+    "db:reseed-skincare": "npx dotenv-cli -e .env.local -- node scripts/reseed-ada-skincare.mjs",
+    "db:seed-beauty": "npx dotenv-cli -e .env.local -- node scripts/seed-glow-beauty.mjs",
+    "db:enrich-gallery": "npx dotenv-cli -e .env.local -- node scripts/enrich-product-gallery.mjs",
+    "db:reset": "npx dotenv-cli -e .env.local -- prisma db push --force-reset && npm run db:seed",
+    "test:api": "npx dotenv-cli -e .env.local -- node scripts/audit-api-smoke.mjs",
+    "test:e2e": "playwright test",
+    "test": "npm run test:api"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.16.0",
+    "bcryptjs": "^3.0.2",
+    "jose": "^6.1.0",
+    "lucide-react": "^1.17.0",
+    "next": "16.2.7",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "sonner": "^2.0.7"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.52.0",
+    "@tailwindcss/postcss": "^4",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "dotenv": "^16.6.1",
+    "dotenv-cli": "^11.0.0",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.7",
+    "prisma": "^6.16.0",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}

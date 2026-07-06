@@ -1,0 +1,74 @@
+import { detectMediaType, type ProductMediaType } from "@/lib/media";
+import { parseVariantName, type VariantFormRow } from "@/lib/products/variants";
+
+export type ProductFormInitial = {
+  id?: string;
+  title: string;
+  description: string;
+  price: string;
+  compareAtPrice: string;
+  status: "DRAFT" | "ACTIVE" | "ARCHIVED";
+  stock: string;
+  lowStockThreshold: string;
+  media: Array<{ url: string; mediaType: ProductMediaType }>;
+  variants: VariantFormRow[];
+};
+
+export function toProductFormInitial(product?: {
+  id: string;
+  title: string;
+  description: string | null;
+  price: { toString(): string } | number;
+  compareAtPrice: { toString(): string } | number | null;
+  status: "DRAFT" | "ACTIVE" | "ARCHIVED";
+  stock: number;
+  lowStockThreshold: number;
+  images: Array<{ url: string; mediaType?: ProductMediaType | string }>;
+  variants: Array<{
+    id: string;
+    name: string;
+    sku: string | null;
+    price: { toString(): string } | number | null;
+    stock: number;
+  }>;
+}): ProductFormInitial {
+  if (!product) {
+    return {
+      title: "",
+      description: "",
+      price: "",
+      compareAtPrice: "",
+      status: "DRAFT",
+      stock: "0",
+      lowStockThreshold: "5",
+      media: [],
+      variants: [],
+    };
+  }
+
+  return {
+    id: product.id,
+    title: product.title,
+    description: product.description ?? "",
+    price: String(product.price),
+    compareAtPrice: product.compareAtPrice ? String(product.compareAtPrice) : "",
+    status: product.status,
+    stock: String(product.stock),
+    lowStockThreshold: String(product.lowStockThreshold),
+    media: product.images.map((image) => ({
+      url: image.url,
+      mediaType: (image.mediaType as ProductMediaType) || detectMediaType(image.url),
+    })),
+    variants: product.variants.map((variant) => {
+      const { size, color } = parseVariantName(variant.name);
+      return {
+        id: variant.id,
+        size,
+        color,
+        sku: variant.sku ?? "",
+        price: variant.price ? String(variant.price) : "",
+        stock: String(variant.stock),
+      };
+    }),
+  };
+}

@@ -1,0 +1,136 @@
+# CartFlow Admin Platform — Requirements Spec (refined)
+
+## Goal
+Ship a data-proven admin console where every metric is defined, visual, and actionable. Sellers and admins share order visibility; platform operators can moderate users and inspect subscriptions.
+
+---
+
+## 1. Platform Analytics (`/admin/analytics`)
+
+### UI
+- Responsive across mobile, tablet, desktop (test all viewports).
+- KPI cards with tone colors, period selector (7/30/90d), sticky metric glossary sidebar on xl+.
+- Visual charts:
+  - Daily GMV + order volume (dual bar chart, horizontal scroll on mobile).
+  - Plan breakdown + order status breakdown (`BreakdownPanel` stacked bars).
+  - Seller health tier distribution (segmented bar + grid counts).
+- Seller health table ranked by period GMV with labeled Actions.
+
+### Metrics (documented in `lib/admin/metrics.ts` → `METRIC_DEFINITIONS`)
+Every KPI on the page must map to a glossary entry with: label, SQL/logic definition, recommended action.
+
+| Metric | Definition summary |
+|--------|-------------------|
+| GMV | Sum fulfilled order totals in period |
+| Active sellers | Stores with ≥1 order in period |
+| AOV | GMV ÷ fulfilled orders |
+| Repeat customer rate | Buyers with ≥2 orders ÷ buyers with ≥1 |
+| Receipt backlog | PENDING orders with receipt uploaded |
+| Seller activation | Stores with ≥1 sale ÷ all stores |
+| New customers | Customers created in period |
+
+### Seller health tiers
+`thriving | active | at_risk | dormant | activating | inactive` — see `classifySellerHealth()`.
+
+---
+
+## 2. Storefront links (admin → live store)
+
+**Problem:** Relative `href="/slug"` fails when admin is on a different origin/port.
+
+**Fix:** Use `StorefrontLink` + `absoluteStoreUrl()` everywhere:
+- `/admin/stores`, overview recent stores
+- `/admin/orders`, overview recent orders
+- `/admin/users` (owned stores)
+- `/admin/analytics` seller health
+- `/admin/customers`
+
+Inactive/hidden stores show a "Hidden" badge; link still opens but warns in tooltip.
+
+---
+
+## 3. Users (`/admin/users` + `/admin/users/[id]`)
+
+### List
+- Click user name → detail page (not expand-only).
+- Expand row still available for quick peek.
+- Show suspended badge on list.
+- Per-store subscription fields: `plan`, `subscriptionStatus`, `planStartedAt`.
+
+### Detail page
+- Signup date, days on platform, first sale date.
+- Lifetime GMV + fulfilled order count (across owned stores).
+- Per-store: GMV, orders, catalog counts, subscription status, plan started.
+- **Suspend & hide:** blocks login (`isSuspended`), sets all owned stores `isActive=false`.
+- **Restore:** unsuspend + reactivate owned stores.
+- Cannot suspend ADMIN role.
+
+### Schema
+```prisma
+User: isSuspended, suspendedAt, suspendReason
+Business: planStartedAt, subscriptionStatus (TRIAL|ACTIVE|PAST_DUE|CANCELLED)
+```
+
+---
+
+## 4. Orders (`/admin/orders` + `/admin/orders/[id]`)
+
+### List actions (must be labeled, not icon-only)
+- **View** → `/admin/orders/[id]` (order number is also a link).
+- **Impersonate** → seller dashboard as store owner.
+- **Storefront** → absolute store URL.
+
+### Detail (admin + seller)
+Both roles see:
+- Full order breakdown (items, totals, customer, fulfillment).
+- Payment receipt viewer (image or PDF inline).
+- Approve payment when PENDING + receipt uploaded.
+
+### Receipt upload limits
+- Max **100 KB** (client + server validation).
+- Types: JPG, PNG, WebP, GIF, PDF.
+- Stored in DB (`paymentReceiptData` bytes), served via:
+  - Seller: `/api/orders/[id]/receipt`
+  - Admin: `/api/admin/orders/[id]/receipt`
+  - Storefront: `/api/storefront/[slug]/orders/[orderNumber]/receipt`
+
+---
+
+## 5. Admin Actions component
+
+Reusable `AdminActions` for all admin tables:
+```
+View (orders only) | Impersonate | Storefront
+```
+Never ship icon-only impersonate in tables — always show text label.
+
+---
+
+## 6. Seller subscriptions (future billing)
+
+Track on `Business`:
+- `plan` (FREE/STARTER/PRO/ENTERPRISE)
+- `subscriptionStatus`
+- `planStartedAt`
+
+Admin user detail surfaces these per store. Payment integration TBD.
+
+---
+
+## 7. Acceptance checklist
+
+- [ ] Storefront links open correct URL from every admin page (new tab).
+- [ ] Analytics readable on 375px, 768px, 1280px viewports.
+- [ ] Metric glossary covers every KPI on analytics page.
+- [ ] User detail shows GMV, sales, signup, subscription, suspend/restore.
+- [ ] Order detail shows receipt for admin and seller.
+- [ ] Receipt rejects files > 100 KB before upload.
+- [ ] Admin order Actions: View + Impersonate + Storefront all work.
+- [ ] `npm run build` passes after `npm run db:push`.
+
+---
+
+## Dev credentials
+- Admin: `admin@cartflow.app` / `demo12345` → `/admin`
+- Seller: `demo@cartflow.app` / `demo12345` → `/dashboard`
+- Dev server: `npm run dev` → http://localhost:3001

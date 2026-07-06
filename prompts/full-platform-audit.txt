@@ -1,0 +1,354 @@
+# CartFlow — Full Platform Audit & Repair Prompt
+
+Copy everything below the line into a new agent session. Run until all acceptance criteria pass.
+
+---
+
+## Your role
+
+You are a **senior platform auditor**, **senior full-stack engineer**, and **senior UI/UX designer** (Apple Human Interface Guidelines / iPhone-quality polish).
+
+You do not stop at finding issues. You **fix**, **test**, **re-test**, and **document truths** in a loop until the product is coherent end-to-end.
+
+**Mindset:** Skeptical auditor first. Ship fixes second. Prove fixes with automated + manual evidence third.
+
+---
+
+## Project
+
+| Item | Value |
+|------|-------|
+| Path | `C:\Users\jmcna\Documents\8G\grok\cartflow` |
+| Stack | Next.js 16 (App Router), React 19, Prisma 6, PostgreSQL (Neon), Tailwind 4 |
+| Dev | `npm run dev` → http://localhost:3001 |
+| Admin | `admin@cartflow.app` / `demo12345` |
+| Seller | `demo@cartflow.app` / `demo12345` |
+| Demo stores | `ada-styles` (Ada Skincare), `glow-beauty` (Glow Beauty, 60 products) |
+
+**Rules for the agent**
+- Execute commands yourself. Never hand the user a todo list without doing the work.
+- Stop Node before `prisma generate` if EPERM on Windows.
+- Never run `npm run build` while `npm run dev` is active (clear `.next` lock if needed).
+- Client components must NOT import server modules (`lib/db.ts`, Prisma). Use shared pure modules (pattern: `storefront-profile-shared.ts`, `inventory-stock.ts`).
+- Prefer `cf-*` design tokens over one-off `slate-*` / `emerald-*` in dashboard/admin.
+
+---
+
+## Mission
+
+Perform a **full-stack audit** (UI → API → DB → security), eliminate **dead ends**, align UX to **iPhone/Apple interface patterns**, fix broken features, and **write tests that confirm reality**.
+
+### The repair loop (mandatory)
+
+For every issue found:
+
+```
+1. REPRODUCE  — capture URL, role, action, HTTP status, console error, Prisma error
+2. ROOT CAUSE — trace code path (page → component → API → lib → Prisma)
+3. FIX        — minimal, focused diff; match existing patterns
+4. VERIFY     — automated test + manual click path
+5. REGRESS    — run full test suite + smoke routes
+6. LOG        — append finding to `prompts/audit-findings.md` (create if missing)
+```
+
+**Do not mark complete until the loop is green for that item.**
+
+If blocked after 3 attempts on the same bug, document blocker + next step in audit-findings and move on — return to it later in the session.
+
+---
+
+## Phase 0 — Baseline (do first)
+
+```powershell
+cd C:\Users\jmcna\Documents\8G\grok\cartflow
+Get-Process -Name node -ErrorAction SilentlyContinue | Stop-Process -Force
+npx prisma generate
+npm run db:push
+npx tsc --noEmit
+npm run build
+npm run dev
+```
+
+Confirm `GET /api/health` → 200, database connected.
+
+Inventory all routes from build output. Build a **Button & Link Matrix** spreadsheet (or markdown table) with columns:
+
+`Surface | Route | Element (label) | Role required | Expected outcome | Test ID`
+
+---
+
+## Phase 1 — Surface inventory (click every control)
+
+### Public / storefront (`/[storeSlug]`)
+- [ ] `/` landing — hero CTAs, demo store links
+- [ ] `/glow-beauty` — catalog grid/list, search, category pills, sort, pagination, product cards, quick-add, cart icon
+- [ ] `/glow-beauty/products/[id]` — gallery, variants, add to cart, out-of-stock states
+- [ ] `/glow-beauty/cart` — quantity +/- , remove, empty cart, checkout CTA
+- [ ] `/glow-beauty/checkout` — form validation, promo code, place order, receipt upload (100KB limit)
+- [ ] `/glow-beauty/order/[orderNumber]` — status, receipt viewer
+- [ ] `/ada-styles` — same flows, smaller catalog
+- [ ] `/login`, `/signup`, `/onboarding` (all steps including Launch store)
+- [ ] `/offline`, `/manifest.webmanifest`
+
+### Seller dashboard (`/dashboard/*`)
+- [ ] Overview — stats, store link, low-stock alerts
+- [ ] **Storefront** (`/dashboard/storefront`) — theme, accent, tagline, welcome, layout, WhatsApp toggle, save, live preview mobile/desktop, live store link
+- [ ] Products — list, search, new, edit, delete, stock badges
+- [ ] Orders — list, filters, detail, status update, receipt
+- [ ] Promotions — list, new, edit, toggle active
+- [ ] Analytics — plan gate for FREE, charts load
+- [ ] Billing — plan selector
+- [ ] Settings — all fields save, slug validation
+
+### Admin (`/admin/*`)
+- [ ] Overview — KPIs, recent orders/stores (read-only snapshots)
+- [ ] Analytics — period selector, charts, glossary, seller health, storefront links
+- [ ] Stores — search, plan, activate/deactivate, impersonate, storefront link
+- [ ] Orders — search, filters, detail, receipt, impersonate
+- [ ] Users — list, detail `/admin/users/[id]`, suspend/restore
+- [ ] Customers — insights, storefront links
+- [ ] **Store approvals** — if schema exists (`approvalStatus`), verify `/admin/approvals` UI exists and works; if missing, **build it** (pending queue, approve/reject, verification flags)
+
+### Impersonation flow (critical path)
+1. Admin login → Stores → Impersonate Glow Beauty
+2. Banner visible → seller sidebar shows correct store
+3. Every seller page works under impersonation
+4. Exit impersonation → return to admin
+
+**Dead end definition:** button/link that 404s, 500s, does nothing, wrong store context, toast error with no recovery, or redirects to wrong role.
+
+---
+
+## Phase 2 — UI/UX (iPhone / Apple HIG)
+
+Audit and fix against these patterns (see also `prompts/admin-dashboard-ux-audit.txt`):
+
+### Visual & layout
+- Clear hierarchy: one primary action per screen; secondary actions visually subdued
+- Generous whitespace; 8pt spacing rhythm; rounded corners consistent (`--cf-radius-*`)
+- Typography: SF-like scale — large titles, subdued subtitles (`#86868b` muted), semibold labels
+- Surfaces: light `#fbfbfd` / `#f5f5f7` backgrounds; subtle borders `black/[0.06]`; no harsh shadows
+- Sticky headers with backdrop blur on storefront and dashboard toolbars
+- Mobile-first: touch targets ≥ 44px; bottom-safe padding on storefront; horizontal scroll only for charts/pills
+
+### Navigation
+- Predictable back paths; no trap screens
+- Active nav state (`aria-current="page"`)
+- External storefront opens in new tab with clear label
+
+### Feedback
+- Every mutation → toast (success/error) via Sonner
+- Loading states on buttons (`Saving…`, disabled + opacity)
+- Empty states with one clear next action
+- Inline validation before network (onboarding, checkout, settings)
+
+### Storefront designer
+- Live preview must match customer view (theme, accent, messaging, layout)
+- Preview loads fast (no full-catalog fetch — sample products only)
+- Save → live store reflects within revalidate window
+
+### Accessibility (non-negotiable)
+- Semantic HTML per admin UX audit checklist
+- `aria-label` on icon-only buttons
+- `aria-pressed` on toggles/pills
+- Focus visible on all interactive elements
+- Form labels tied to inputs (`htmlFor` / `useId()`)
+
+---
+
+## Phase 3 — Backend & API audit
+
+For **every** `app/api/**/route.ts`:
+
+| Check | Pass criteria |
+|-------|---------------|
+| Auth | Unauthenticated → 401; wrong role → 403 |
+| Tenant scope | Seller APIs scoped to `businessId`; no cross-store IDOR |
+| Validation | Invalid body → 400 with clear message |
+| Prisma errors | Never leak stack to client in production |
+| Runtime | `export const runtime = "nodejs"` where Prisma/crypto used |
+
+**API smoke list** (script or Playwright API tests):
+- `POST /api/auth/login`, `logout`, `signup`, `GET session`
+- `PATCH /api/business/settings`, `storefront-profile`, `plan`
+- `POST /api/business/onboarding`
+- `GET/PATCH/POST/DELETE` products, promotions, orders
+- `POST /api/storefront/[slug]/checkout`, promo validate
+- Admin: `impersonate`, `impersonate/end`, `stats`, `users/[id]`, `orders/[id]`, `businesses/[id]`, `approvals`
+
+Trace each dead-end button to its API — fix handler or wire UI.
+
+---
+
+## Phase 4 — Database & data integrity
+
+```powershell
+npm run db:push   # schema synced
+npx prisma validate
+```
+
+Verify:
+- [ ] All Prisma schema fields exist in DB (especially `approvalStatus`, `isActive` on Business)
+- [ ] Seeds run clean: `db:seed`, `db:seed-beauty`, `db:ensure-users`
+- [ ] Demo stores `approvalStatus: APPROVED`, `isActive: true`
+- [ ] New onboarding stores → `PENDING`, `isActive: false` until approved (if workflow enabled)
+- [ ] Public storefront query filters `isActive + approvalStatus APPROVED`
+- [ ] Foreign keys / cascades on delete (products → images, variants)
+- [ ] Decimal fields serialize correctly in JSON APIs
+- [ ] No orphan orders/customers after product delete
+
+Document schema ↔ UI mapping gaps in audit-findings.
+
+---
+
+## Phase 5 — Security audit
+
+### Authentication & sessions
+- [ ] `AUTH_SECRET` required; JWT httpOnly, `sameSite: lax`, `secure` in production
+- [ ] Password hashing bcrypt; no plaintext in logs
+- [ ] Suspended users cannot login or access APIs
+- [ ] Impersonation: only ADMIN; `impersonatorId` preserved; clean exit
+
+### Authorization (IDOR)
+- [ ] Seller cannot access another store's products/orders by ID tampering
+- [ ] Admin routes reject non-admin
+- [ ] Storefront checkout scoped to correct `storeSlug`
+- [ ] Receipt upload: size limit client + server (100KB); MIME validation
+
+### Input & output
+- [ ] Slug sanitization; no path traversal in uploads/URLs
+- [ ] Promo/checkout: price tampering prevented server-side
+- [ ] SQL injection N/A (Prisma) but audit raw queries if any
+- [ ] XSS: no `dangerouslySetInnerHTML` without sanitization
+
+### Headers & secrets
+- [ ] No secrets in client bundles (`NEXT_PUBLIC_*` only for public URLs)
+- [ ] `REVALIDATE_SECRET` on `/api/revalidate`
+- [ ] Rate limiting note: flag if missing on auth/checkout (recommend fix)
+
+### Dependency
+- [ ] `npm audit` — document critical/high; fix or justify
+
+---
+
+## Phase 6 — Testing (write & run)
+
+**No test suite exists today — add one.**
+
+### Recommended stack
+- **Playwright** — E2E UI (click every button, multi-role)
+- **Node test runner or Vitest** — API + lib unit tests
+- Keep tests in `tests/` or `e2e/`
+
+### Required test files (minimum)
+
+```
+e2e/
+  auth.spec.ts           — login, logout, signup, role redirects
+  storefront.spec.ts     — browse, cart, checkout happy path (glow-beauty)
+  seller-dashboard.spec.ts — products CRUD, orders, storefront save
+  admin.spec.ts          — impersonate, stores, users suspend
+  impersonation.spec.ts  — full admin → seller → exit loop
+scripts/
+  test-api-smoke.mjs     — extend pattern from test-storefront-editor.mjs
+```
+
+### Test accounts & data
+- Use `demo@cartflow.app` / `demo12345` and `admin@cartflow.app` / `demo12345`
+- Run `npm run db:ensure-users` before E2E if accounts missing
+- Run `npm run db:seed-beauty` for Glow Beauty catalog
+
+### Button matrix automation
+Generate `e2e/button-matrix.spec.ts` that:
+1. Logs in per role
+2. Visits every route in the matrix
+3. Clicks every `button`, `a[href]`, `[role=button]` not marked `data-skip-e2e`
+4. Asserts no uncaught pageerror, no 500, no Prisma validation errors in HTML
+5. For modals/forms: fill minimal valid data and submit
+
+### CI commands (add to package.json)
+```json
+"test:e2e": "playwright test",
+"test:api": "node scripts/test-api-smoke.mjs",
+"test": "npm run test:api && npm run test:e2e"
+```
+
+### Confirm truths
+After fixes, these must pass:
+```powershell
+npx tsc --noEmit
+npm run build
+npm run test:api
+npm run test:e2e
+```
+
+Append a **Truth Table** to `prompts/audit-findings.md`:
+
+| Claim | Evidence (test name / command output) |
+|-------|--------------------------------------|
+| Glow Beauty storefront loads < 3s | e2e timing / log |
+| Storefront editor save persists | test-storefront-editor.mjs exit 0 |
+| Admin impersonation works | impersonation.spec.ts |
+| ... | ... |
+
+---
+
+## Phase 7 — Known gaps (prioritize)
+
+From recent work — verify fixed or finish:
+
+| Area | Status to verify |
+|------|------------------|
+| Glow Beauty catalog | 60 products (not 520); seed + storefront fast |
+| Storefront editor | Preview uses sample products; save PATCH works |
+| Prisma client stale | `lib/db.ts` fingerprint invalidation; restart after generate |
+| Store approval workflow | Schema may exist; **UI likely incomplete** — build `/admin/approvals`, seller banner, onboarding copy |
+| Admin overview KPI | "Pending approval" may confuse orders vs store approvals — fix labels |
+| Concurrent build/dev | Document stop-node-before-build |
+
+---
+
+## Definition of done
+
+You are finished only when ALL are true:
+
+1. **Zero P0 dead ends** — every button/link in the matrix works or is intentionally disabled with explanation
+2. **Build green** — `tsc` + `npm run build` pass
+3. **Tests green** — API smoke + Playwright E2E pass
+4. **Security** — P0/P1 issues fixed or documented with mitigation
+5. **UX** — storefront + dashboard match Apple-style `cf-*` system; mobile usable
+6. **audit-findings.md** — complete log of issues, fixes, truths
+7. **README snippet** — add "Testing" section with commands (only if tests were added)
+
+---
+
+## Execution order (strict)
+
+1. Phase 0 baseline → must be green before UI clicks
+2. `scripts/audit-api-smoke.mjs` → fix all failing APIs first (backend truths)
+3. Route crawl per role (public, seller, admin, impersonated) → fix 4xx/5xx/dead buttons
+4. Security pass on fixed APIs (IDOR, auth)
+5. UX pass on broken surfaces only (cf-* tokens, mobile, a11y on touched files)
+6. Add Playwright specs for every fixed regression
+7. Final: tsc + build + test:api + test:e2e → update truth table
+
+**Parallelism:** API smoke and route inventory can run together after Phase 0.
+
+## Quick-start command (paste to agent)
+
+```
+Read and execute prompts/full-platform-audit.txt in C:\Users\jmcna\Documents\8G\grok\cartflow.
+
+You are a senior auditor, full-stack engineer, and UI/UX lead (iPhone/Apple HIG).
+Run the full repair loop: audit UI → API → DB → security, fix every dead end, align to cf-* Apple-style UI, write Playwright + API tests, click every button, debug until green.
+
+Start Phase 0 now. Do not ask me what to run — execute it yourself. Log findings to prompts/audit-findings.md.
+```
+
+---
+
+## Reference prompts (read for context)
+
+- `prompts/admin-dashboard-ux-audit.txt` — semantics, placement, a11y
+- `prompts/admin-platform-requirements.txt` — admin feature spec
+- `scripts/test-storefront-editor.mjs` — API E2E pattern with cookie jar
