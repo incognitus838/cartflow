@@ -21,7 +21,8 @@
     "db:reset": "npx dotenv-cli -e .env.local -- prisma db push --force-reset && npm run db:seed",
     "test:api": "npx dotenv-cli -e .env.local -- node scripts/audit-api-smoke.mjs",
     "test:e2e": "playwright test",
-    "test": "npm run test:api"
+    "test": "npm run test:api",
+    "vercel:sync-env": "node scripts/sync-vercel-env.mjs"
   },
   "dependencies": {
     "@prisma/client": "^6.16.0",

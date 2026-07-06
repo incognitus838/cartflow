@@ -4,7 +4,11 @@ import { isDatabaseConfigured, prisma } from "@/lib/db";
 export async function GET() {
   if (!isDatabaseConfigured()) {
     return NextResponse.json(
-      { ok: false, database: "not_configured", message: "Set DATABASE_URL in .env.local" },
+      {
+        ok: false,
+        database: "not_configured",
+        message: "Set DATABASE_URL (or connect Neon on Vercel → Storage)",
+      },
       { status: 503 },
     );
   }
