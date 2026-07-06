@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { HeroChatter } from "@/components/landing/hero-chatter";
 
 export function Hero() {
   return (
@@ -15,11 +16,7 @@ export function Hero() {
             <span className="block">social commerce.</span>
           </h1>
 
-          <p className="cf-subtext mx-auto mt-6 max-w-xl text-[17px] sm:text-[19px]">
-            CartFlow transforms chaotic chat-based selling into a seamless, premium storefront.
-            Share one link. Customers browse, add to bag, and checkout — you manage everything
-            from one beautifully designed dashboard.
-          </p>
+          <HeroChatter />
 
           <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
             <Link href="/signup" className="btn-primary inline-flex items-center gap-2 px-7 py-3.5 text-[15px]">

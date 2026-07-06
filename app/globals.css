@@ -228,6 +228,39 @@ body {
   line-height: 1.6;
 }
 
+.cf-hero-chatter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.08em;
+}
+
+.cf-hero-chatter-quote {
+  font-size: 0.72em;
+  font-weight: 500;
+  color: var(--cf-gold);
+  line-height: 1;
+}
+
+.cf-hero-chatter-text {
+  display: inline-block;
+  transition:
+    opacity 0.42s var(--cf-ease),
+    transform 0.42s var(--cf-ease);
+}
+
+.cf-hero-chatter-text[data-visible="false"] {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cf-hero-chatter-text {
+    transition: none;
+  }
+}
+
 .cf-gold-accent {
   color: var(--cf-gold);
 }
