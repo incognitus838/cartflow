@@ -36,11 +36,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
   return (
     <ProductDetail
       storeSlug={store.slug}
-      storeName={store.name}
       currency={store.currency}
       deliveryFee={toNumber(store.deliveryFee)}
-      whatsapp={store.whatsapp}
-      phone={store.phone}
       product={product}
     />
   );

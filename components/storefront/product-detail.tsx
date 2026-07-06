@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { ArrowLeft, MessageCircle, Minus, Plus, ShoppingBag } from "lucide-react";
+import { ArrowLeft, Minus, Plus, ShoppingBag } from "lucide-react";
 import { toast } from "sonner";
 import { useCart } from "@/components/storefront/cart-provider";
 import {
@@ -12,8 +12,7 @@ import {
 import { toNumber } from "@/lib/decimal";
 import { isOutOfStock } from "@/lib/inventory-stock";
 import type { ProductMediaType } from "@/lib/media";
-import { absoluteStoreUrl, storePath } from "@/lib/storefront/paths";
-import { buildOrderMessage, buildWhatsAppOrderUrl } from "@/lib/storefront/whatsapp";
+import { storePath } from "@/lib/storefront/paths";
 import { formatCurrency } from "@/lib/utils";
 
 export type StorefrontProductDetail = {
@@ -35,25 +34,18 @@ export type StorefrontProductDetail = {
 
 type ProductDetailProps = {
   storeSlug: string;
-  storeName: string;
   currency: string;
   deliveryFee: number;
-  whatsapp: string | null;
-  phone: string | null;
   product: StorefrontProductDetail;
 };
 
 export function ProductDetail({
   storeSlug,
-  storeName,
   currency,
   deliveryFee,
-  whatsapp,
-  phone,
   product,
 }: ProductDetailProps) {
   const { addItem } = useCart();
-  const contact = whatsapp || phone;
   const hasVariants = product.variants.length > 0;
   const [selectedVariantId, setSelectedVariantId] = useState(
     product.variants.find((v) => v.stock > 0)?.id ?? product.variants[0]?.id ?? null,
@@ -82,35 +74,6 @@ export function ProductDetail({
     alt: image.alt,
     mediaType: (image.mediaType as ProductMediaType) || "IMAGE",
   }));
-
-  const whatsappUrl = useMemo(() => {
-    if (!contact || !canAdd) return null;
-
-    const message = buildOrderMessage(
-      storeName,
-      [
-        {
-          title: product.title,
-          variantName: selectedVariant?.name,
-          quantity,
-          priceLabel: formatCurrency(unitPrice * quantity, currency),
-        },
-      ],
-      absoluteStoreUrl(storeSlug),
-    );
-
-    return buildWhatsAppOrderUrl(contact, message);
-  }, [
-    canAdd,
-    contact,
-    currency,
-    product.title,
-    quantity,
-    selectedVariant?.name,
-    storeName,
-    storeSlug,
-    unitPrice,
-  ]);
 
   function handleAddToCart() {
     if (!canAdd) return;
@@ -243,7 +206,7 @@ export function ProductDetail({
             </p>
           ) : null}
 
-          <div className="mt-8 hidden space-y-3 sm:block">
+          <div className="mt-8 hidden sm:block">
             {canAdd ? (
               <button
                 type="button"
@@ -258,17 +221,6 @@ export function ProductDetail({
                 This item is currently unavailable.
               </p>
             )}
-            {whatsappUrl ? (
-              <a
-                href={whatsappUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn-secondary inline-flex w-full items-center justify-center gap-2 py-3 text-[14px]"
-              >
-                <MessageCircle className="h-4 w-4" strokeWidth={1.75} />
-                Order on WhatsApp
-              </a>
-            ) : null}
           </div>
         </div>
       </div>

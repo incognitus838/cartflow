@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CheckCircle2, Clock, MessageCircle } from "lucide-react";
+import { CheckCircle2, Clock } from "lucide-react";
 import { PaymentReceiptViewer } from "@/components/payment-receipt-viewer";
 import { OrderSummary } from "@/components/storefront/order-summary";
 import { ReceiptUploadForm } from "@/components/storefront/receipt-upload-form";
@@ -10,9 +10,7 @@ import { getStoreOrder } from "@/lib/queries/storefront";
 import { storefrontOrderReceiptUrl } from "@/lib/storefront/receipt-url";
 import { storePath } from "@/lib/storefront/paths";
 import { resolveStorefront } from "@/lib/storefront/resolve-store";
-import { buildWhatsAppOrderUrl } from "@/lib/storefront/whatsapp";
 import type { CartLine } from "@/lib/cart/types";
-import { formatCurrency } from "@/lib/utils";
 
 type OrderConfirmationProps = {
   params: Promise<{ storeSlug: string; orderNumber: string }>;
@@ -39,7 +37,6 @@ export default async function OrderConfirmationPage({ params }: OrderConfirmatio
     maxStock: item.quantity,
   }));
 
-  const total = toNumber(order.total);
   const hasReceipt = orderHasReceipt(order);
   const receiptSrc = storefrontOrderReceiptUrl(store.slug, order.orderNumber);
   const isPaid =
@@ -48,14 +45,6 @@ export default async function OrderConfirmationPage({ params }: OrderConfirmatio
     order.status === "SHIPPED" ||
     order.status === "DELIVERED";
   const awaitingApproval = order.status === "PENDING" && hasReceipt;
-
-  const contact = store.whatsapp || store.phone;
-  const chatUrl = contact
-    ? buildWhatsAppOrderUrl(
-        contact,
-        `Hi ${store.name}! I placed order ${order.orderNumber} for ${formatCurrency(total, store.currency)}.${hasReceipt ? " My payment receipt is attached." : " I need help with payment."}`,
-      )
-    : null;
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -130,19 +119,8 @@ export default async function OrderConfirmationPage({ params }: OrderConfirmatio
         />
       </div>
 
-      <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-        {chatUrl ? (
-          <a
-            href={chatUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-primary inline-flex flex-1 items-center justify-center gap-2 py-3"
-          >
-            <MessageCircle className="h-5 w-5" />
-            Message seller on WhatsApp
-          </a>
-        ) : null}
-        <Link href={storePath(store.slug)} className="btn-secondary flex-1 py-3 text-center">
+      <div className="mt-6">
+        <Link href={storePath(store.slug)} className="btn-primary block py-3 text-center">
           Continue shopping
         </Link>
       </div>
