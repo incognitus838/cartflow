@@ -1,4 +1,6 @@
-import type { CSSProperties } from "react";
+"use client";
+
+import { useEffect, useState } from "react";
 
 export const sellerChatter = [
   "How much?",
@@ -11,11 +13,21 @@ export const sellerChatter = [
   "I dey sleep — my shop still open.",
 ] as const;
 
-const HOLD_SECONDS = 2.8;
-const COUNT = sellerChatter.length;
-const CYCLE_SECONDS = COUNT * HOLD_SECONDS;
+const ROTATE_MS = 3000;
 
 export function HeroChatter() {
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setIndex((current) => (current + 1) % sellerChatter.length);
+    }, ROTATE_MS);
+
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const phrase = sellerChatter[index];
+
   return (
     <div className="mx-auto mt-6 max-w-2xl">
       <p className="text-[12px] font-medium uppercase tracking-[0.14em] text-[#86868b]">
@@ -24,31 +36,18 @@ export function HeroChatter() {
 
       <div
         className="cf-hero-chatter-stage cf-heading mt-4 text-[30px] leading-[1.15] sm:text-[40px] lg:text-[46px]"
-        style={
-          {
-            "--chatter-count": COUNT,
-            "--chatter-hold": `${HOLD_SECONDS}s`,
-            "--chatter-cycle": `${CYCLE_SECONDS}s`,
-          } as CSSProperties
-        }
-        aria-live="off"
+        aria-live="polite"
+        aria-atomic="true"
       >
-        {sellerChatter.map((phrase, index) => (
-          <p
-            key={phrase}
-            className="cf-hero-chatter-line"
-            style={{ "--chatter-index": index } as CSSProperties}
-            aria-hidden={index !== 0}
-          >
-            <span className="cf-hero-chatter-quote" aria-hidden>
-              &ldquo;
-            </span>
-            <span className="cf-hero-chatter-text">{phrase}</span>
-            <span className="cf-hero-chatter-quote" aria-hidden>
-              &rdquo;
-            </span>
-          </p>
-        ))}
+        <p key={phrase} className="cf-hero-chatter-line">
+          <span className="cf-hero-chatter-quote" aria-hidden>
+            &ldquo;
+          </span>
+          <span className="cf-hero-chatter-text">{phrase}</span>
+          <span className="cf-hero-chatter-quote" aria-hidden>
+            &rdquo;
+          </span>
+        </p>
       </div>
 
       <p className="cf-subtext mx-auto mt-5 max-w-lg text-[17px] sm:text-[18px]">

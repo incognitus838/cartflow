@@ -229,25 +229,21 @@ body {
 }
 
 .cf-hero-chatter-stage {
-  position: relative;
+  display: flex;
   min-height: 2.6em;
+  align-items: center;
+  justify-content: center;
   text-align: center;
 }
 
 .cf-hero-chatter-line {
-  position: absolute;
-  inset: 0;
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
   justify-content: center;
   gap: 0.08em;
   margin: 0;
-  opacity: 0;
-  transform: translateY(12px);
-  animation: cf-hero-chatter-cycle var(--chatter-cycle) linear infinite;
-  animation-delay: calc(var(--chatter-index) * var(--chatter-hold));
-  pointer-events: none;
+  animation: cf-hero-chatter-enter 0.55s var(--cf-ease) both;
 }
 
 .cf-hero-chatter-quote {
@@ -261,42 +257,21 @@ body {
   display: inline-block;
 }
 
-@keyframes cf-hero-chatter-cycle {
-  0% {
+@keyframes cf-hero-chatter-enter {
+  from {
     opacity: 0;
-    transform: translateY(12px);
+    transform: translateY(14px);
   }
 
-  2% {
+  to {
     opacity: 1;
     transform: translateY(0);
-  }
-
-  12% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-
-  14% {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-
-  100% {
-    opacity: 0;
-    transform: translateY(-8px);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .cf-hero-chatter-line {
     animation: none;
-    opacity: 0;
-    transform: none;
-  }
-
-  .cf-hero-chatter-line:first-child {
-    opacity: 1;
   }
 }
 
