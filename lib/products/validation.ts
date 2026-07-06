@@ -1,4 +1,4 @@
-import type { ProductStatus } from "@prisma/client";
+import type { Prisma, ProductStatus } from "@prisma/client";
 import {
   detectMediaType,
   MAX_PRODUCT_MEDIA,
@@ -53,8 +53,8 @@ export function parseProductInput(body: unknown): ProductInput | string {
   const description = typeof data.description === "string" ? data.description.trim() : "";
   const category = typeof data.category === "string" ? data.category.trim() : "General";
   const metadata =
-    data.metadata && typeof data.metadata === "object" && !Array.isArray(data.metadata)
-      ? (data.metadata as Record<string, unknown>)
+    data.metadata && typeof data.metadata === "object"
+      ? (data.metadata as Prisma.InputJsonValue)
       : undefined;
   const status = typeof data.status === "string" ? data.status : "DRAFT";
   const price = Number(data.price);

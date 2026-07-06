@@ -1,4 +1,4 @@
-import type { ProductStatus } from "@prisma/client";
+import type { Prisma, ProductStatus } from "@prisma/client";
 import type { ProductMedia } from "@/lib/media";
 
 export type VariantInput = {
@@ -13,7 +13,7 @@ export type ProductInput = {
   title: string;
   description?: string;
   category?: string;
-  metadata?: Record<string, unknown>;
+  metadata?: Prisma.InputJsonValue;
   price: number;
   compareAtPrice?: number | null;
   status: ProductStatus;

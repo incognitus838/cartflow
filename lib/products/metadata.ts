@@ -1,3 +1,4 @@
+import type { Prisma } from "@prisma/client";
 import type { ProductType } from "@/lib/products/product-types";
 
 export type ProductMetadata = {
@@ -67,7 +68,7 @@ export function parseProductMetadata(raw: unknown): ProductMetadata {
   return base;
 }
 
-export function serializeProductMetadata(metadata: ProductMetadata): Record<string, unknown> {
+export function serializeProductMetadata(metadata: ProductMetadata): Prisma.InputJsonValue {
   return {
     productType: metadata.productType,
     tags: metadata.tags.filter(Boolean),
