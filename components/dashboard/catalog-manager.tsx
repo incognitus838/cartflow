@@ -1,0 +1,323 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import { ArrowDown, ArrowUp, FolderOpen, Plus, Sparkles, Tag, Trash2 } from "lucide-react";
+import { toast } from "sonner";
+import { CATALOG_TEMPLATES } from "@/lib/catalog/templates";
+import type { CatalogCategory, CatalogSettings } from "@/lib/catalog/settings";
+
+type CatalogManagerProps = {
+  initial: CatalogSettings;
+};
+
+function createCategory(name: string, sortOrder: number): CatalogCategory {
+  return {
+    id: `cat_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`,
+    name,
+    sortOrder,
+  };
+}
+
+export function CatalogManager({ initial }: CatalogManagerProps) {
+  const [settings, setSettings] = useState(initial);
+  const [newCategory, setNewCategory] = useState("");
+  const [newTag, setNewTag] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [applyingTemplate, setApplyingTemplate] = useState<string | null>(null);
+
+  const sortedCategories = useMemo(
+    () => [...settings.categories].sort((a, b) => a.sortOrder - b.sortOrder),
+    [settings.categories],
+  );
+
+  async function persist(next: CatalogSettings, message = "Catalog saved") {
+    setSaving(true);
+    try {
+      const res = await fetch("/api/catalog", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(next),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast.error(data.error || "Could not save catalog");
+        return;
+      }
+
+      setSettings(data.settings);
+      toast.success(message);
+    } catch {
+      toast.error("Something went wrong");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleApplyTemplate(templateId: string) {
+    setApplyingTemplate(templateId);
+    try {
+      const res = await fetch("/api/catalog", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ applyTemplate: templateId }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast.error(data.error || "Could not apply template");
+        return;
+      }
+
+      setSettings(data.settings);
+      toast.success("Template applied — edit or remove anything you do not need.");
+    } catch {
+      toast.error("Something went wrong");
+    } finally {
+      setApplyingTemplate(null);
+    }
+  }
+
+  function updateCategoryName(id: string, name: string) {
+    setSettings((prev) => ({
+      ...prev,
+      categories: prev.categories.map((category) =>
+        category.id === id ? { ...category, name } : category,
+      ),
+    }));
+  }
+
+  function moveCategory(id: string, direction: -1 | 1) {
+    const list = [...sortedCategories];
+    const index = list.findIndex((category) => category.id === id);
+    const target = index + direction;
+    if (index < 0 || target < 0 || target >= list.length) return;
+
+    [list[index], list[target]] = [list[target], list[index]];
+    setSettings((prev) => ({
+      ...prev,
+      categories: list.map((category, sortOrder) => ({ ...category, sortOrder })),
+    }));
+  }
+
+  function removeCategory(id: string) {
+    setSettings((prev) => ({
+      ...prev,
+      categories: prev.categories.filter((category) => category.id !== id),
+    }));
+  }
+
+  function addCategory() {
+    const name = newCategory.trim();
+    if (!name) return;
+    setSettings((prev) => ({
+      ...prev,
+      categories: [...prev.categories, createCategory(name, prev.categories.length)],
+    }));
+    setNewCategory("");
+  }
+
+  function addTag() {
+    const tag = newTag.trim();
+    if (!tag) return;
+    if (settings.tags.some((existing) => existing.toLowerCase() === tag.toLowerCase())) {
+      setNewTag("");
+      return;
+    }
+    setSettings((prev) => ({ ...prev, tags: [...prev.tags, tag] }));
+    setNewTag("");
+  }
+
+  function removeTag(tag: string) {
+    setSettings((prev) => ({ ...prev, tags: prev.tags.filter((existing) => existing !== tag) }));
+  }
+
+  return (
+    <div className="space-y-6">
+      <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
+        <div className="flex items-start gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-700">
+            <Sparkles className="h-5 w-5" />
+          </span>
+          <div>
+            <h2 className="text-sm font-semibold text-slate-900">Industry templates</h2>
+            <p className="mt-1 text-xs text-slate-500">
+              Start with ready-made categories and tags for your business type. Templates merge with
+              what you already have.
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          {CATALOG_TEMPLATES.map((template) => (
+            <button
+              key={template.id}
+              type="button"
+              disabled={Boolean(applyingTemplate)}
+              onClick={() => handleApplyTemplate(template.id)}
+              className="rounded-xl border border-slate-200 bg-slate-50/80 p-4 text-left transition-colors hover:border-emerald-300 hover:bg-emerald-50/40 disabled:opacity-60"
+            >
+              <p className="text-sm font-semibold text-slate-900">{template.label}</p>
+              <p className="mt-1 text-xs text-slate-500">{template.description}</p>
+              <p className="mt-2 text-[11px] font-medium text-emerald-700">
+                {applyingTemplate === template.id ? "Applying…" : `${template.categories.length} categories · ${template.tags.length} tags`}
+              </p>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
+          <div className="flex items-center gap-2">
+            <FolderOpen className="h-4 w-4 text-slate-600" />
+            <h2 className="text-sm font-semibold text-slate-900">Categories</h2>
+          </div>
+          <p className="mt-1 text-xs text-slate-500">
+            Shown as collection filters on your storefront. Renaming updates products using that
+            category.
+          </p>
+
+          {sortedCategories.length === 0 ? (
+            <p className="mt-4 rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm text-slate-500">
+              No categories yet — pick a template or add your first one.
+            </p>
+          ) : (
+            <ul className="mt-4 space-y-2">
+              {sortedCategories.map((category, index) => (
+                <li
+                  key={category.id}
+                  className="flex items-center gap-2 rounded-lg border border-slate-100 bg-slate-50/60 px-3 py-2"
+                >
+                  <div className="flex flex-col gap-0.5">
+                    <button
+                      type="button"
+                      disabled={index === 0}
+                      onClick={() => moveCategory(category.id, -1)}
+                      className="rounded p-0.5 text-slate-400 hover:text-slate-700 disabled:opacity-30"
+                      aria-label="Move up"
+                    >
+                      <ArrowUp className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      disabled={index === sortedCategories.length - 1}
+                      onClick={() => moveCategory(category.id, 1)}
+                      className="rounded p-0.5 text-slate-400 hover:text-slate-700 disabled:opacity-30"
+                      aria-label="Move down"
+                    >
+                      <ArrowDown className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                  <input
+                    value={category.name}
+                    onChange={(e) => updateCategoryName(category.id, e.target.value)}
+                    className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeCategory(category.id)}
+                    className="rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-600"
+                    aria-label="Remove category"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <div className="mt-4 flex gap-2">
+            <input
+              value={newCategory}
+              onChange={(e) => setNewCategory(e.target.value)}
+              placeholder="New category name"
+              className="min-w-0 flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-emerald-500"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  addCategory();
+                }
+              }}
+            />
+            <button
+              type="button"
+              onClick={addCategory}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            >
+              <Plus className="h-4 w-4" />
+              Add
+            </button>
+          </div>
+        </section>
+
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
+          <div className="flex items-center gap-2">
+            <Tag className="h-4 w-4 text-slate-600" />
+            <h2 className="text-sm font-semibold text-slate-900">Tags</h2>
+          </div>
+          <p className="mt-1 text-xs text-slate-500">
+            Reusable labels for products — bestseller, new arrival, sale, and more.
+          </p>
+
+          <div className="mt-4 flex flex-wrap gap-2">
+            {settings.tags.length === 0 ? (
+              <p className="text-sm text-slate-500">No tags yet.</p>
+            ) : (
+              settings.tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700"
+                >
+                  {tag}
+                  <button
+                    type="button"
+                    onClick={() => removeTag(tag)}
+                    className="text-slate-400 hover:text-red-600"
+                    aria-label={`Remove ${tag}`}
+                  >
+                    ×
+                  </button>
+                </span>
+              ))
+            )}
+          </div>
+
+          <div className="mt-4 flex gap-2">
+            <input
+              value={newTag}
+              onChange={(e) => setNewTag(e.target.value)}
+              placeholder="New tag"
+              className="min-w-0 flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-emerald-500"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  addTag();
+                }
+              }}
+            />
+            <button
+              type="button"
+              onClick={addTag}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            >
+              <Plus className="h-4 w-4" />
+              Add
+            </button>
+          </div>
+        </section>
+      </div>
+
+      <div className="flex justify-end">
+        <button
+          type="button"
+          disabled={saving}
+          onClick={() => persist(settings)}
+          className="btn-primary px-6"
+        >
+          {saving ? "Saving…" : "Save catalog"}
+        </button>
+      </div>
+    </div>
+  );
+}

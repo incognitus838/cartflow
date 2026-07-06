@@ -169,6 +169,7 @@ model Business {
   welcomeMessage           String?
   showContactButton        Boolean         @default(true)
   catalogLayout            CatalogLayout   @default(GRID)
+  catalogSettings          Json?
   isActive                 Boolean      @default(true)
   approvalStatus           StoreApprovalStatus @default(APPROVED)
   submittedAt              DateTime?

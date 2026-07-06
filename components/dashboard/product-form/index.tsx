@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { ChevronRight } from "lucide-react";
 import { toast } from "sonner";
+import { CategoryTagsFields } from "@/components/dashboard/product-form/category-tags-fields";
 import { CollapsibleSection } from "@/components/dashboard/product-form/collapsible-section";
 import { MediaGallery, type MediaRow } from "@/components/dashboard/product-form/media-gallery";
 import { ProductTypeDetails } from "@/components/dashboard/product-form/product-type-details";
@@ -27,6 +28,8 @@ type ProductFormProps = {
   mode: "create" | "edit";
   currency: string;
   initial: ProductFormInitial;
+  catalogCategories?: string[];
+  catalogTags?: string[];
 };
 
 const STATUSES = [
@@ -35,7 +38,13 @@ const STATUSES = [
   { value: "ARCHIVED", label: "Archived" },
 ] as const;
 
-export function ProductForm({ mode, currency, initial }: ProductFormProps) {
+export function ProductForm({
+  mode,
+  currency,
+  initial,
+  catalogCategories = [],
+  catalogTags = [],
+}: ProductFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [title, setTitle] = useState(initial.title);
@@ -53,7 +62,7 @@ export function ProductForm({ mode, currency, initial }: ProductFormProps) {
     createVariantGroup(metadata.productType === "DIGITAL" ? "Module" : "Size"),
   ]);
   const [useVariants, setUseVariants] = useState(initial.variants.length > 0);
-  const [tagsInput, setTagsInput] = useState(initial.metadata.tags.join(", "));
+  const [selectedTags, setSelectedTags] = useState(initial.metadata.tags);
 
   const typeConfig = PRODUCT_TYPE_CONFIG[metadata.productType];
 
@@ -91,10 +100,7 @@ export function ProductForm({ mode, currency, initial }: ProductFormProps) {
 
     setLoading(true);
     const resolvedStatus = nextStatus ?? status;
-    const tags = tagsInput
-      .split(",")
-      .map((tag) => tag.trim())
-      .filter(Boolean);
+    const tags = selectedTags.map((tag) => tag.trim()).filter(Boolean);
 
     const payload = {
       title,
@@ -326,32 +332,15 @@ export function ProductForm({ mode, currency, initial }: ProductFormProps) {
       ) : null}
 
       <CollapsibleSection title="Categories & tags" description="Organise products for your storefront.">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label htmlFor="category" className="cf-product-label">
-              Category
-            </label>
-            <input
-              id="category"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="cf-input mt-2"
-              placeholder={typeConfig.categoryPlaceholder}
-            />
-          </div>
-          <div>
-            <label htmlFor="tags" className="cf-product-label">
-              Tags
-            </label>
-            <input
-              id="tags"
-              value={tagsInput}
-              onChange={(e) => setTagsInput(e.target.value)}
-              className="cf-input mt-2"
-              placeholder="bestseller, new arrival"
-            />
-          </div>
-        </div>
+        <CategoryTagsFields
+          category={category}
+          onCategoryChange={setCategory}
+          tags={selectedTags}
+          onTagsChange={setSelectedTags}
+          catalogCategories={catalogCategories}
+          catalogTags={catalogTags}
+          categoryPlaceholder={typeConfig.categoryPlaceholder}
+        />
       </CollapsibleSection>
 
       <CollapsibleSection title="SEO" description="How this product appears in search and shares.">

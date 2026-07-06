@@ -5,7 +5,7 @@ import { PaymentReceiptViewer } from "@/components/payment-receipt-viewer";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { OrderStatus } from "@prisma/client";
-import { CheckCircle2, Mail, MapPin, MessageCircle, Phone, StickyNote } from "lucide-react";
+import { CheckCircle2, Mail, MapPin, MessageCircle, Pencil, Phone, StickyNote, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { OrderStatusBadge } from "@/components/dashboard/order-status-badge";
 import { toNumber } from "@/lib/decimal";
@@ -81,16 +81,28 @@ export function OrderDetailPanel({
   const router = useRouter();
   const [status, setStatus] = useState(order.status);
   const [internalNotes, setInternalNotes] = useState(order.internalNotes ?? "");
+  const [customerName, setCustomerName] = useState(order.customerName);
+  const [customerPhone, setCustomerPhone] = useState(order.customerPhone);
+  const [customerAddress, setCustomerAddress] = useState(order.customerAddress ?? "");
+  const [notes, setNotes] = useState(order.notes ?? "");
+  const [deliveryFee, setDeliveryFee] = useState(String(toNumber(order.deliveryFee)));
+  const [items, setItems] = useState(
+    order.items.map((item) => ({
+      id: item.id,
+      title: item.title,
+      variantName: item.variantName,
+      quantity: item.quantity,
+      unitPrice: toNumber(item.unitPrice),
+      total: toNumber(item.total),
+    })),
+  );
   const [saving, setSaving] = useState(false);
   const [approving, setApproving] = useState(false);
 
   const orderApi = patchUrl ?? `/api/orders/${order.id}`;
   const canApprovePayment = order.status === "PENDING" && order.hasPaymentReceipt;
+  const itemsLocked = ["SHIPPED", "DELIVERED", "CANCELLED", "REFUNDED"].includes(order.status);
   const receiptSrc = receiptSrcProp ?? dashboardOrderReceiptUrl(order.id);
-  const whatsappUrl = buildWhatsAppOrderUrl(
-    order.customerPhone,
-    `Hi ${order.customerName}! Regarding your order ${order.orderNumber} for ${formatCurrency(toNumber(order.total), currency)}.`,
-  );
 
   async function handleApprovePayment() {
     setApproving(true);
@@ -117,13 +129,60 @@ export function OrderDetailPanel({
     }
   }
 
+  function updateItemQuantity(id: string, quantity: number) {
+    setItems((current) =>
+      current.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              quantity,
+              total: item.unitPrice * quantity,
+            }
+          : item,
+      ),
+    );
+  }
+
+  function removeItem(id: string) {
+    setItems((current) => current.filter((item) => item.id !== id));
+  }
+
+  const previewSubtotal = items.reduce((sum, item) => sum + item.total, 0);
+  const previewDiscount = toNumber(order.discountAmount ?? 0);
+  const previewDelivery = Number(deliveryFee) || 0;
+  const previewTotal = Math.max(0, previewSubtotal - previewDiscount + previewDelivery);
+  const whatsappUrl = buildWhatsAppOrderUrl(
+    customerPhone,
+    `Hi ${customerName}! Regarding your order ${order.orderNumber} for ${formatCurrency(previewTotal, currency)}.`,
+  );
+
   async function handleSave() {
     setSaving(true);
     try {
+      const itemPatches = order.items
+        .map((original) => {
+          const edited = items.find((item) => item.id === original.id);
+          if (!edited) return { id: original.id, remove: true };
+          if (edited.quantity !== original.quantity) {
+            return { id: original.id, quantity: edited.quantity };
+          }
+          return null;
+        })
+        .filter((patch): patch is { id: string; remove: true } | { id: string; quantity: number } => patch !== null);
+
       const res = await fetch(orderApi, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status, internalNotes }),
+        body: JSON.stringify({
+          status,
+          internalNotes,
+          customerName,
+          customerPhone,
+          customerAddress,
+          notes,
+          deliveryFee: previewDelivery,
+          items: itemsLocked ? undefined : itemPatches.length ? itemPatches : undefined,
+        }),
       });
       const data = await res.json();
 
@@ -203,72 +262,84 @@ export function OrderDetailPanel({
 
       <div className="grid gap-6 lg:grid-cols-2">
         <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
-          <h2 className="text-sm font-semibold text-slate-900">Customer details</h2>
-          <dl className="mt-4 space-y-4 text-sm">
+          <div className="flex items-center gap-2">
+            <Pencil className="h-4 w-4 text-slate-500" />
+            <h2 className="text-sm font-semibold text-slate-900">Customer details</h2>
+          </div>
+          <div className="mt-4 space-y-4 text-sm">
             <div>
-              <dt className="text-slate-500">Name</dt>
-              <dd className="mt-0.5 text-base font-medium text-slate-900">{order.customerName}</dd>
+              <label className="mb-1.5 block text-slate-500">Name</label>
+              <input
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+                className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-emerald-500"
+              />
             </div>
             <div>
-              <dt className="flex items-center gap-1.5 text-slate-500">
+              <label className="mb-1.5 flex items-center gap-1.5 text-slate-500">
                 <Phone className="h-3.5 w-3.5" />
                 Phone / WhatsApp
-              </dt>
-              <dd className="mt-1 flex flex-wrap items-center gap-2">
-                <a href={`tel:${order.customerPhone}`} className="font-medium text-slate-900 hover:text-emerald-700">
-                  {order.customerPhone}
+              </label>
+              <input
+                value={customerPhone}
+                onChange={(e) => setCustomerPhone(e.target.value)}
+                className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-emerald-500"
+              />
+              {whatsappUrl ? (
+                <a
+                  href={whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-100"
+                >
+                  <MessageCircle className="h-3.5 w-3.5" />
+                  Message on WhatsApp
                 </a>
-                {whatsappUrl ? (
-                  <a
-                    href={whatsappUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-100"
-                  >
-                    <MessageCircle className="h-3.5 w-3.5" />
-                    Message on WhatsApp
-                  </a>
-                ) : null}
-              </dd>
+              ) : null}
             </div>
             {order.customerEmail ? (
               <div>
-                <dt className="flex items-center gap-1.5 text-slate-500">
+                <p className="mb-1.5 flex items-center gap-1.5 text-slate-500">
                   <Mail className="h-3.5 w-3.5" />
                   Email
-                </dt>
-                <dd className="mt-0.5">
-                  <a href={`mailto:${order.customerEmail}`} className="font-medium text-slate-900 hover:text-emerald-700">
-                    {order.customerEmail}
-                  </a>
-                </dd>
-              </div>
-            ) : null}
-            {order.customerAddress ? (
-              <div>
-                <dt className="flex items-center gap-1.5 text-slate-500">
-                  <MapPin className="h-3.5 w-3.5" />
-                  Delivery address
-                </dt>
-                <dd className="mt-0.5 text-slate-900">{order.customerAddress}</dd>
-              </div>
-            ) : null}
-            {order.notes ? (
-              <div className="rounded-lg bg-slate-50 px-3 py-3">
-                <dt className="flex items-center gap-1.5 text-slate-500">
-                  <StickyNote className="h-3.5 w-3.5" />
-                  Customer note
-                </dt>
-                <dd className="mt-1 text-slate-900">{order.notes}</dd>
+                </p>
+                <a href={`mailto:${order.customerEmail}`} className="font-medium text-slate-900 hover:text-emerald-700">
+                  {order.customerEmail}
+                </a>
               </div>
             ) : null}
             <div>
-              <dt className="text-slate-500">Payment</dt>
-              <dd className="mt-0.5 capitalize text-slate-900">
-                {(order.paymentProvider ?? "manual").toLowerCase()} bank transfer
-              </dd>
+              <label className="mb-1.5 flex items-center gap-1.5 text-slate-500">
+                <MapPin className="h-3.5 w-3.5" />
+                Delivery address
+              </label>
+              <textarea
+                value={customerAddress}
+                onChange={(e) => setCustomerAddress(e.target.value)}
+                rows={3}
+                className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-emerald-500"
+              />
             </div>
-          </dl>
+            <div>
+              <label className="mb-1.5 flex items-center gap-1.5 text-slate-500">
+                <StickyNote className="h-3.5 w-3.5" />
+                Customer note
+              </label>
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                rows={2}
+                placeholder="Notes from the customer at checkout"
+                className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-emerald-500"
+              />
+            </div>
+            <div>
+              <p className="text-slate-500">Payment</p>
+              <p className="mt-0.5 capitalize text-slate-900">
+                {(order.paymentProvider ?? "manual").toLowerCase()} bank transfer
+              </p>
+            </div>
+          </div>
         </section>
 
         <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
@@ -301,58 +372,99 @@ export function OrderDetailPanel({
               />
             </div>
             <button type="button" disabled={saving} onClick={handleSave} className="btn-primary">
-              {saving ? "Saving…" : "Save changes"}
+              {saving ? "Saving…" : "Save order"}
             </button>
+            <p className="text-xs text-slate-500">
+              Saves customer details, fulfillment status, items, and delivery fee together.
+            </p>
           </div>
         </section>
       </div>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
-        <h2 className="text-sm font-semibold text-slate-900">Items</h2>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-sm font-semibold text-slate-900">Items</h2>
+          {itemsLocked ? (
+            <p className="text-xs text-slate-500">Items are locked after shipping or closure.</p>
+          ) : (
+            <p className="text-xs text-slate-500">Adjust quantities or remove lines — totals update on save.</p>
+          )}
+        </div>
         <ul className="mt-4 divide-y divide-slate-100">
-          {order.items.map((item) => (
-            <li key={item.id} className="flex justify-between gap-4 py-3 text-sm">
-              <div>
-                <p className="font-medium text-slate-900">
-                  {item.title}
-                  {item.quantity > 1 ? ` × ${item.quantity}` : ""}
-                </p>
+          {items.map((item) => (
+            <li key={item.id} className="flex flex-wrap items-center justify-between gap-4 py-3 text-sm">
+              <div className="min-w-0 flex-1">
+                <p className="font-medium text-slate-900">{item.title}</p>
                 {item.variantName ? (
                   <p className="text-xs text-slate-500">{item.variantName}</p>
                 ) : null}
+                <p className="mt-1 text-xs text-slate-500">
+                  {formatCurrency(item.unitPrice, currency)} each
+                </p>
               </div>
-              <span className="font-medium text-slate-700">
-                {formatCurrency(toNumber(item.total), currency)}
-              </span>
+              <div className="flex items-center gap-2">
+                {!itemsLocked ? (
+                  <>
+                    <input
+                      type="number"
+                      min={1}
+                      value={item.quantity}
+                      onChange={(e) => updateItemQuantity(item.id, Math.max(1, Number(e.target.value) || 1))}
+                      className="w-16 rounded-lg border border-slate-200 px-2 py-1.5 text-center text-sm outline-none focus:border-emerald-500"
+                    />
+                    <button
+                      type="button"
+                      disabled={items.length <= 1}
+                      onClick={() => removeItem(item.id)}
+                      className="rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-30"
+                      aria-label="Remove item"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </>
+                ) : (
+                  <span className="text-slate-600">× {item.quantity}</span>
+                )}
+                <span className="min-w-[5rem] text-right font-medium text-slate-700">
+                  {formatCurrency(item.total, currency)}
+                </span>
+              </div>
             </li>
           ))}
         </ul>
         <div className="mt-4 space-y-2 border-t border-slate-100 pt-4 text-sm">
           <div className="flex justify-between text-slate-600">
             <span>Subtotal</span>
-            <span>{formatCurrency(toNumber(order.subtotal), currency)}</span>
+            <span>{formatCurrency(previewSubtotal, currency)}</span>
           </div>
-          {order.discountAmount && toNumber(order.discountAmount) > 0 ? (
+          {previewDiscount > 0 ? (
             <div className="flex justify-between text-emerald-700">
               <span>
                 Discount{order.promotionCode ? ` (${order.promotionCode})` : ""}
               </span>
-              <span>-{formatCurrency(toNumber(order.discountAmount), currency)}</span>
+              <span>-{formatCurrency(previewDiscount, currency)}</span>
             </div>
           ) : null}
-          {order.promotionCode && (!order.discountAmount || toNumber(order.discountAmount) === 0) ? (
+          {order.promotionCode && previewDiscount === 0 ? (
             <div className="flex justify-between text-emerald-700">
               <span>Promotion</span>
               <span className="font-mono text-xs">{order.promotionCode}</span>
             </div>
           ) : null}
-          <div className="flex justify-between text-slate-600">
+          <div className="flex items-center justify-between gap-3 text-slate-600">
             <span>Delivery</span>
-            <span>{formatCurrency(toNumber(order.deliveryFee), currency)}</span>
+            <input
+              type="number"
+              min={0}
+              step="0.01"
+              value={deliveryFee}
+              onChange={(e) => setDeliveryFee(e.target.value)}
+              className="w-28 rounded-lg border border-slate-200 px-2 py-1.5 text-right text-sm outline-none focus:border-emerald-500"
+            />
           </div>
           <div className="flex justify-between text-base font-bold text-slate-900">
             <span>Total</span>
-            <span className="text-emerald-700">{formatCurrency(toNumber(order.total), currency)}</span>
+            <span className="text-emerald-700">{formatCurrency(previewTotal, currency)}</span>
           </div>
         </div>
       </section>

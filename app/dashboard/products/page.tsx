@@ -20,10 +20,18 @@ export default async function ProductsPage() {
         title="Products"
         description="Manage your catalog and inventory."
         actions={
-          <Link href="/dashboard/products/new" className="btn-primary inline-flex items-center gap-2">
-            <Plus className="h-4 w-4" aria-hidden />
-            Add product
-          </Link>
+          <div className="flex flex-wrap items-center gap-2">
+            <Link
+              href="/dashboard/catalog"
+              className="inline-flex items-center gap-2 rounded-full border border-black/[0.08] bg-white px-4 py-2 text-sm font-medium text-[#1d1d1f] hover:bg-[#f5f5f7]"
+            >
+              Manage catalog
+            </Link>
+            <Link href="/dashboard/products/new" className="btn-primary inline-flex items-center gap-2">
+              <Plus className="h-4 w-4" aria-hidden />
+              Add product
+            </Link>
+          </div>
         }
       />
 
@@ -46,6 +54,7 @@ export default async function ProductsPage() {
               <thead>
                 <tr>
                   <th scope="col">Product</th>
+                  <th scope="col">Category</th>
                   <th scope="col">Price</th>
                   <th scope="col">Stock</th>
                   <th scope="col">Variants</th>
@@ -80,6 +89,7 @@ export default async function ProductsPage() {
                           <span className="font-medium text-[#1d1d1f]">{product.title}</span>
                         </Link>
                       </td>
+                      <td className="text-[#6e6e73]">{product.category || "General"}</td>
                       <td className="currency text-[#6e6e73]">
                         {formatCurrency(toNumber(product.price), business.currency)}
                       </td>
