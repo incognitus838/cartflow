@@ -7,12 +7,16 @@ import { ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { CollapsibleSection } from "@/components/dashboard/product-form/collapsible-section";
 import { MediaGallery, type MediaRow } from "@/components/dashboard/product-form/media-gallery";
+import { ProductTypeDetails } from "@/components/dashboard/product-form/product-type-details";
+import { ProductTypeSelector } from "@/components/dashboard/product-form/product-type-selector";
 import { RichTextEditor } from "@/components/dashboard/product-form/rich-text-editor";
 import { VariantsSection } from "@/components/dashboard/product-form/variants-section";
 import { detectMediaType } from "@/lib/media";
 import type { ProductFormInitial } from "@/lib/products/form-initial";
+import type { ProductMetadata } from "@/lib/products/metadata";
 import { serializeProductMetadata } from "@/lib/products/metadata";
-import { PRODUCT_TYPES } from "@/lib/products/product-types";
+import { PRODUCT_TYPE_CONFIG } from "@/lib/products/product-type-config";
+import { defaultVariantGroupName, type ProductType } from "@/lib/products/product-types";
 import { createVariantGroup } from "@/lib/products/variant-groups";
 import { emptyVariantRow, type VariantFormRow } from "@/lib/products/variants";
 import { formatCurrency } from "@/lib/utils";
@@ -51,6 +55,8 @@ export function ProductForm({ mode, currency, initial }: ProductFormProps) {
   const [useVariants, setUseVariants] = useState(initial.variants.length > 0);
   const [tagsInput, setTagsInput] = useState(initial.metadata.tags.join(", "));
 
+  const typeConfig = PRODUCT_TYPE_CONFIG[metadata.productType];
+
   const pricePreview = useMemo(() => {
     const sale = Number(price);
     const original = compareAtPrice ? Number(compareAtPrice) : null;
@@ -58,11 +64,23 @@ export function ProductForm({ mode, currency, initial }: ProductFormProps) {
     return { sale, original };
   }, [price, compareAtPrice]);
 
-  function patchMetadata<K extends keyof typeof metadata>(key: K, value: (typeof metadata)[K]) {
+  function patchMetadata<K extends keyof ProductMetadata>(key: K, value: ProductMetadata[K]) {
     setMetadata((current) => ({ ...current, [key]: value }));
   }
 
+  function handleProductTypeChange(nextType: ProductType) {
+    patchMetadata("productType", nextType);
+    setVariantGroups([createVariantGroup(defaultVariantGroupName(nextType))]);
+    if (nextType === "DIGITAL" || nextType === "SERVICE") {
+      setStock("0");
+    }
+  }
+
   async function saveProduct(nextStatus?: typeof status) {
+    if (metadata.productType === "DIGITAL" && !metadata.digitalDeliveryUrl.trim()) {
+      toast.error("Add an auto-delivery link for digital products.");
+      return;
+    }
     if (useVariants) {
       const invalidVariant = variants.find((row) => !row.name.trim());
       if (invalidVariant) {
@@ -86,7 +104,12 @@ export function ProductForm({ mode, currency, initial }: ProductFormProps) {
       price: Number(price),
       compareAtPrice: compareAtPrice ? Number(compareAtPrice) : null,
       status: resolvedStatus,
-      stock: useVariants ? 0 : Number(stock),
+      stock:
+        metadata.productType === "DIGITAL" || metadata.productType === "SERVICE"
+          ? 0
+          : useVariants
+            ? 0
+            : Number(stock),
       lowStockThreshold: Number(lowStockThreshold),
       media: mediaRows
         .filter((row) => row.url.trim() && !row.uploading)
@@ -184,7 +207,7 @@ export function ProductForm({ mode, currency, initial }: ProductFormProps) {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className="cf-input mt-2 text-[16px] font-medium sm:text-[18px]"
-              placeholder="Ankara Midi Dress"
+              placeholder={typeConfig.titlePlaceholder}
             />
           </div>
 
@@ -194,35 +217,26 @@ export function ProductForm({ mode, currency, initial }: ProductFormProps) {
               <RichTextEditor
                 value={description}
                 onChange={setDescription}
-                placeholder="Tell customers what makes this product special."
+                placeholder={typeConfig.descriptionPlaceholder}
               />
             </div>
           </div>
 
-          <fieldset>
-            <legend className="cf-product-label">Product type</legend>
-            <div className="mt-3 grid gap-2 sm:grid-cols-2">
-              {PRODUCT_TYPES.map((type) => (
-                <label
-                  key={type.value}
-                  className={`cf-product-type-option ${
-                    metadata.productType === type.value ? "cf-product-type-option--active" : ""
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="productType"
-                    value={type.value}
-                    checked={metadata.productType === type.value}
-                    onChange={() => patchMetadata("productType", type.value)}
-                    className="sr-only"
-                  />
-                  <span className="text-[13px] font-semibold text-[#1d1d1f]">{type.label}</span>
-                  <span className="mt-1 block text-[11px] leading-snug text-[#86868b]">{type.hint}</span>
-                </label>
-              ))}
-            </div>
-          </fieldset>
+          <ProductTypeSelector
+            value={metadata.productType}
+            onChange={handleProductTypeChange}
+          />
+
+          <ProductTypeDetails
+            type={metadata.productType}
+            metadata={metadata}
+            stock={stock}
+            lowStockThreshold={lowStockThreshold}
+            useVariants={useVariants}
+            onMetadataChange={patchMetadata}
+            onStockChange={setStock}
+            onLowStockChange={setLowStockThreshold}
+          />
         </div>
       </section>
 
@@ -278,153 +292,38 @@ export function ProductForm({ mode, currency, initial }: ProductFormProps) {
         ) : null}
       </section>
 
-      <MediaGallery rows={mediaRows} onChange={setMediaRows} />
-
-      <VariantsSection
-        productType={metadata.productType}
-        useVariants={useVariants}
-        onUseVariantsChange={setUseVariants}
-        groups={variantGroups}
-        onGroupsChange={setVariantGroups}
-        variants={variants}
-        onVariantsChange={setVariants}
+      <MediaGallery
+        rows={mediaRows}
+        onChange={setMediaRows}
+        hint={typeConfig.mediaHint}
       />
 
-      <section className="cf-product-card cf-product-card--lift">
-        <h2 className="text-[15px] font-semibold tracking-tight text-[#1d1d1f]">
-          Inventory &amp; fulfillment
-        </h2>
-        <p className="mt-1 text-[12px] text-[#86868b]">
-          {metadata.productType === "DIGITAL"
-            ? "Digital products auto-deliver via link — no stock limit required."
-            : metadata.productType === "FOOD"
-              ? "Track freshness, prep time, and low-stock alerts."
-              : metadata.productType === "SERVICE"
-                ? "Services may not need stock — set availability per variant if needed."
-                : "Physical goods deduct stock when orders are marked paid."}
-        </p>
-        <div className="mt-5 grid gap-4 sm:grid-cols-2">
-          {metadata.productType !== "DIGITAL" && !useVariants ? (
-            <div>
-              <label htmlFor="stock-count" className="cf-product-label">
-                Stock quantity
-              </label>
-              <input
-                id="stock-count"
-                type="number"
-                min={0}
-                required
-                value={stock}
-                onChange={(e) => setStock(e.target.value)}
-                className="cf-input mt-2"
-              />
-            </div>
-          ) : useVariants ? (
-            <div className="rounded-[12px] bg-[#f5f5f7] px-4 py-3 text-[13px] text-[#6e6e73] sm:col-span-2">
-              Total stock:{" "}
-              <span className="font-semibold text-[#1d1d1f]">
-                {variants.reduce((sum, row) => sum + (Number(row.stock) || 0), 0)}
-              </span>{" "}
-              units across {variants.length} variant{variants.length === 1 ? "" : "s"}
-            </div>
-          ) : (
-            <div className="rounded-[12px] bg-[#f5f5f7] px-4 py-3 text-[13px] text-[#6e6e73] sm:col-span-2">
-              Unlimited digital stock — delivery link sent after payment.
-            </div>
-          )}
+      {typeConfig.showVariants ? (
+        <VariantsSection
+          productType={metadata.productType}
+          useVariants={useVariants}
+          onUseVariantsChange={setUseVariants}
+          groups={variantGroups}
+          onGroupsChange={setVariantGroups}
+          variants={variants}
+          onVariantsChange={setVariants}
+        />
+      ) : null}
 
-          <div>
-            <label htmlFor="low-stock" className="cf-product-label">
-              Low-stock alert
-            </label>
-            <input
-              id="low-stock"
-              type="number"
-              min={0}
-              required
-              value={lowStockThreshold}
-              onChange={(e) => setLowStockThreshold(e.target.value)}
-              className="cf-input mt-2"
-            />
-          </div>
-
-          {metadata.productType === "PHYSICAL" ? (
-            <>
-              <div>
-                <label htmlFor="product-sku" className="cf-product-label">
-                  SKU
-                </label>
-                <input
-                  id="product-sku"
-                  value={metadata.sku}
-                  onChange={(e) => patchMetadata("sku", e.target.value)}
-                  className="cf-input mt-2"
-                />
-              </div>
-              <div>
-                <label htmlFor="product-weight" className="cf-product-label">
-                  Weight (kg)
-                </label>
-                <input
-                  id="product-weight"
-                  type="number"
-                  min={0}
-                  step="0.01"
-                  value={metadata.weightKg}
-                  onChange={(e) => patchMetadata("weightKg", e.target.value)}
-                  className="cf-input mt-2"
-                />
-              </div>
-            </>
-          ) : null}
-
-          {metadata.productType === "DIGITAL" ? (
-            <div className="sm:col-span-2">
-              <label htmlFor="delivery-url" className="cf-product-label">
-                Auto-delivery link
-              </label>
-              <input
-                id="delivery-url"
-                type="url"
-                value={metadata.digitalDeliveryUrl}
-                onChange={(e) => patchMetadata("digitalDeliveryUrl", e.target.value)}
-                className="cf-input mt-2"
-                placeholder="https://course.example.com/access"
-              />
-            </div>
-          ) : null}
-
-          {metadata.productType === "FOOD" ? (
-            <>
-              <div>
-                <label htmlFor="expiry-date" className="cf-product-label">
-                  Expiry date
-                </label>
-                <input
-                  id="expiry-date"
-                  type="date"
-                  value={metadata.expiryDate}
-                  onChange={(e) => patchMetadata("expiryDate", e.target.value)}
-                  className="cf-input mt-2"
-                />
-              </div>
-              <div>
-                <label htmlFor="prep-time" className="cf-product-label">
-                  Preparation time (minutes)
-                </label>
-                <input
-                  id="prep-time"
-                  type="number"
-                  min={0}
-                  value={metadata.prepTimeMinutes}
-                  onChange={(e) => patchMetadata("prepTimeMinutes", e.target.value)}
-                  className="cf-input mt-2"
-                />
-              </div>
-            </>
-          ) : null}
-        </div>
-      </section>
+      {useVariants && typeConfig.showStock ? (
+        <section className="cf-product-card cf-product-card--lift">
+          <h2 className="text-[15px] font-semibold tracking-tight text-[#1d1d1f]">
+            Variant stock summary
+          </h2>
+          <p className="mt-3 rounded-[12px] bg-[#f5f5f7] px-4 py-3 text-[13px] text-[#6e6e73]">
+            Total stock:{" "}
+            <span className="font-semibold text-[#1d1d1f]">
+              {variants.reduce((sum, row) => sum + (Number(row.stock) || 0), 0)}
+            </span>{" "}
+            units across {variants.length} variant{variants.length === 1 ? "" : "s"}
+          </p>
+        </section>
+      ) : null}
 
       <CollapsibleSection title="Categories & tags" description="Organise products for your storefront.">
         <div className="grid gap-4 sm:grid-cols-2">
@@ -437,7 +336,7 @@ export function ProductForm({ mode, currency, initial }: ProductFormProps) {
               value={category}
               onChange={(e) => setCategory(e.target.value)}
               className="cf-input mt-2"
-              placeholder="Skincare"
+              placeholder={typeConfig.categoryPlaceholder}
             />
           </div>
           <div>
@@ -481,49 +380,6 @@ export function ProductForm({ mode, currency, initial }: ProductFormProps) {
               className="cf-input mt-2 resize-y"
             />
           </div>
-        </div>
-      </CollapsibleSection>
-
-      <CollapsibleSection title="Custom fields" description="Ingredients, duration, or any extra details.">
-        <div className="grid gap-4 sm:grid-cols-2">
-          {metadata.productType === "FOOD" ? (
-            <div className="sm:col-span-2">
-              <label htmlFor="ingredients" className="cf-product-label">
-                Ingredients
-              </label>
-              <textarea
-                id="ingredients"
-                rows={3}
-                value={metadata.customFields.ingredients ?? ""}
-                onChange={(e) =>
-                  patchMetadata("customFields", {
-                    ...metadata.customFields,
-                    ingredients: e.target.value,
-                  })
-                }
-                className="cf-input mt-2 resize-y"
-              />
-            </div>
-          ) : null}
-          {metadata.productType === "DIGITAL" ? (
-            <div>
-              <label htmlFor="duration" className="cf-product-label">
-                Duration
-              </label>
-              <input
-                id="duration"
-                value={metadata.customFields.duration ?? ""}
-                onChange={(e) =>
-                  patchMetadata("customFields", {
-                    ...metadata.customFields,
-                    duration: e.target.value,
-                  })
-                }
-                className="cf-input mt-2"
-                placeholder="6 weeks"
-              />
-            </div>
-          ) : null}
         </div>
       </CollapsibleSection>
 

@@ -22,9 +22,10 @@ export type MediaRow = {
 type MediaGalleryProps = {
   rows: MediaRow[];
   onChange: (rows: MediaRow[]) => void;
+  hint?: string;
 };
 
-export function MediaGallery({ rows, onChange }: MediaGalleryProps) {
+export function MediaGallery({ rows, onChange, hint }: MediaGalleryProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const rowsRef = useRef(rows);
   rowsRef.current = rows;
@@ -131,7 +132,8 @@ export function MediaGallery({ rows, onChange }: MediaGalleryProps) {
             Media gallery
           </h2>
           <p className="mt-1 text-[12px] text-[#86868b]">
-            Up to {MAX_PRODUCT_MEDIA} photos or videos. Drag to reorder — first image is the storefront preview.
+            {hint ??
+              `Up to ${MAX_PRODUCT_MEDIA} photos or videos. Drag to reorder — first image is the storefront preview.`}
           </p>
         </div>
       </div>
