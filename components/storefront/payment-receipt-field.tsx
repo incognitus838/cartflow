@@ -3,10 +3,9 @@
 import Image from "next/image";
 import { useRef, useState } from "react";
 import { FileText, ImageIcon } from "lucide-react";
-import { RECEIPT_MAX_LABEL } from "@/lib/uploads/receipt";
+import { RECEIPT_MAX_BYTES, RECEIPT_MAX_LABEL } from "@/lib/uploads/receipt";
 
 const ACCEPT = "image/jpeg,image/png,image/webp,image/gif,application/pdf";
-const MAX_SIZE_BYTES = 100 * 1024;
 
 type PaymentReceiptFieldProps = {
   file: File | null;
@@ -29,7 +28,7 @@ export function PaymentReceiptField({ file, onFileChange, required = true }: Pay
       return;
     }
 
-    if (selected.size > MAX_SIZE_BYTES) {
+    if (selected.size > RECEIPT_MAX_BYTES) {
       setError(`Receipt must be under ${RECEIPT_MAX_LABEL}.`);
       onFileChange(null);
       setPreview(null);
@@ -80,7 +79,7 @@ export function PaymentReceiptField({ file, onFileChange, required = true }: Pay
               Tap to upload payment proof
             </span>
             <span className="text-xs text-[var(--cf-gray-400)]">
-              Screenshot (JPG, PNG) or PDF · max 100 KB
+              Screenshot (JPG, PNG) or PDF · max {RECEIPT_MAX_LABEL}
             </span>
           </>
         )}

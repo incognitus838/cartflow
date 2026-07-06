@@ -1,4 +1,4 @@
-const MAX_SIZE_BYTES = 100 * 1024;
+export const RECEIPT_MAX_BYTES = 500 * 1024;
 const ALLOWED_TYPES = new Set([
   "image/jpeg",
   "image/png",
@@ -7,7 +7,7 @@ const ALLOWED_TYPES = new Set([
   "application/pdf",
 ]);
 
-export const RECEIPT_MAX_LABEL = "100 KB";
+export const RECEIPT_MAX_LABEL = "500 KB";
 
 export type ParsedReceipt = {
   data: Buffer;
@@ -33,7 +33,7 @@ export async function parseReceiptFile(file: File): Promise<ParsedReceipt> {
     throw new Error("Upload a JPG, PNG, WebP, GIF screenshot, or PDF receipt.");
   }
 
-  if (file.size > MAX_SIZE_BYTES) {
+  if (file.size > RECEIPT_MAX_BYTES) {
     throw new Error(`Receipt must be under ${RECEIPT_MAX_LABEL}.`);
   }
 

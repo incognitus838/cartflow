@@ -35,7 +35,7 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
     <>
       <PageHeader
         title="Orders"
-        description="Every order on CartFlow. Click an order to view details and payment receipts (screenshot/PDF, max 100 KB)."
+        description="Every order on CartFlow. Click an order to view details and payment receipts (screenshot/PDF, max 500 KB)."
       />
       <AdminOrdersPanel
         initialStatus={initialStatus}
