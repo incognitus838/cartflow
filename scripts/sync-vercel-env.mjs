@@ -4,8 +4,9 @@
  * Run: npm run vercel:sync-env
  */
 import { randomBytes } from "crypto";
+import { homedir } from "os";
 import { readFileSync, existsSync } from "fs";
-import { resolve } from "path";
+import { join, resolve } from "path";
 
 const PROJECT_NAME = "cartflow";
 const PRODUCTION_URL = process.env.CARTFLOW_PRODUCTION_URL ?? "https://cartflow-hbq8ezxen-839.vercel.app";
@@ -65,10 +66,33 @@ async function api(path, { method = "GET", body, token, teamId } = {}) {
   return data;
 }
 
+function readCliAuthToken() {
+  const candidates = [
+    join(homedir(), "AppData", "Roaming", "xdg.data", "com.vercel.cli", "auth.json"),
+    join(homedir(), ".local", "share", "com.vercel.cli", "auth.json"),
+    join(homedir(), "Library", "Application Support", "com.vercel.cli", "auth.json"),
+  ];
+
+  for (const path of candidates) {
+    if (!existsSync(path)) continue;
+    try {
+      const auth = JSON.parse(readFileSync(path, "utf8"));
+      if (auth.token?.trim()) return auth.token.trim();
+    } catch {
+      // try next path
+    }
+  }
+  return "";
+}
+
 async function getToken() {
   const fromEnv = process.env.VERCEL_TOKEN?.trim();
   if (fromEnv) return fromEnv;
-  throw new Error("Set VERCEL_TOKEN (create at https://vercel.com/account/tokens) then re-run npm run vercel:sync-env");
+  const fromCli = readCliAuthToken();
+  if (fromCli) return fromCli;
+  throw new Error(
+    "Run `npx vercel login` or set VERCEL_TOKEN (https://vercel.com/account/tokens), then re-run npm run vercel:sync-env",
+  );
 }
 
 async function getTeamId(token) {
