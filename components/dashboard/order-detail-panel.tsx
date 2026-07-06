@@ -5,8 +5,13 @@ import { PaymentReceiptViewer } from "@/components/payment-receipt-viewer";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { OrderStatus } from "@prisma/client";
-import { CheckCircle2, Mail, MapPin, MessageCircle, Pencil, Phone, StickyNote, Trash2 } from "lucide-react";
+import { Mail, MapPin, MessageCircle, Pencil, Phone, StickyNote, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  PaymentReviewHistory,
+  type PaymentReviewEvent,
+} from "@/components/dashboard/payment-review-history";
+import { PaymentReviewActions } from "@/components/dashboard/payment-review-actions";
 import { OrderStatusBadge } from "@/components/dashboard/order-status-badge";
 import { toNumber } from "@/lib/decimal";
 import { dashboardOrderReceiptUrl } from "@/lib/storefront/receipt-url";
@@ -43,6 +48,8 @@ export type OrderDetailData = {
   paymentReceiptMimeType: string | null;
   paymentReceiptFilename: string | null;
   paymentReceiptSubmittedAt: string | Date | null;
+  paymentRejectionReason?: string | null;
+  paymentEvents?: PaymentReviewEvent[];
   createdAt: string | Date;
   items: Array<{
     id: string;
@@ -68,6 +75,7 @@ type OrderDetailPanelProps = {
   backLabel?: string;
   receiptSrc?: string;
   patchUrl?: string;
+  paymentReviewUrl?: string;
 };
 
 export function OrderDetailPanel({
@@ -77,6 +85,7 @@ export function OrderDetailPanel({
   backLabel = "Back to orders",
   receiptSrc: receiptSrcProp,
   patchUrl,
+  paymentReviewUrl,
 }: OrderDetailPanelProps) {
   const router = useRouter();
   const [status, setStatus] = useState(order.status);
@@ -97,37 +106,11 @@ export function OrderDetailPanel({
     })),
   );
   const [saving, setSaving] = useState(false);
-  const [approving, setApproving] = useState(false);
 
   const orderApi = patchUrl ?? `/api/orders/${order.id}`;
-  const canApprovePayment = order.status === "PENDING" && order.hasPaymentReceipt;
+  const canReviewPayment = order.status === "PENDING" && order.hasPaymentReceipt;
   const itemsLocked = ["SHIPPED", "DELIVERED", "CANCELLED", "REFUNDED"].includes(order.status);
   const receiptSrc = receiptSrcProp ?? dashboardOrderReceiptUrl(order.id);
-
-  async function handleApprovePayment() {
-    setApproving(true);
-    try {
-      const res = await fetch(orderApi, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "PAID" }),
-      });
-      const data = await res.json();
-
-      if (!res.ok) {
-        toast.error(data.error || "Could not approve payment");
-        return;
-      }
-
-      setStatus("PAID");
-      toast.success("Payment approved — order marked as paid.");
-      router.refresh();
-    } catch {
-      toast.error("Something went wrong");
-    } finally {
-      setApproving(false);
-    }
-  }
 
   function updateItemQuantity(id: string, quantity: number) {
     setItems((current) =>
@@ -227,17 +210,6 @@ export function OrderDetailPanel({
                 {" · "}Stored in database
               </p>
             </div>
-            {canApprovePayment ? (
-              <button
-                type="button"
-                disabled={approving}
-                onClick={handleApprovePayment}
-                className="btn-primary inline-flex items-center gap-2"
-              >
-                <CheckCircle2 className="h-4 w-4" />
-                {approving ? "Approving…" : "Approve payment"}
-              </button>
-            ) : null}
           </div>
           <PaymentReceiptViewer
             src={receiptSrc}
@@ -245,18 +217,43 @@ export function OrderDetailPanel({
             filename={order.paymentReceiptFilename}
             className="mt-4"
           />
-          {canApprovePayment ? (
-            <p className="mt-3 text-xs text-amber-700">
-              Verify the transfer matches the order total, then approve to mark this order as paid.
-            </p>
+          {canReviewPayment ? (
+            <div className="mt-4">
+              <p className="mb-3 text-xs text-amber-700">
+                Verify the transfer matches the order total, then approve or reject with a reason.
+              </p>
+              <PaymentReviewActions
+                orderId={order.id}
+                reviewUrl={paymentReviewUrl}
+              />
+            </div>
           ) : null}
         </section>
       ) : order.status === "PENDING" ? (
         <section className="rounded-2xl border border-dashed border-amber-200 bg-amber-50/50 p-5 sm:p-6">
           <h2 className="text-sm font-semibold text-amber-900">Awaiting payment receipt</h2>
           <p className="mt-1 text-xs text-amber-800">
-            The customer has not uploaded a payment screenshot yet.
+            {order.paymentRejectionReason
+              ? "The previous payment was rejected — waiting for a new receipt from the customer."
+              : "The customer has not uploaded a payment screenshot yet."}
           </p>
+          {order.paymentRejectionReason ? (
+            <p className="mt-3 rounded-lg bg-white px-3 py-2 text-sm text-amber-900 ring-1 ring-amber-200">
+              Last rejection: {order.paymentRejectionReason}
+            </p>
+          ) : null}
+        </section>
+      ) : null}
+
+      {order.paymentEvents && order.paymentEvents.length > 0 ? (
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
+          <h2 className="text-sm font-semibold text-slate-900">Payment review history</h2>
+          <p className="mt-1 text-xs text-slate-500">
+            Approvals, rejections, and receipt submissions for this order.
+          </p>
+          <div className="mt-4">
+            <PaymentReviewHistory events={order.paymentEvents} />
+          </div>
         </section>
       ) : null}
 

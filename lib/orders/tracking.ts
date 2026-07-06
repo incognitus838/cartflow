@@ -26,7 +26,7 @@ function rank(status: OrderStatus): number {
 
 type OrderTrackingInput = Pick<
   Order,
-  "status" | "paymentReceiptSubmittedAt" | "createdAt" | "updatedAt"
+  "status" | "paymentReceiptSubmittedAt" | "createdAt" | "updatedAt" | "paymentRejectionReason"
 > & {
   paymentReceiptData?: Uint8Array | Buffer | null;
   paymentReceiptMimeType?: string | null;
@@ -78,30 +78,38 @@ export function getOrderTrackingSteps(order: OrderTrackingInput): TrackingStep[]
     state: "complete",
   };
 
+  const wasRejected = Boolean(order.paymentRejectionReason) && status === "PENDING" && !hasReceipt;
+
   const receiptStep: TrackingStep = {
     key: "receipt",
-    label: "Receipt submitted",
+    label: wasRejected ? "New receipt needed" : "Receipt submitted",
     description: hasReceipt
       ? receiptAt?.toLocaleString() ?? "Submitted with your order"
-      : "Upload your payment receipt to continue",
+      : wasRejected
+        ? order.paymentRejectionReason ?? "Upload a new payment receipt"
+        : "Upload your payment receipt to continue",
     state: hasReceipt ? "complete" : status === "PENDING" ? "current" : "upcoming",
   };
 
   const paid: TrackingStep = {
     key: "paid",
-    label: "Payment confirmed",
+    label: wasRejected ? "Payment not approved" : "Payment confirmed",
     description:
       rank(status) >= rank("PAID")
         ? "Seller verified your payment"
-        : hasReceipt
-          ? "Seller is verifying your receipt"
-          : "Awaiting receipt and seller approval",
+        : wasRejected
+          ? order.paymentRejectionReason ?? "Seller rejected the previous receipt"
+          : hasReceipt
+            ? "Seller is verifying your receipt"
+            : "Awaiting receipt and seller approval",
     state:
       rank(status) >= rank("PAID")
         ? "complete"
-        : hasReceipt && status === "PENDING"
-          ? "current"
-          : "upcoming",
+        : wasRejected
+          ? "cancelled"
+          : hasReceipt && status === "PENDING"
+            ? "current"
+            : "upcoming",
   };
 
   const processing: TrackingStep = {
@@ -137,9 +145,14 @@ export function getOrderTrackingSteps(order: OrderTrackingInput): TrackingStep[]
   return [placed, receiptStep, paid, processing, shipped, delivered];
 }
 
-export function getTrackingHeadline(status: OrderStatus, hasReceipt: boolean): string {
+export function getTrackingHeadline(
+  status: OrderStatus,
+  hasReceipt: boolean,
+  paymentRejectionReason?: string | null,
+): string {
   switch (status) {
     case "PENDING":
+      if (paymentRejectionReason && !hasReceipt) return "Payment not approved";
       return hasReceipt ? "Awaiting payment confirmation" : "Complete your payment";
     case "PAID":
       return "Payment confirmed";
@@ -172,6 +185,7 @@ export type PublicOrderSnapshot = {
   updatedAt: string;
   hasReceipt: boolean;
   receiptSubmittedAt: string | null;
+  paymentRejectionReason: string | null;
   items: PublicOrderItem[];
 };
 
@@ -188,6 +202,7 @@ export function toPublicOrderSnapshot(
     updatedAt: order.updatedAt.toISOString(),
     hasReceipt,
     receiptSubmittedAt: order.paymentReceiptSubmittedAt?.toISOString() ?? null,
+    paymentRejectionReason: order.paymentRejectionReason,
     items: order.items.map((item) => ({
       title: item.title,
       variantName: item.variantName,

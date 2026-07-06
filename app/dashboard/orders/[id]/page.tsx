@@ -40,6 +40,14 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
         paymentReceiptMimeType: order.paymentReceiptMimeType,
         paymentReceiptFilename: order.paymentReceiptFilename,
         paymentReceiptSubmittedAt: order.paymentReceiptSubmittedAt?.toISOString() ?? null,
+        paymentRejectionReason: order.paymentRejectionReason,
+        paymentEvents: order.paymentEvents.map((event) => ({
+          id: event.id,
+          action: event.action,
+          reason: event.reason,
+          actorName: event.actorName,
+          createdAt: event.createdAt.toISOString(),
+        })),
         createdAt: order.createdAt.toISOString(),
         items: order.items,
         notifications: order.notifications.map((n) => ({

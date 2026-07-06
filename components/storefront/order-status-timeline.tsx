@@ -12,6 +12,7 @@ type OrderStatusTimelineProps = {
   updatedAt: Date;
   hasReceipt: boolean;
   receiptSubmittedAt: Date | null;
+  paymentRejectionReason?: string | null;
 };
 
 function StepIcon({ state }: { state: TrackingStepState }) {
@@ -61,12 +62,14 @@ export function OrderStatusTimeline({
   updatedAt,
   hasReceipt,
   receiptSubmittedAt,
+  paymentRejectionReason,
 }: OrderStatusTimelineProps) {
   const steps = getOrderTrackingSteps({
     status,
     createdAt,
     updatedAt,
     paymentReceiptSubmittedAt: receiptSubmittedAt,
+    paymentRejectionReason,
     paymentReceiptData: hasReceipt ? new Uint8Array([1]) : null,
   });
 

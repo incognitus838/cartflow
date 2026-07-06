@@ -48,8 +48,9 @@ export default async function OrderConfirmationPage({ params }: OrderConfirmatio
     order.status === "PROCESSING" ||
     order.status === "SHIPPED" ||
     order.status === "DELIVERED";
+  const paymentRejected = order.status === "PENDING" && !hasReceipt && Boolean(order.paymentRejectionReason);
   const awaitingApproval = order.status === "PENDING" && hasReceipt;
-  const headline = getTrackingHeadline(order.status, hasReceipt);
+  const headline = getTrackingHeadline(order.status, hasReceipt, order.paymentRejectionReason);
   const isTerminal = isTerminalOrderStatus(order.status);
 
   return (
@@ -60,9 +61,11 @@ export default async function OrderConfirmationPage({ params }: OrderConfirmatio
         className={`rounded-2xl border p-6 text-center sm:p-8 ${
           isPaid
             ? "border-emerald-200 bg-emerald-50"
-            : awaitingApproval
-              ? "border-amber-200 bg-amber-50"
-              : order.status === "CANCELLED" || order.status === "REFUNDED"
+            : paymentRejected
+              ? "border-red-200 bg-red-50"
+              : awaitingApproval
+                ? "border-amber-200 bg-amber-50"
+                : order.status === "CANCELLED" || order.status === "REFUNDED"
                 ? "border-red-200 bg-red-50"
                 : "border-[var(--store-border)] bg-[var(--store-surface)]"
         }`}
@@ -71,9 +74,11 @@ export default async function OrderConfirmationPage({ params }: OrderConfirmatio
           className={`mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-sm ${
             isPaid
               ? "text-emerald-600"
-              : awaitingApproval
-                ? "text-amber-600"
-                : order.status === "CANCELLED" || order.status === "REFUNDED"
+              : paymentRejected
+                ? "text-red-600"
+                : awaitingApproval
+                  ? "text-amber-600"
+                  : order.status === "CANCELLED" || order.status === "REFUNDED"
                   ? "text-red-600"
                   : "text-[var(--store-text)]"
           }`}
@@ -84,10 +89,10 @@ export default async function OrderConfirmationPage({ params }: OrderConfirmatio
         <p className="mt-2 text-sm text-[var(--store-muted)]">
           {isPaid
             ? `${store.name} has confirmed your payment.`
-            : awaitingApproval
-              ? "The seller will verify your payment shortly."
-              : hasReceipt
-                ? "We're processing your order."
+            : paymentRejected
+              ? "Please upload a new payment receipt using the seller's reason below."
+              : awaitingApproval
+                ? "The seller will verify your payment shortly."
                 : "Upload your payment receipt to complete this order."}
         </p>
       </div>
@@ -101,8 +106,16 @@ export default async function OrderConfirmationPage({ params }: OrderConfirmatio
           updatedAt={order.updatedAt}
           hasReceipt={hasReceipt}
           receiptSubmittedAt={order.paymentReceiptSubmittedAt}
+          paymentRejectionReason={order.paymentRejectionReason}
         />
       </div>
+
+      {paymentRejected ? (
+        <section className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-5 sm:p-6">
+          <h2 className="text-sm font-semibold text-red-900">Payment not approved</h2>
+          <p className="mt-2 text-sm text-red-800">{order.paymentRejectionReason}</p>
+        </section>
+      ) : null}
 
       {!isPaid && !hasReceipt ? (
         <div className="mt-6">

@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { toNumber } from "@/lib/decimal";
 import type { CheckoutInput } from "@/lib/orders/types";
 import { formatOrderNumber } from "@/lib/order-number";
+import { logOrderPaymentEvent } from "@/lib/orders/payment-events";
 import { receiptWriteData } from "@/lib/orders/receipt-storage";
 import { applyPromotionCode } from "@/lib/promotions/apply";
 import type { ParsedReceipt } from "@/lib/uploads/receipt";
@@ -181,6 +182,10 @@ export async function createGuestOrder(
         where: { id: promotionId },
         data: { usedCount: { increment: 1 } },
       });
+    }
+
+    if (receipt) {
+      await logOrderPaymentEvent(order.id, "RECEIPT_SUBMITTED", undefined, tx);
     }
 
     return order;

@@ -101,6 +101,7 @@ export async function getBusinessOrder(businessId: string, orderId: string) {
       items: true,
       customer: true,
       notifications: { orderBy: { createdAt: "desc" }, take: 10 },
+      paymentEvents: { orderBy: { createdAt: "desc" } },
     },
   });
 }

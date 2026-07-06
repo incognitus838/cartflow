@@ -85,3 +85,40 @@ export async function notifyOrderStatusChange(orderId: string, newStatus: OrderS
     body,
   });
 }
+
+export async function notifyPaymentRejected(orderId: string, reason: string) {
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: { business: true, customer: true },
+  });
+
+  if (!order || !order.business.notifyCustomerOnStatus) return;
+
+  const customerEmail = order.customer?.email;
+  const body = [
+    `Hi ${order.customerName}, your payment for order ${order.orderNumber} from ${order.business.name} was not approved.`,
+    "",
+    `Reason: ${reason}`,
+    "",
+    "Please upload a new payment receipt on your order page or contact the seller.",
+  ].join("\n");
+
+  if (customerEmail) {
+    await sendNotification({
+      businessId: order.businessId,
+      orderId: order.id,
+      channel: "EMAIL",
+      recipient: customerEmail,
+      subject: `Payment not approved — ${order.orderNumber}`,
+      body,
+    });
+  }
+
+  await sendNotification({
+    businessId: order.businessId,
+    orderId: order.id,
+    channel: "SMS",
+    recipient: order.customerPhone,
+    body: `CartFlow: Payment for ${order.orderNumber} was not approved. Reason: ${reason}. Upload a new receipt on your order page.`,
+  });
+}
