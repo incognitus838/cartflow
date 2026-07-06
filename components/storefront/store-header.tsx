@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { MessageCircle, ShoppingBag } from "lucide-react";
+import { MessageCircle, PackageSearch, ShoppingBag } from "lucide-react";
 import { CartNavLink } from "@/components/storefront/cart-nav-link";
 import { LazyImage } from "@/components/storefront/lazy-image";
 import { buildWhatsAppOrderUrl } from "@/lib/storefront/whatsapp";
-import { storePath } from "@/lib/storefront/paths";
+import { storePath, trackOrderPath } from "@/lib/storefront/paths";
 
 type StoreHeaderProps = {
   name: string;
@@ -78,6 +78,15 @@ export function StoreHeader({
         )}
 
         <div className="flex shrink-0 items-center gap-2.5">
+          {!previewMode ? (
+            <Link
+              href={trackOrderPath(slug)}
+              className="inline-flex items-center gap-2 rounded-full border border-[var(--store-border)] bg-[var(--store-surface)] px-3 py-2 text-[13px] font-medium text-[var(--store-text)] transition-all hover:shadow-sm sm:px-4"
+            >
+              <PackageSearch className="h-4 w-4" strokeWidth={1.75} />
+              <span className="hidden sm:inline">Track order</span>
+            </Link>
+          ) : null}
           {previewMode ? (
             <span
               className="inline-flex shrink-0 items-center justify-center rounded-full border border-[var(--store-border)] bg-[var(--store-surface)] p-2.5 text-[var(--store-muted)]"

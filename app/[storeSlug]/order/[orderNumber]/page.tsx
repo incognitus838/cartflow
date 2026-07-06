@@ -2,10 +2,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CheckCircle2, Clock } from "lucide-react";
 import { PaymentReceiptViewer } from "@/components/payment-receipt-viewer";
+import { OrderIdCard } from "@/components/storefront/order-id-card";
+import { OrderStatusRefresh } from "@/components/storefront/order-status-refresh";
+import { OrderStatusTimeline } from "@/components/storefront/order-status-timeline";
 import { OrderSummary } from "@/components/storefront/order-summary";
 import { ReceiptUploadForm } from "@/components/storefront/receipt-upload-form";
 import { toNumber } from "@/lib/decimal";
 import { orderHasReceipt } from "@/lib/orders/receipt-storage";
+import { getTrackingHeadline, isTerminalOrderStatus } from "@/lib/orders/tracking";
 import { getStoreOrder } from "@/lib/queries/storefront";
 import { storefrontOrderReceiptUrl } from "@/lib/storefront/receipt-url";
 import { storePath } from "@/lib/storefront/paths";
@@ -45,41 +49,59 @@ export default async function OrderConfirmationPage({ params }: OrderConfirmatio
     order.status === "SHIPPED" ||
     order.status === "DELIVERED";
   const awaitingApproval = order.status === "PENDING" && hasReceipt;
+  const headline = getTrackingHeadline(order.status, hasReceipt);
+  const isTerminal = isTerminalOrderStatus(order.status);
 
   return (
     <div className="mx-auto max-w-2xl">
+      <OrderStatusRefresh enabled={!isTerminal} />
+
       <div
         className={`rounded-2xl border p-6 text-center sm:p-8 ${
           isPaid
             ? "border-emerald-200 bg-emerald-50"
             : awaitingApproval
               ? "border-amber-200 bg-amber-50"
-              : "border-[var(--cf-border-strong)] bg-white"
+              : order.status === "CANCELLED" || order.status === "REFUNDED"
+                ? "border-red-200 bg-red-50"
+                : "border-[var(--store-border)] bg-[var(--store-surface)]"
         }`}
       >
         <span
           className={`mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-sm ${
-            isPaid ? "text-emerald-600" : awaitingApproval ? "text-amber-600" : "text-[var(--cf-black)]"
+            isPaid
+              ? "text-emerald-600"
+              : awaitingApproval
+                ? "text-amber-600"
+                : order.status === "CANCELLED" || order.status === "REFUNDED"
+                  ? "text-red-600"
+                  : "text-[var(--store-text)]"
           }`}
         >
           {isPaid ? <CheckCircle2 className="h-8 w-8" /> : <Clock className="h-8 w-8" />}
         </span>
-        <h1 className="mt-4 text-2xl font-bold text-[var(--cf-black)]">
-          {isPaid ? "Payment confirmed!" : awaitingApproval ? "Receipt submitted" : "Order incomplete"}
-        </h1>
-        <p className="mt-2 text-sm text-[var(--cf-gray-600)]">
-          Order <span className="font-mono font-semibold text-[var(--cf-black)]">{order.orderNumber}</span>
+        <h1 className="mt-4 text-2xl font-bold text-[var(--store-text)]">{headline}</h1>
+        <p className="mt-2 text-sm text-[var(--store-muted)]">
           {isPaid
-            ? ` — ${store.name} has confirmed your payment.`
+            ? `${store.name} has confirmed your payment.`
             : awaitingApproval
-              ? " — the seller will verify your payment shortly."
-              : " — upload your payment receipt to complete this order."}
+              ? "The seller will verify your payment shortly."
+              : hasReceipt
+                ? "We're processing your order."
+                : "Upload your payment receipt to complete this order."}
         </p>
-        {!isPaid ? (
-          <p className="mt-1 text-xs text-[var(--cf-gray-400)]">
-            Status: {order.status.toLowerCase()}
-          </p>
-        ) : null}
+      </div>
+
+      <OrderIdCard storeSlug={store.slug} orderNumber={order.orderNumber} />
+
+      <div className="mt-6">
+        <OrderStatusTimeline
+          status={order.status}
+          createdAt={order.createdAt}
+          updatedAt={order.updatedAt}
+          hasReceipt={hasReceipt}
+          receiptSubmittedAt={order.paymentReceiptSubmittedAt}
+        />
       </div>
 
       {!isPaid && !hasReceipt ? (
@@ -89,9 +111,9 @@ export default async function OrderConfirmationPage({ params }: OrderConfirmatio
       ) : null}
 
       {hasReceipt ? (
-        <section className="mt-6 rounded-2xl border border-[var(--cf-border-strong)] bg-white p-5 sm:p-6">
-          <h2 className="text-sm font-semibold text-[var(--cf-black)]">Your receipt</h2>
-          <p className="mt-1 text-xs text-[var(--cf-gray-600)]">
+        <section className="mt-6 rounded-2xl border border-[var(--store-border)] bg-[var(--store-surface)] p-5 sm:p-6">
+          <h2 className="text-sm font-semibold text-[var(--store-text)]">Your receipt</h2>
+          <p className="mt-1 text-xs text-[var(--store-muted)]">
             Submitted {order.paymentReceiptSubmittedAt?.toLocaleString() ?? "with your order"}
             {awaitingApproval ? " — awaiting seller approval." : "."}
           </p>

@@ -93,7 +93,7 @@ export function CheckoutForm({
       }
 
       clear();
-      toast.success("Order placed — receipt submitted for seller approval.");
+      toast.success(`Order placed! Your ID is ${data.order.orderNumber}`, { duration: 6000 });
       router.push(orderConfirmationPath(storeSlug, data.order.orderNumber));
       router.refresh();
     } catch {

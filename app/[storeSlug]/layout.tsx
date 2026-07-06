@@ -40,6 +40,7 @@ export default async function StoreLayout({ children, params }: StoreLayoutProps
           </main>
           <StoreFooter
             storeName={store.name}
+            storeSlug={store.slug}
             currency={store.currency}
             deliveryFee={toNumber(store.deliveryFee)}
           />

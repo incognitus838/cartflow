@@ -22,6 +22,10 @@ export function orderConfirmationPath(storeSlug: string, orderNumber: string) {
   return `/${storeSlug}/order/${orderNumber}`;
 }
 
+export function trackOrderPath(storeSlug: string) {
+  return `/${storeSlug}/track`;
+}
+
 export function absoluteStoreUrl(storeSlug: string) {
   return `${getAppBaseUrl()}${storePath(storeSlug)}`;
 }
