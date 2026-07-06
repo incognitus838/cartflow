@@ -229,21 +229,26 @@ body {
 }
 
 .cf-hero-chatter-stage {
-  display: flex;
-  min-height: 2.6em;
-  align-items: center;
-  justify-content: center;
+  position: relative;
+  min-height: 2.8em;
   text-align: center;
 }
 
 .cf-hero-chatter-line {
+  position: absolute;
+  inset: 0;
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
+  align-items: center;
   justify-content: center;
   gap: 0.08em;
   margin: 0;
-  animation: cf-hero-chatter-enter 0.55s var(--cf-ease) both;
+  opacity: 0;
+  animation-name: cf-hero-chatter-cycle;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  animation-fill-mode: both;
+  will-change: opacity, transform;
 }
 
 .cf-hero-chatter-quote {
@@ -257,21 +262,43 @@ body {
   display: inline-block;
 }
 
-@keyframes cf-hero-chatter-enter {
-  from {
+/* 8 phrases: each visible for 12.5% of the full cycle */
+@keyframes cf-hero-chatter-cycle {
+  0% {
     opacity: 0;
-    transform: translateY(14px);
+    transform: translateY(12px);
   }
 
-  to {
+  1% {
     opacity: 1;
     transform: translateY(0);
+  }
+
+  11% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  12.5% {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(-8px);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .cf-hero-chatter-line {
     animation: none;
+    opacity: 0;
+    transform: none;
+  }
+
+  .cf-hero-chatter-line:nth-child(1) {
+    opacity: 1;
   }
 }
 
