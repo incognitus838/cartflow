@@ -12,6 +12,8 @@ export type VariantInput = {
 export type ProductInput = {
   title: string;
   description?: string;
+  category?: string;
+  metadata?: Record<string, unknown>;
   price: number;
   compareAtPrice?: number | null;
   status: ProductStatus;

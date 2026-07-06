@@ -51,6 +51,11 @@ export function parseProductInput(body: unknown): ProductInput | string {
   const data = body as Record<string, unknown>;
   const title = typeof data.title === "string" ? data.title.trim() : "";
   const description = typeof data.description === "string" ? data.description.trim() : "";
+  const category = typeof data.category === "string" ? data.category.trim() : "General";
+  const metadata =
+    data.metadata && typeof data.metadata === "object" && !Array.isArray(data.metadata)
+      ? (data.metadata as Record<string, unknown>)
+      : undefined;
   const status = typeof data.status === "string" ? data.status : "DRAFT";
   const price = Number(data.price);
   const compareAtPrice =
@@ -110,6 +115,8 @@ export function parseProductInput(body: unknown): ProductInput | string {
   return {
     title,
     description: description || undefined,
+    category: category || "General",
+    metadata,
     price,
     compareAtPrice,
     status: status as ProductStatus,

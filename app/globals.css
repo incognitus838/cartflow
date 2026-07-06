@@ -854,3 +854,204 @@ body {
 .cf-storefront-device-screen {
   background: #e8e8ed;
 }
+
+/* ——— Product form (premium) ——— */
+.cf-product-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding-bottom: 2rem;
+}
+
+.cf-product-form-header {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 0.25rem;
+}
+
+@media (min-width: 640px) {
+  .cf-product-form-header {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+}
+
+.cf-product-card {
+  border: 1px solid var(--cf-border);
+  border-radius: 18px;
+  background: var(--cf-white);
+  padding: 1.25rem;
+  transition:
+    transform 0.35s var(--cf-ease),
+    box-shadow 0.35s var(--cf-ease),
+    border-color 0.35s var(--cf-ease);
+}
+
+@media (min-width: 640px) {
+  .cf-product-card {
+    padding: 1.5rem;
+  }
+}
+
+.cf-product-card--lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.06);
+  border-color: var(--cf-border-strong);
+}
+
+.cf-product-card--gold {
+  border-color: rgba(184, 149, 106, 0.28);
+  background: linear-gradient(180deg, #fffdf8 0%, #ffffff 100%);
+}
+
+.cf-product-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #86868b;
+}
+
+.cf-product-type-option {
+  cursor: pointer;
+  border: 1px solid var(--cf-border);
+  border-radius: 14px;
+  background: #fbfbfd;
+  padding: 0.875rem 1rem;
+  transition:
+    border-color 0.25s var(--cf-ease),
+    background 0.25s var(--cf-ease),
+    transform 0.25s var(--cf-ease);
+}
+
+.cf-product-type-option:hover {
+  border-color: rgba(184, 149, 106, 0.35);
+  transform: translateY(-1px);
+}
+
+.cf-product-type-option--active {
+  border-color: var(--cf-gold);
+  background: #fffdf8;
+  box-shadow: inset 0 0 0 1px rgba(184, 149, 106, 0.2);
+}
+
+.cf-product-dropzone {
+  cursor: pointer;
+  border: 1.5px dashed rgba(184, 149, 106, 0.45);
+  border-radius: 16px;
+  background: #fbfbfd;
+  padding: 2rem 1.25rem;
+  text-align: center;
+  transition:
+    border-color 0.25s var(--cf-ease),
+    background 0.25s var(--cf-ease),
+    transform 0.25s var(--cf-ease);
+}
+
+.cf-product-dropzone:hover,
+.cf-product-dropzone--active {
+  border-color: var(--cf-gold);
+  background: #fffdf8;
+  transform: translateY(-2px);
+}
+
+.cf-product-media-tile {
+  transition: transform 0.25s var(--cf-ease);
+}
+
+.cf-product-media-tile:hover {
+  transform: translateY(-2px);
+}
+
+.cf-product-icon-btn {
+  display: inline-flex;
+  height: 2.25rem;
+  width: 2.25rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  color: #6e6e73;
+  transition:
+    background 0.2s var(--cf-ease),
+    color 0.2s var(--cf-ease),
+    transform 0.2s var(--cf-ease);
+}
+
+.cf-product-icon-btn:hover {
+  background: #f5f5f7;
+  color: #1d1d1f;
+  transform: scale(1.05);
+}
+
+.cf-product-variant-table {
+  border-collapse: separate;
+  border-spacing: 0 0.5rem;
+  font-size: 13px;
+}
+
+.cf-product-variant-table th {
+  padding: 0 0.5rem 0.25rem;
+  text-align: left;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #86868b;
+}
+
+.cf-product-variant-row {
+  transition: background 0.2s var(--cf-ease);
+}
+
+.cf-product-variant-row:hover {
+  background: #fbfbfd;
+}
+
+.cf-product-variant-row td {
+  padding: 0.25rem 0.5rem;
+  vertical-align: middle;
+}
+
+.cf-product-form-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  border-top: 1px solid var(--cf-border);
+  background: rgba(251, 251, 253, 0.92);
+  padding: 1rem 0;
+  backdrop-filter: blur(12px);
+}
+
+.cf-product-create-btn {
+  display: inline-flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  min-width: 10rem;
+  border-radius: 980px;
+  background: #1d1d1f;
+  padding: 0.8rem 1.5rem;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  transition:
+    background 0.3s var(--cf-ease),
+    transform 0.3s var(--cf-ease),
+    box-shadow 0.3s var(--cf-ease);
+}
+
+.cf-product-create-btn:hover:not(:disabled) {
+  background: #333;
+  box-shadow: 0 8px 24px rgba(184, 149, 106, 0.25);
+  transform: scale(1.02);
+}
+
+.cf-product-create-btn:disabled {
+  opacity: 0.6;
+}

@@ -1,16 +1,23 @@
 import { detectMediaType, type ProductMediaType } from "@/lib/media";
-import { parseVariantName, type VariantFormRow } from "@/lib/products/variants";
+import {
+  emptyProductMetadata,
+  parseProductMetadata,
+  type ProductMetadata,
+} from "@/lib/products/metadata";
+import { emptyVariantRow, type VariantFormRow } from "@/lib/products/variants";
 
 export type ProductFormInitial = {
   id?: string;
   title: string;
   description: string;
+  category: string;
+  metadata: ProductMetadata;
   price: string;
   compareAtPrice: string;
   status: "DRAFT" | "ACTIVE" | "ARCHIVED";
   stock: string;
   lowStockThreshold: string;
-  media: Array<{ url: string; mediaType: ProductMediaType }>;
+  media: Array<{ url: string; mediaType: ProductMediaType; alt?: string; previewUrl?: string }>;
   variants: VariantFormRow[];
 };
 
@@ -18,12 +25,14 @@ export function toProductFormInitial(product?: {
   id: string;
   title: string;
   description: string | null;
+  category: string;
+  metadata?: unknown;
   price: { toString(): string } | number;
   compareAtPrice: { toString(): string } | number | null;
   status: "DRAFT" | "ACTIVE" | "ARCHIVED";
   stock: number;
   lowStockThreshold: number;
-  images: Array<{ url: string; mediaType?: ProductMediaType | string }>;
+  images: Array<{ url: string; alt?: string | null; mediaType?: ProductMediaType | string }>;
   variants: Array<{
     id: string;
     name: string;
@@ -36,6 +45,8 @@ export function toProductFormInitial(product?: {
     return {
       title: "",
       description: "",
+      category: "General",
+      metadata: emptyProductMetadata(),
       price: "",
       compareAtPrice: "",
       status: "DRAFT",
@@ -46,10 +57,14 @@ export function toProductFormInitial(product?: {
     };
   }
 
+  const metadata = parseProductMetadata(product.metadata);
+
   return {
     id: product.id,
     title: product.title,
     description: product.description ?? "",
+    category: product.category,
+    metadata,
     price: String(product.price),
     compareAtPrice: product.compareAtPrice ? String(product.compareAtPrice) : "",
     status: product.status,
@@ -57,18 +72,15 @@ export function toProductFormInitial(product?: {
     lowStockThreshold: String(product.lowStockThreshold),
     media: product.images.map((image) => ({
       url: image.url,
+      alt: image.alt ?? undefined,
       mediaType: (image.mediaType as ProductMediaType) || detectMediaType(image.url),
     })),
-    variants: product.variants.map((variant) => {
-      const { size, color } = parseVariantName(variant.name);
-      return {
-        id: variant.id,
-        size,
-        color,
-        sku: variant.sku ?? "",
-        price: variant.price ? String(variant.price) : "",
-        stock: String(variant.stock),
-      };
-    }),
+    variants: product.variants.map((variant) => ({
+      id: variant.id,
+      name: variant.name,
+      sku: variant.sku ?? "",
+      price: variant.price ? String(variant.price) : "",
+      stock: String(variant.stock),
+    })),
   };
 }

@@ -1,4 +1,4 @@
-export const MAX_PRODUCT_MEDIA = 6;
+export const MAX_PRODUCT_MEDIA = 12;
 
 export type ProductMediaType = "IMAGE" | "VIDEO" | "GIF";
 

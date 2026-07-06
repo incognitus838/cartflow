@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { canAddProduct } from "@/lib/plans";
 import type { ProductInput } from "@/lib/products/types";
@@ -19,6 +20,8 @@ export async function createProduct(businessId: string, input: ProductInput) {
         businessId,
         title: input.title,
         description: input.description,
+        category: input.category ?? "General",
+        metadata: (input.metadata as Prisma.InputJsonValue | undefined) ?? undefined,
         price: input.price,
         compareAtPrice: input.compareAtPrice,
         status: input.status,
@@ -135,6 +138,8 @@ export async function updateProduct(
       data: {
         title: input.title,
         description: input.description,
+        category: input.category ?? "General",
+        metadata: (input.metadata as Prisma.InputJsonValue | undefined) ?? undefined,
         price: input.price,
         compareAtPrice: input.compareAtPrice,
         status: input.status,
