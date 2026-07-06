@@ -1,6 +1,31 @@
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { HeroChatter } from "@/components/landing/hero-chatter";
+
+const heroProducts = [
+  {
+    name: "Oud Lagos Serum",
+    price: "₦12,500",
+    category: "Skincare",
+    image: "/landing/oud-lagos-serum.png",
+    alt: "Oud Lagos Serum dropper bottle on a stone pedestal",
+  },
+  {
+    name: "Oud Lagos Eau de Parfum",
+    price: "₦28,000",
+    category: "Fragrance",
+    image: "/landing/oud-lagos-eau-de-parfum.png",
+    alt: "Glow Beauty Oud Lagos Eau de Parfum bottle with white orchid on marble",
+  },
+  {
+    name: "Lagos Crossbody Bag",
+    price: "₦38,500",
+    category: "Accessories",
+    image: "/landing/lagos-crossbody-bag.png",
+    alt: "Brown leather Lagos crossbody bag with gold clasp on white marble",
+  },
+] as const;
 
 export function Hero() {
   return (
@@ -12,8 +37,8 @@ export function Hero() {
           </p>
 
           <h1 className="cf-heading mt-5 text-[40px] leading-[1.05] sm:text-[56px] lg:text-[64px]">
-            The iPhone of
-            <span className="block">social commerce.</span>
+            The iphone
+            <span className="block"> of digital market.</span>
           </h1>
 
           <HeroChatter />
@@ -44,26 +69,30 @@ export function Hero() {
               </span>
             </div>
             <div className="grid gap-px bg-black/[0.04] sm:grid-cols-3">
-              {[
-                { name: "Velvet Kiss Matte Lipstick", price: "₦4,200", cat: "Lip Care" },
-                { name: "Harmattan Shield SPF 50", price: "₦11,500", cat: "Skincare" },
-                { name: "Oud Lagos Eau de Parfum", price: "₦28,000", cat: "Fragrance" },
-              ].map((item) => (
-                <div
+              {heroProducts.map((item) => (
+                <article
                   key={item.name}
                   className="group bg-white p-5 text-left transition-colors hover:bg-[#fbfbfd]"
                 >
-                  <div className="mb-4 aspect-[4/5] overflow-hidden rounded-[14px] bg-gradient-to-b from-[#f5f5f7] to-[#e8e8ed] transition-transform duration-500 group-hover:scale-[1.02]" />
+                  <div className="relative mb-4 aspect-[4/5] overflow-hidden rounded-[14px] bg-[#f5f5f7]">
+                    <Image
+                      src={item.image}
+                      alt={item.alt}
+                      fill
+                      sizes="(max-width: 640px) 100vw, 280px"
+                      className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+                    />
+                  </div>
                   <p className="text-[10px] font-medium uppercase tracking-wider text-[#86868b]">
-                    {item.cat}
+                    {item.category}
                   </p>
-                  <p className="mt-1 text-[14px] font-medium tracking-tight text-[#1d1d1f]">
+                  <h3 className="mt-1 text-[14px] font-medium tracking-tight text-[#1d1d1f]">
                     {item.name}
-                  </p>
-                  <p className="mt-1.5 text-[14px] font-semibold tabular-nums text-[#1d1d1f]">
+                  </h3>
+                  <p className="currency mt-1.5 text-[14px] font-semibold text-[#1d1d1f]">
                     {item.price}
                   </p>
-                </div>
+                </article>
               ))}
             </div>
           </div>
