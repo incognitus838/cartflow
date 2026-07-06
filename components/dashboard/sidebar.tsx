@@ -80,17 +80,20 @@ export function DashboardSidebar({
       data-open={mobileOpen ? "true" : "false"}
       aria-hidden={isMobileNav && !mobileOpen ? true : undefined}
     >
-      <div className="border-b border-black/[0.06] px-5 py-5">
-        <div className="flex items-center gap-2.5">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[12px] bg-[#1d1d1f] text-white">
+      <div className="cf-dash-sidebar__header">
+        <div className="cf-dash-sidebar__brand">
+          <span className="cf-dash-sidebar__logo hidden lg:flex" aria-hidden>
             <ShoppingBag className="h-4 w-4" strokeWidth={1.75} />
           </span>
-          <div className="min-w-0 flex-1">
+          <div className="hidden min-w-0 flex-1 lg:block">
             <p className="truncate text-[14px] font-semibold tracking-tight text-[#1d1d1f]">
               {businessName}
             </p>
             <p className="truncate text-[12px] text-[#86868b]">/{businessSlug}</p>
           </div>
+          <p className="flex-1 text-[14px] font-semibold tracking-tight text-[#1d1d1f] lg:hidden">
+            Menu
+          </p>
           <button
             type="button"
             onClick={onClose}
@@ -102,7 +105,7 @@ export function DashboardSidebar({
         </div>
       </div>
 
-      <nav className="flex-1 px-3 py-4" aria-label="Seller dashboard">
+      <nav className="cf-dash-sidebar__nav" aria-label="Seller dashboard">
         <ul className="space-y-0.5" role="list">
           {navItems.map((item) => {
             const active = item.exact
@@ -119,8 +122,12 @@ export function DashboardSidebar({
                   className="cf-dash-nav-link"
                   onClick={onNavigate}
                 >
-                  <Icon className="h-4 w-4" strokeWidth={1.75} aria-hidden />
-                  {item.label}
+                  <Icon
+                    className={`h-4 w-4 ${active ? "text-[#d4bc94]" : ""}`}
+                    strokeWidth={1.75}
+                    aria-hidden
+                  />
+                  <span className={active ? "font-semibold" : undefined}>{item.label}</span>
                 </Link>
               </li>
             );
@@ -128,7 +135,7 @@ export function DashboardSidebar({
         </ul>
       </nav>
 
-      <div className="space-y-1 border-t border-black/[0.06] px-3 py-4">
+      <div className="cf-dash-sidebar__footer">
         <a
           href={`/${businessSlug}`}
           target="_blank"
@@ -149,7 +156,8 @@ export function DashboardSidebar({
             Admin panel
           </Link>
         ) : null}
-        <div className="px-3 py-2">
+        <div className="cf-dash-sidebar__session">
+          <p className="cf-dash-sidebar__session-label">Signed in as</p>
           <p className="truncate text-[12px] font-medium text-[#1d1d1f]">{userName}</p>
           <button
             type="button"

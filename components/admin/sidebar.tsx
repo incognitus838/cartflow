@@ -44,10 +44,10 @@ export function AdminSidebar({ userEmail, userName, pendingApprovals = 0 }: Admi
 
   return (
     <aside className="cf-dash-sidebar">
-      <div className="border-b border-black/[0.06] px-5 py-5">
-        <div className="flex items-center gap-2.5">
-          <span className="flex h-9 w-9 items-center justify-center rounded-[12px] bg-[#1d1d1f] text-white">
-            <Shield className="h-4 w-4" strokeWidth={1.75} aria-hidden />
+      <div className="cf-dash-sidebar__header">
+        <div className="cf-dash-sidebar__brand">
+          <span className="cf-dash-sidebar__logo" aria-hidden>
+            <Shield className="h-4 w-4" strokeWidth={1.75} />
           </span>
           <div className="min-w-0">
             <p className="truncate text-[14px] font-semibold tracking-tight text-[#1d1d1f]">
@@ -58,7 +58,7 @@ export function AdminSidebar({ userEmail, userName, pendingApprovals = 0 }: Admi
         </div>
       </div>
 
-      <nav className="flex-1 px-3 py-4" aria-label="Admin">
+      <nav className="cf-dash-sidebar__nav" aria-label="Admin">
         <ul className="space-y-0.5" role="list">
           {navItems.map((item) => {
             const active = item.exact
@@ -95,11 +95,9 @@ export function AdminSidebar({ userEmail, userName, pendingApprovals = 0 }: Admi
         </ul>
       </nav>
 
-      <div className="border-t border-black/[0.06] px-3 py-4">
-        <p className="px-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#86868b]">
-          Session
-        </p>
-        <div className="mt-2 px-3 py-2">
+      <div className="cf-dash-sidebar__footer">
+        <div className="cf-dash-sidebar__session">
+          <p className="cf-dash-sidebar__session-label">Session</p>
           <p className="truncate text-[12px] font-medium text-[#1d1d1f]">{userName}</p>
           <button
             type="button"
