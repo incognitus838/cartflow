@@ -108,47 +108,47 @@ export function ProductCard({
     );
   }
 
-  const gridBody = (
-    <>
-      <div className="relative aspect-[4/5] overflow-hidden bg-[#f5f5f7]">
-        {image ? (
-          <LazyImage
-            src={image.url}
-            alt={image.alt || product.title}
-            sizes="(max-width: 640px) 45vw, 220px"
-            className="transition-transform duration-700 ease-out group-hover:scale-[1.04]"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center text-[#86868b]">
-            <Package className="h-8 w-8" strokeWidth={1.25} />
-          </div>
-        )}
-        {product.category ? (
-          <span className="absolute left-3 top-3 max-w-[85%] truncate rounded-full border border-black/[0.06] bg-white/90 px-2.5 py-1 text-[10px] font-medium uppercase tracking-wider text-[#6e6e73] backdrop-blur-sm">
-            {product.category}
-          </span>
-        ) : null}
-        {soldOut ? (
-          <span className="absolute right-3 top-3 rounded-full bg-[#1d1d1f]/90 px-2.5 py-1 text-[10px] font-medium uppercase tracking-wide text-white">
-            Sold out
-          </span>
-        ) : null}
-      </div>
-
-      <div className="flex flex-1 flex-col p-4">
-        <h3 className="line-clamp-2 text-[14px] font-medium leading-snug tracking-tight text-[var(--store-text)]">
-          {product.title}
-        </h3>
-        <div className="mt-auto flex items-baseline gap-2 pt-3">
-          <span className="text-[14px] font-semibold tabular-nums text-[var(--store-text)]">
-            {formatCurrency(price, currency)}
-          </span>
-          {compareAt && compareAt > price ? (
-            <span className="text-[12px] tabular-nums text-[var(--store-muted)] line-through">
-              {formatCurrency(compareAt, currency)}
-            </span>
-          ) : null}
+  const gridImage = (
+    <div className="relative aspect-[4/5] overflow-hidden bg-[#f5f5f7]">
+      {image ? (
+        <LazyImage
+          src={image.url}
+          alt={image.alt || product.title}
+          sizes="(max-width: 640px) 45vw, 220px"
+          className="transition-transform duration-700 ease-out group-hover:scale-[1.04]"
+        />
+      ) : (
+        <div className="flex h-full w-full items-center justify-center text-[#86868b]">
+          <Package className="h-8 w-8" strokeWidth={1.25} />
         </div>
+      )}
+      {product.category ? (
+        <span className="absolute left-3 top-3 max-w-[85%] truncate rounded-full border border-black/[0.06] bg-white/90 px-2.5 py-1 text-[10px] font-medium uppercase tracking-wider text-[#6e6e73] backdrop-blur-sm">
+          {product.category}
+        </span>
+      ) : null}
+      {soldOut ? (
+        <span className="absolute right-3 top-3 rounded-full bg-[#1d1d1f]/90 px-2.5 py-1 text-[10px] font-medium uppercase tracking-wide text-white">
+          Sold out
+        </span>
+      ) : null}
+    </div>
+  );
+
+  const gridText = (
+    <>
+      <h3 className="line-clamp-2 text-[14px] font-medium leading-snug tracking-tight text-[var(--store-text)]">
+        {product.title}
+      </h3>
+      <div className="mt-2 flex items-baseline gap-2">
+        <span className="text-[14px] font-semibold tabular-nums text-[var(--store-text)]">
+          {formatCurrency(price, currency)}
+        </span>
+        {compareAt && compareAt > price ? (
+          <span className="text-[12px] tabular-nums text-[var(--store-muted)] line-through">
+            {formatCurrency(compareAt, currency)}
+          </span>
+        ) : null}
       </div>
     </>
   );
@@ -164,16 +164,31 @@ export function ProductCard({
       )}
     >
       {previewMode ? (
-        <div className="flex flex-1 flex-col">{gridBody}</div>
+        <div className="flex flex-1 flex-col">
+          {gridImage}
+          <div className="flex flex-1 flex-col p-4">{gridText}</div>
+        </div>
       ) : (
-        <Link href={productPath(storeSlug, product.id)} className="flex flex-1 flex-col">
-          {gridBody}
-        </Link>
+        <>
+          <Link href={productPath(storeSlug, product.id)} className="block">
+            {gridImage}
+          </Link>
+          <div className="flex flex-1 flex-col p-4">
+            <Link href={productPath(storeSlug, product.id)} className="block">
+              {gridText}
+            </Link>
+            {!soldOut ? (
+              <div className="relative z-10 mt-3 sm:hidden">
+                <QuickAddButton product={product} layout="inline" />
+              </div>
+            ) : null}
+          </div>
+        </>
       )}
 
       {!previewMode && !soldOut ? (
-        <div className="absolute bottom-4 right-4 z-10">
-          <QuickAddButton product={product} />
+        <div className="absolute bottom-4 right-4 z-10 hidden sm:block">
+          <QuickAddButton product={product} layout="floating" />
         </div>
       ) : null}
     </div>

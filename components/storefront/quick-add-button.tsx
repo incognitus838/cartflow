@@ -27,9 +27,16 @@ export type QuickAddProduct = {
 type QuickAddButtonProps = {
   product: QuickAddProduct;
   className?: string;
+  /** Inline row under product title (mobile cards). Default floating pill. */
+  layout?: "floating" | "inline";
 };
 
-export function QuickAddButton({ product, className }: QuickAddButtonProps) {
+export function QuickAddButton({
+  product,
+  className,
+  layout = "floating",
+}: QuickAddButtonProps) {
+  const inline = layout === "inline";
   const { lines, addItem, updateQuantity, removeItem } = useCart();
   const [pickingVariant, setPickingVariant] = useState(false);
   const [pulse, setPulse] = useState(false);
@@ -135,7 +142,10 @@ export function QuickAddButton({ product, className }: QuickAddButtonProps) {
     return (
       <div
         className={cn(
-          "flex flex-col gap-1 rounded-[14px] border border-black/[0.08] bg-white p-2 shadow-[0_12px_40px_rgba(0,0,0,0.12)]",
+          "flex flex-col gap-1 rounded-[14px] border border-black/[0.08] bg-white p-2",
+          inline
+            ? "w-full shadow-none"
+            : "shadow-[0_12px_40px_rgba(0,0,0,0.12)]",
           className,
         )}
         onClick={(e) => e.preventDefault()}
@@ -179,7 +189,10 @@ export function QuickAddButton({ product, className }: QuickAddButtonProps) {
     return (
       <div
         className={cn(
-          "flex items-center gap-0.5 rounded-full border border-black/[0.08] bg-white/95 p-1 shadow-[0_4px_24px_rgba(0,0,0,0.08)] backdrop-blur-sm",
+          "flex items-center gap-0.5 border border-black/[0.08] bg-[#f5f5f7]/80 p-1",
+          inline
+            ? "w-full justify-between rounded-[12px] shadow-none"
+            : "rounded-full bg-white/95 shadow-[0_4px_24px_rgba(0,0,0,0.08)] backdrop-blur-sm",
           pulse && "cf-pulse-added",
           className,
         )}
@@ -188,14 +201,18 @@ export function QuickAddButton({ product, className }: QuickAddButtonProps) {
         <button
           type="button"
           onClick={handleDecrement}
-          className="flex h-9 w-9 items-center justify-center rounded-full text-[#1d1d1f] transition-colors hover:bg-[#f5f5f7]"
+          className={cn(
+            "flex items-center justify-center rounded-full text-[#1d1d1f] transition-colors hover:bg-white",
+            inline ? "h-10 w-10" : "h-9 w-9 hover:bg-[#f5f5f7]",
+          )}
           aria-label={`Remove one ${product.title}`}
         >
           <Minus className="h-3.5 w-3.5" strokeWidth={2} />
         </button>
         <span
           className={cn(
-            "flex h-10 w-10 items-center justify-center rounded-full bg-[#1d1d1f] text-[14px] font-semibold tabular-nums text-white transition-transform duration-300",
+            "flex items-center justify-center rounded-full bg-[#1d1d1f] text-[14px] font-semibold tabular-nums text-white transition-transform duration-300",
+            inline ? "h-10 min-w-10 px-3" : "h-10 w-10",
             pulse && "scale-110",
           )}
           aria-label={`${totalInCart} in bag`}
@@ -205,7 +222,10 @@ export function QuickAddButton({ product, className }: QuickAddButtonProps) {
         <button
           type="button"
           onClick={handleIncrement}
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-[#1d1d1f] text-white transition-transform hover:scale-105 active:scale-95"
+          className={cn(
+            "flex items-center justify-center rounded-full bg-[#1d1d1f] text-white transition-transform hover:scale-105 active:scale-95",
+            inline ? "h-10 w-10" : "h-9 w-9",
+          )}
           aria-label={`Add another ${product.title}`}
         >
           <Plus className="h-3.5 w-3.5" strokeWidth={2} />
@@ -227,13 +247,18 @@ export function QuickAddButton({ product, className }: QuickAddButtonProps) {
         handleAdd();
       }}
       className={cn(
-        "flex h-11 w-11 items-center justify-center rounded-full bg-[#1d1d1f] text-white shadow-[0_4px_16px_rgba(0,0,0,0.15)] transition-all duration-300 hover:scale-105 hover:shadow-[0_8px_24px_rgba(0,0,0,0.2)] active:scale-95",
-        pulse && "ring-2 ring-[#b8956a]/40 ring-offset-2",
+        "flex items-center justify-center bg-[#1d1d1f] text-white transition-all duration-300 active:scale-[0.98]",
+        inline
+          ? "h-10 w-full gap-2 rounded-[12px] text-[13px] font-medium shadow-none hover:bg-[#333]"
+          : "h-11 w-11 rounded-full shadow-[0_4px_16px_rgba(0,0,0,0.15)] hover:scale-105 hover:shadow-[0_8px_24px_rgba(0,0,0,0.2)]",
+        pulse && !inline && "ring-2 ring-[#b8956a]/40 ring-offset-2",
+        pulse && inline && "bg-[#333]",
         className,
       )}
       aria-label={`Add ${product.title} to bag`}
     >
-      <Plus className="h-5 w-5" strokeWidth={2} />
+      <Plus className={cn(inline ? "h-4 w-4" : "h-5 w-5")} strokeWidth={2} />
+      {inline ? <span>Add to bag</span> : null}
     </button>
   );
 }
