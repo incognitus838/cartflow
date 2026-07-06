@@ -228,12 +228,26 @@ body {
   line-height: 1.6;
 }
 
-.cf-hero-chatter {
+.cf-hero-chatter-stage {
+  position: relative;
+  min-height: 2.6em;
+  text-align: center;
+}
+
+.cf-hero-chatter-line {
+  position: absolute;
+  inset: 0;
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
   justify-content: center;
   gap: 0.08em;
+  margin: 0;
+  opacity: 0;
+  transform: translateY(12px);
+  animation: cf-hero-chatter-cycle var(--chatter-cycle) linear infinite;
+  animation-delay: calc(var(--chatter-index) * var(--chatter-hold));
+  pointer-events: none;
 }
 
 .cf-hero-chatter-quote {
@@ -245,19 +259,44 @@ body {
 
 .cf-hero-chatter-text {
   display: inline-block;
-  transition:
-    opacity 0.42s var(--cf-ease),
-    transform 0.42s var(--cf-ease);
 }
 
-.cf-hero-chatter-text[data-visible="false"] {
-  opacity: 0;
-  transform: translateY(10px);
+@keyframes cf-hero-chatter-cycle {
+  0% {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  2% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  12% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  14% {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .cf-hero-chatter-text {
-    transition: none;
+  .cf-hero-chatter-line {
+    animation: none;
+    opacity: 0;
+    transform: none;
+  }
+
+  .cf-hero-chatter-line:first-child {
+    opacity: 1;
   }
 }
 
