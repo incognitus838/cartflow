@@ -47,9 +47,9 @@ export function DashboardShell({
       <header className="cf-dash-mobile-bar lg:hidden">
         <button
           type="button"
-          onClick={() => setNavOpen(true)}
+          onClick={() => setNavOpen((open) => !open)}
           className="cf-dash-menu-btn"
-          aria-label="Open menu"
+          aria-label={navOpen ? "Close menu" : "Open menu"}
           aria-expanded={navOpen}
           aria-controls="seller-dashboard-nav"
         >

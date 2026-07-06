@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -53,6 +54,15 @@ export function DashboardSidebar({
 }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const [isMobileNav, setIsMobileNav] = useState(false);
+
+  useEffect(() => {
+    const query = window.matchMedia("(max-width: 1023px)");
+    const sync = () => setIsMobileNav(query.matches);
+    sync();
+    query.addEventListener("change", sync);
+    return () => query.removeEventListener("change", sync);
+  }, []);
 
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -62,7 +72,12 @@ export function DashboardSidebar({
   }
 
   return (
-    <aside id={id} className="cf-dash-sidebar" data-open={mobileOpen ? "true" : "false"}>
+    <aside
+      id={id}
+      className="cf-dash-sidebar"
+      data-open={mobileOpen ? "true" : "false"}
+      aria-hidden={isMobileNav && !mobileOpen ? true : undefined}
+    >
       <div className="border-b border-black/[0.06] px-5 py-5">
         <div className="flex items-center gap-2.5">
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[12px] bg-[#1d1d1f] text-white">

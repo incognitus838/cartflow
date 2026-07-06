@@ -278,6 +278,9 @@ body {
   border-bottom: 1px solid var(--cf-border);
   background: rgba(255, 255, 255, 0.92);
   padding: 0.75rem 1rem;
+  padding-top: max(0.75rem, env(safe-area-inset-top, 0px));
+  padding-left: max(1rem, env(safe-area-inset-left, 0px));
+  padding-right: max(1rem, env(safe-area-inset-right, 0px));
   backdrop-filter: blur(12px);
 }
 
@@ -331,11 +334,15 @@ body {
     transition: transform 0.28s var(--cf-ease);
     box-shadow: 12px 0 40px rgba(0, 0, 0, 0.12);
     visibility: hidden;
+    pointer-events: none;
+    overscroll-behavior: contain;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
   .cf-dash-sidebar[data-open="true"] {
     transform: translateX(0);
     visibility: visible;
+    pointer-events: auto;
   }
 
   .cf-dash-main {
