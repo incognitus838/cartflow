@@ -1,21 +1,92 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
 import { PackageSearch } from "lucide-react";
 import { toast } from "sonner";
-import { orderConfirmationPath } from "@/lib/storefront/paths";
+import { OrderTrackingPanel } from "@/components/storefront/order-tracking-panel";
+import type { PublicOrderTracking } from "@/lib/orders/tracking";
+import { trackOrderLookupPath } from "@/lib/storefront/paths";
 
 type TrackOrderFormProps = {
   storeSlug: string;
   storeName: string;
+  initialOrder?: string;
+  initialPhone?: string;
 };
 
-export function TrackOrderForm({ storeSlug, storeName }: TrackOrderFormProps) {
+export function TrackOrderForm({
+  storeSlug,
+  storeName,
+  initialOrder = "",
+  initialPhone = "",
+}: TrackOrderFormProps) {
   const router = useRouter();
-  const [orderNumber, setOrderNumber] = useState("");
-  const [customerPhone, setCustomerPhone] = useState("");
+  const searchParams = useSearchParams();
+  const [orderNumber, setOrderNumber] = useState(initialOrder);
+  const [customerPhone, setCustomerPhone] = useState(initialPhone);
   const [loading, setLoading] = useState(false);
+  const [trackedOrder, setTrackedOrder] = useState<PublicOrderTracking | null>(null);
+  const [verifiedPhone, setVerifiedPhone] = useState<string | null>(null);
+
+  const lookupOrder = useCallback(
+    async (trimmedId: string, trimmedPhone: string, updateUrl = true) => {
+      setLoading(true);
+
+      try {
+        const res = await fetch(
+          `/api/storefront/${storeSlug}/orders/${encodeURIComponent(trimmedId)}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ customerPhone: trimmedPhone }),
+          },
+        );
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          toast.error(data.error || "Order not found. Check your ID and phone number.");
+          setTrackedOrder(null);
+          setVerifiedPhone(null);
+          return false;
+        }
+
+        setTrackedOrder(data.order as PublicOrderTracking);
+        setVerifiedPhone(trimmedPhone);
+        setOrderNumber(trimmedId);
+
+        if (updateUrl) {
+          const next = trackOrderLookupPath(storeSlug, trimmedId, trimmedPhone);
+          const current = `/${storeSlug}/track?${searchParams.toString()}`;
+          if (current !== next) {
+            router.replace(next, { scroll: false });
+          }
+        }
+
+        return true;
+      } catch {
+        toast.error("Something went wrong. Try again.");
+        return false;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [router, searchParams, storeSlug],
+  );
+
+  useEffect(() => {
+    const fromUrlOrder = searchParams.get("order")?.trim().toUpperCase() ?? "";
+    const fromUrlPhone = searchParams.get("phone")?.trim() ?? "";
+
+    if (fromUrlOrder) setOrderNumber(fromUrlOrder);
+    if (fromUrlPhone) setCustomerPhone(fromUrlPhone);
+
+    if (fromUrlOrder && fromUrlPhone.length >= 7 && !trackedOrder && !loading) {
+      void lookupOrder(fromUrlOrder, fromUrlPhone, false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- auto-lookup once on mount / URL change
+  }, [searchParams]);
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -33,29 +104,31 @@ export function TrackOrderForm({ storeSlug, storeName }: TrackOrderFormProps) {
       return;
     }
 
-    setLoading(true);
+    await lookupOrder(trimmedId, trimmedPhone);
+  }
 
-    try {
-      const res = await fetch(`/api/storefront/${storeSlug}/orders/${encodeURIComponent(trimmedId)}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ customerPhone: trimmedPhone }),
-      });
+  if (trackedOrder && verifiedPhone) {
+    return (
+      <div className="space-y-6">
+        <OrderTrackingPanel
+          order={trackedOrder}
+          storeSlug={storeSlug}
+          customerPhone={verifiedPhone}
+          showConfirmationLink
+        />
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        toast.error(data.error || "Order not found. Check your ID and phone number.");
-        return;
-      }
-
-      router.push(orderConfirmationPath(storeSlug, data.order.orderNumber));
-      router.refresh();
-    } catch {
-      toast.error("Something went wrong. Try again.");
-    } finally {
-      setLoading(false);
-    }
+        <button
+          type="button"
+          onClick={() => {
+            setTrackedOrder(null);
+            setVerifiedPhone(null);
+          }}
+          className="w-full rounded-xl border border-[var(--store-border)] bg-[var(--store-surface)] py-3 text-sm font-medium text-[var(--store-text)] transition-colors hover:bg-[var(--store-header-bg)]"
+        >
+          Look up a different order
+        </button>
+      </div>
+    );
   }
 
   return (

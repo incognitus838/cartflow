@@ -26,6 +26,18 @@ export function trackOrderPath(storeSlug: string) {
   return `/${storeSlug}/track`;
 }
 
+export function trackOrderLookupPath(
+  storeSlug: string,
+  orderNumber: string,
+  customerPhone: string,
+) {
+  const params = new URLSearchParams({
+    order: orderNumber.trim().toUpperCase(),
+    phone: customerPhone.trim(),
+  });
+  return `/${storeSlug}/track?${params}`;
+}
+
 export function absoluteStoreUrl(storeSlug: string) {
   return `${getAppBaseUrl()}${storePath(storeSlug)}`;
 }

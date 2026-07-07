@@ -3,14 +3,18 @@
 import { useState } from "react";
 import { Check, Copy } from "lucide-react";
 import { toast } from "sonner";
-import { trackOrderPath } from "@/lib/storefront/paths";
+import { trackOrderLookupPath, trackOrderPath } from "@/lib/storefront/paths";
 
 type OrderIdCardProps = {
   storeSlug: string;
   orderNumber: string;
+  customerPhone?: string;
 };
 
-export function OrderIdCard({ storeSlug, orderNumber }: OrderIdCardProps) {
+export function OrderIdCard({ storeSlug, orderNumber, customerPhone }: OrderIdCardProps) {
+  const trackHref = customerPhone
+    ? trackOrderLookupPath(storeSlug, orderNumber, customerPhone)
+    : trackOrderPath(storeSlug);
   const [copied, setCopied] = useState(false);
 
   async function handleCopy() {
@@ -54,7 +58,7 @@ export function OrderIdCard({ storeSlug, orderNumber }: OrderIdCardProps) {
       <p className="mt-3 text-xs leading-relaxed text-[var(--store-muted)]">
         Save this page or your order ID to check progress later. You can also{" "}
         <a
-          href={trackOrderPath(storeSlug)}
+          href={trackHref}
           className="font-medium text-[var(--store-text)] underline-offset-2 hover:underline"
         >
           track your order

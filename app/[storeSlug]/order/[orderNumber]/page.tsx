@@ -4,17 +4,15 @@ import { CheckCircle2, Clock } from "lucide-react";
 import { PaymentReceiptViewer } from "@/components/payment-receipt-viewer";
 import { OrderIdCard } from "@/components/storefront/order-id-card";
 import { OrderStatusRefresh } from "@/components/storefront/order-status-refresh";
-import { OrderStatusTimeline } from "@/components/storefront/order-status-timeline";
-import { OrderSummary } from "@/components/storefront/order-summary";
+import { OrderTrackingPanel } from "@/components/storefront/order-tracking-panel";
 import { ReceiptUploadForm } from "@/components/storefront/receipt-upload-form";
 import { toNumber } from "@/lib/decimal";
 import { orderHasReceipt } from "@/lib/orders/receipt-storage";
-import { getTrackingHeadline, isTerminalOrderStatus } from "@/lib/orders/tracking";
+import { getTrackingHeadline, isTerminalOrderStatus, toPublicOrderTracking } from "@/lib/orders/tracking";
 import { getStoreOrder } from "@/lib/queries/storefront";
 import { storefrontOrderReceiptUrl } from "@/lib/storefront/receipt-url";
-import { storePath } from "@/lib/storefront/paths";
+import { storePath, trackOrderLookupPath } from "@/lib/storefront/paths";
 import { resolveStorefront } from "@/lib/storefront/resolve-store";
-import type { CartLine } from "@/lib/cart/types";
 
 type OrderConfirmationProps = {
   params: Promise<{ storeSlug: string; orderNumber: string }>;
@@ -29,18 +27,6 @@ export default async function OrderConfirmationPage({ params }: OrderConfirmatio
     notFound();
   }
 
-  const lines: CartLine[] = order.items.map((item) => ({
-    key: item.id,
-    productId: item.productId ?? item.id,
-    variantId: item.variantId ?? undefined,
-    title: item.title,
-    variantName: item.variantName ?? undefined,
-    sku: item.sku ?? undefined,
-    unitPrice: toNumber(item.unitPrice),
-    quantity: item.quantity,
-    maxStock: item.quantity,
-  }));
-
   const hasReceipt = orderHasReceipt(order);
   const receiptSrc = storefrontOrderReceiptUrl(store.slug, order.orderNumber);
   const isPaid =
@@ -52,6 +38,11 @@ export default async function OrderConfirmationPage({ params }: OrderConfirmatio
   const awaitingApproval = order.status === "PENDING" && hasReceipt;
   const headline = getTrackingHeadline(order.status, hasReceipt, order.paymentRejectionReason);
   const isTerminal = isTerminalOrderStatus(order.status);
+  const trackingSnapshot = toPublicOrderTracking(order, {
+    name: store.name,
+    slug: store.slug,
+    currency: store.currency,
+  });
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -97,20 +88,31 @@ export default async function OrderConfirmationPage({ params }: OrderConfirmatio
         </p>
       </div>
 
-      <OrderIdCard storeSlug={store.slug} orderNumber={order.orderNumber} />
+      <OrderIdCard
+        storeSlug={store.slug}
+        orderNumber={order.orderNumber}
+        customerPhone={order.customerPhone}
+      />
 
       <div className="mt-6">
-        <OrderStatusTimeline
-          status={order.status}
-          createdAt={order.createdAt}
-          updatedAt={order.updatedAt}
-          hasReceipt={hasReceipt}
-          receiptSubmittedAt={order.paymentReceiptSubmittedAt}
-          paymentRejectionReason={order.paymentRejectionReason}
-          customerAddress={order.customerAddress}
-          deliveryFee={order.deliveryFee}
+        <OrderTrackingPanel
+          order={trackingSnapshot}
+          storeSlug={store.slug}
+          customerPhone={order.customerPhone}
+          pollEnabled={!isTerminal}
         />
       </div>
+
+      <p className="mt-4 text-center text-sm text-[var(--store-muted)]">
+        Bookmark{" "}
+        <Link
+          href={trackOrderLookupPath(store.slug, order.orderNumber, order.customerPhone)}
+          className="font-medium text-[var(--store-text)] underline-offset-2 hover:underline"
+        >
+          your tracking page
+        </Link>{" "}
+        to check progress anytime.
+      </p>
 
       {paymentRejected ? (
         <section className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-5 sm:p-6">
@@ -140,21 +142,6 @@ export default async function OrderConfirmationPage({ params }: OrderConfirmatio
           />
         </section>
       ) : null}
-
-      <div className="mt-6">
-        <OrderSummary
-          lines={lines}
-          currency={store.currency}
-          deliveryFee={toNumber(order.deliveryFee)}
-          subtotal={toNumber(order.subtotal)}
-          discountAmount={toNumber(order.discountAmount)}
-          giftTitle={
-            order.promotionCode && lines.some((l) => l.unitPrice === 0)
-              ? lines.find((l) => l.unitPrice === 0)?.title
-              : undefined
-          }
-        />
-      </div>
 
       <div className="mt-6">
         <Link href={storePath(store.slug)} className="btn-primary block py-3 text-center">

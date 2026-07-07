@@ -1,19 +1,41 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { TrackOrderForm } from "@/components/storefront/track-order-form";
 import { storePath } from "@/lib/storefront/paths";
 import { resolveStorefront } from "@/lib/storefront/resolve-store";
 
 type TrackPageProps = {
   params: Promise<{ storeSlug: string }>;
+  searchParams: Promise<{ order?: string; phone?: string }>;
 };
 
-export default async function TrackOrderPage({ params }: TrackPageProps) {
+function TrackFormFallback() {
+  return (
+    <div className="rounded-2xl border border-[var(--store-border)] bg-[var(--store-surface)] p-8 animate-pulse">
+      <div className="h-6 w-48 rounded bg-[var(--store-border)]" />
+      <div className="mt-6 space-y-4">
+        <div className="h-12 rounded-xl bg-[var(--store-border)]" />
+        <div className="h-12 rounded-xl bg-[var(--store-border)]" />
+      </div>
+    </div>
+  );
+}
+
+export default async function TrackOrderPage({ params, searchParams }: TrackPageProps) {
   const { storeSlug } = await params;
+  const { order, phone } = await searchParams;
   const store = await resolveStorefront(storeSlug);
 
   return (
-    <div className="mx-auto max-w-lg">
-      <TrackOrderForm storeSlug={store.slug} storeName={store.name} />
+    <div className="mx-auto max-w-2xl">
+      <Suspense fallback={<TrackFormFallback />}>
+        <TrackOrderForm
+          storeSlug={store.slug}
+          storeName={store.name}
+          initialOrder={order?.trim().toUpperCase()}
+          initialPhone={phone?.trim()}
+        />
+      </Suspense>
 
       <p className="mt-6 text-center text-sm text-[var(--store-muted)]">
         <Link
