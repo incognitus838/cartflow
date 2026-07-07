@@ -19,6 +19,12 @@ import type { CatalogCategory, CatalogSettings } from "@/lib/catalog/settings";
 type CatalogManagerProps = {
   initial: CatalogSettings;
   productCountByCategory?: Record<string, number>;
+  embedded?: boolean;
+  emphasizeTemplates?: boolean;
+  onSettingsChange?: (settings: CatalogSettings) => void;
+  onTemplateApplied?: () => void;
+  onSaved?: () => void;
+  savedRedirectLabel?: string;
 };
 
 function createCategory(name: string, sortOrder: number): CatalogCategory {
@@ -29,13 +35,29 @@ function createCategory(name: string, sortOrder: number): CatalogCategory {
   };
 }
 
-export function CatalogManager({ initial, productCountByCategory = {} }: CatalogManagerProps) {
+export function CatalogManager({
+  initial,
+  productCountByCategory = {},
+  embedded = false,
+  emphasizeTemplates = false,
+  onSettingsChange,
+  onTemplateApplied,
+  onSaved,
+  savedRedirectLabel,
+}: CatalogManagerProps) {
   const [settings, setSettings] = useState(initial);
   const [newCategory, setNewCategory] = useState("");
   const [newTag, setNewTag] = useState("");
   const [saving, setSaving] = useState(false);
   const [applyingTemplate, setApplyingTemplate] = useState<string | null>(null);
-  const [templatesOpen, setTemplatesOpen] = useState(!initial.templateId);
+  const [templatesOpen, setTemplatesOpen] = useState(
+    emphasizeTemplates || !initial.templateId || initial.categories.length === 0,
+  );
+
+  function commitSettings(next: CatalogSettings) {
+    setSettings(next);
+    onSettingsChange?.(next);
+  }
   const [pendingTemplateId, setPendingTemplateId] = useState<string | null>(null);
 
   const pendingTemplate = useMemo(
@@ -68,8 +90,9 @@ export function CatalogManager({ initial, productCountByCategory = {} }: Catalog
         return;
       }
 
-      setSettings(data.settings);
+      commitSettings(data.settings);
       toast.success(message);
+      onSaved?.();
     } catch {
       toast.error("Something went wrong");
     } finally {
@@ -105,9 +128,14 @@ export function CatalogManager({ initial, productCountByCategory = {} }: Catalog
         return;
       }
 
-      setSettings(data.settings);
-      setTemplatesOpen(false);
-      toast.success("Template applied — categories and tags replaced. Edit or save when ready.");
+      commitSettings(data.settings);
+      setTemplatesOpen(emphasizeTemplates ? true : false);
+      toast.success(
+        embedded
+          ? "Template applied — continue with your product below."
+          : "Template applied — categories and tags replaced. Edit or save when ready.",
+      );
+      onTemplateApplied?.();
     } catch {
       toast.error("Something went wrong");
     } finally {
@@ -485,7 +513,7 @@ export function CatalogManager({ initial, productCountByCategory = {} }: Catalog
           onClick={() => persist(settings)}
           className="btn-primary px-6"
         >
-          {saving ? "Saving…" : "Save catalog"}
+          {saving ? "Saving…" : savedRedirectLabel ? savedRedirectLabel : "Save catalog"}
         </button>
       </div>
     </div>

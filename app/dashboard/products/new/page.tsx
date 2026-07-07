@@ -1,19 +1,26 @@
-import { ProductForm } from "@/components/dashboard/product-form";
-import { catalogCategoryNames, resolveCatalogSettings } from "@/lib/catalog/settings";
-import { toProductFormInitial } from "@/lib/products/form-initial";
-import { requireApprovedForProducts } from "@/lib/auth-server";
+import { redirect } from "next/navigation";
+import { AddProductFlow } from "@/components/dashboard/add-product-flow";
+import { canManageProducts, isPendingApproval } from "@/lib/business/approval";
+import { requireProductsHub } from "@/lib/auth-server";
+import { resolveCatalogSettings } from "@/lib/catalog/settings";
 
 export default async function NewProductPage() {
-  const { business } = await requireApprovedForProducts();
+  const { business, permissions } = await requireProductsHub();
   const catalog = await resolveCatalogSettings(business.id);
+  const productsUnlocked = canManageProducts(business) && permissions.products;
+  const storePending = isPendingApproval(business);
+
+  if (!permissions.catalog && !permissions.products) {
+    redirect("/dashboard");
+  }
 
   return (
-    <ProductForm
-      mode="create"
+    <AddProductFlow
       currency={business.currency}
-      initial={toProductFormInitial()}
-      catalogCategories={catalogCategoryNames(catalog)}
-      catalogTags={catalog.tags}
+      initialCatalog={catalog}
+      productsUnlocked={productsUnlocked}
+      storePending={storePending}
+      canCatalog={permissions.catalog}
     />
   );
 }

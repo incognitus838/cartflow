@@ -1,16 +1,13 @@
 import Link from "next/link";
-import { Suspense } from "react";
+import { redirect } from "next/navigation";
 import { Package, Plus } from "lucide-react";
-import { CatalogManager } from "@/components/dashboard/catalog-manager";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { ProductActions } from "@/components/dashboard/product-actions";
-import { ProductsTabs } from "@/components/dashboard/products-tabs";
 import { StatusBadge } from "@/components/dashboard/status-badge";
 import { StockBadge } from "@/components/dashboard/stock-badge";
 import { PageHeader } from "@/components/shared/page-header";
 import { canManageProducts, isPendingApproval } from "@/lib/business/approval";
 import { requireProductsHub } from "@/lib/auth-server";
-import { resolveCatalogSettings } from "@/lib/catalog/settings";
 import { toNumber } from "@/lib/decimal";
 import { listBusinessProducts } from "@/lib/queries/dashboard";
 import { formatCurrency } from "@/lib/utils";
@@ -20,120 +17,63 @@ type PageProps = {
 };
 
 export default async function ProductsPage({ searchParams }: PageProps) {
-  const { business, permissions } = await requireProductsHub();
   const params = await searchParams;
+  if (params.tab === "structure") {
+    redirect("/dashboard/products/new");
+  }
+
+  const { business, permissions } = await requireProductsHub();
   const canProducts = permissions.products;
-  const canCatalog = permissions.catalog;
   const productsUnlocked = canManageProducts(business);
   const storePending = isPendingApproval(business);
 
-  let tab: "products" | "structure" =
-    params.tab === "structure" ? "structure" : "products";
-  if (storePending) tab = "structure";
-  if (tab === "products" && !canProducts && canCatalog) tab = "structure";
-  if (tab === "structure" && !canCatalog && canProducts) tab = "products";
-
-  const [products, catalog] = await Promise.all([
-    canProducts ? listBusinessProducts(business.id) : Promise.resolve([]),
-    canCatalog || canProducts ? resolveCatalogSettings(business.id) : Promise.resolve(null),
-  ]);
-
-  const productCountByCategory = products.reduce<Record<string, number>>((acc, product) => {
-    const name = product.category?.trim() || "General";
-    acc[name] = (acc[name] ?? 0) + 1;
-    return acc;
-  }, {});
+  const products = canProducts ? await listBusinessProducts(business.id) : [];
 
   return (
     <>
       <PageHeader
-        title="Products"
+        title={storePending ? "Products" : "Products"}
         description={
-          storePending || tab === "structure"
-            ? "Set up categories and tags for admin review. Product uploads unlock after your store is approved."
-            : "Add products, manage stock, and assign categories from your catalog structure."
+          storePending
+            ? "Your store is awaiting approval. Set up your catalog first — product uploads unlock after review."
+            : "Manage inventory, pricing, and stock."
         }
         actions={
-          tab === "products" && canProducts ? (
-            <div className="flex flex-wrap items-center gap-2">
-              {canCatalog ? (
-                <Link
-                  href="/dashboard/products?tab=structure"
-                  className="inline-flex items-center gap-2 rounded-full border border-black/[0.08] bg-white px-4 py-2 text-sm font-medium text-[#1d1d1f] hover:bg-[#f5f5f7]"
-                >
-                  Categories & tags
-                </Link>
-              ) : null}
-              {productsUnlocked ? (
-                <Link href="/dashboard/products/new" className="btn-primary inline-flex items-center gap-2">
-                  <Plus className="h-4 w-4" aria-hidden />
-                  Add product
-                </Link>
-              ) : null}
-            </div>
-          ) : canProducts ? (
-            <Link href="/dashboard/products" className="text-sm font-medium text-[#6e6e73] hover:text-[#1d1d1f]">
-              View products →
+          canProducts ? (
+            <Link href="/dashboard/products/new" className="btn-primary inline-flex items-center gap-2">
+              <Plus className="h-4 w-4" aria-hidden />
+              {storePending || !productsUnlocked ? "Set up catalog" : "Add product"}
             </Link>
           ) : null
         }
       />
 
-      <Suspense fallback={null}>
-        <ProductsTabs
-          active={tab}
-          canProducts={canProducts && !storePending}
-          canCatalog={canCatalog}
-        />
-      </Suspense>
-
-      {tab === "structure" && canCatalog && catalog ? (
-        <CatalogManager initial={catalog} productCountByCategory={productCountByCategory} />
-      ) : null}
-
-      {tab === "products" && canProducts ? (
+      {canProducts ? (
         <>
           {!productsUnlocked ? (
             <div className="mb-6 rounded-[var(--cf-radius-md)] border border-[#e8a317]/30 bg-[#fffdf5] px-4 py-3 text-[13px] text-[#9a6700]">
               Product uploads are locked until your store is approved.{" "}
-              {canCatalog ? (
-                <>
-                  Configure{" "}
-                  <Link
-                    href="/dashboard/products?tab=structure"
-                    className="font-medium underline underline-offset-2"
-                  >
-                    categories & tags
-                  </Link>{" "}
-                  first.
-                </>
-              ) : null}
+              <Link
+                href="/dashboard/products/new"
+                className="font-medium underline underline-offset-2"
+              >
+                Set up your catalog
+              </Link>{" "}
+              to complete your application.
             </div>
           ) : null}
 
           {products.length === 0 ? (
             <EmptyState
               icon={Package}
-              title="No products yet"
+              title={productsUnlocked ? "No products yet" : "Catalog not set up"}
               description={
                 productsUnlocked
-                  ? "Add your first product — pick a category from your catalog structure or create one inline."
-                  : "Your store is awaiting approval. Set up categories first, then add products once approved."
+                  ? "Pick a template, choose a category, and add your first product."
+                  : "Choose an industry template and configure categories for admin review."
               }
-              actionLabel={
-                productsUnlocked
-                  ? "Add product"
-                  : canCatalog
-                    ? "Set up categories"
-                    : undefined
-              }
-              actionHref={
-                productsUnlocked
-                  ? "/dashboard/products/new"
-                  : canCatalog
-                    ? "/dashboard/products?tab=structure"
-                    : undefined
-              }
+              actionLabel={productsUnlocked ? "Add product" : "Set up catalog"}
+              actionHref="/dashboard/products/new"
             />
           ) : (
             <section aria-labelledby="products-table-heading">

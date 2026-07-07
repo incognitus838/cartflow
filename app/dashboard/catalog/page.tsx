@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
 export default function CatalogPage() {
-  redirect("/dashboard/products?tab=structure");
+  redirect("/dashboard/products/new");
 }

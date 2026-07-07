@@ -37,6 +37,7 @@ export function isPendingApproval(store: StoreApprovalSnapshot) {
 export const PENDING_APPROVAL_NAV_HREFS = [
   "/dashboard",
   "/dashboard/products",
+  "/dashboard/products/new",
   "/dashboard/catalog",
   "/dashboard/stores",
   "/dashboard/settings",

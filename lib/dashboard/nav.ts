@@ -50,7 +50,7 @@ export function navItemsForPermissions(
     .filter((item) => isNavAllowedDuringPending(item.href))
     .map((item) =>
       item.href === "/dashboard/products"
-        ? { ...item, label: "Catalog setup" }
+        ? { ...item, label: "Catalog setup", href: "/dashboard/products/new" }
         : item,
     );
 }
@@ -65,7 +65,7 @@ export function navItemsForStoreRole(
     .filter((item) => isNavAllowedDuringPending(item.href))
     .map((item) =>
       item.href === "/dashboard/products"
-        ? { ...item, label: "Catalog setup" }
+        ? { ...item, label: "Catalog setup", href: "/dashboard/products/new" }
         : item,
     );
 }

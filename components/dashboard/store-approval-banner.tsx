@@ -27,7 +27,7 @@ export function StoreApprovalBanner({ store }: StoreApprovalBannerProps) {
           <Link href="/dashboard/settings" className="underline underline-offset-2">
             Update application
           </Link>
-          <Link href="/dashboard/products?tab=structure" className="underline underline-offset-2">
+          <Link href="/dashboard/products/new" className="underline underline-offset-2">
             Catalog setup
           </Link>
         </div>
