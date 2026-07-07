@@ -80,7 +80,7 @@ export function CategoryTagsFields({
         )}
         {catalogCategories.length === 0 ? (
           <p className="mt-1.5 text-xs text-[#86868b]">
-            <a href="/dashboard/catalog" className="font-medium text-[#1d1d1f] hover:underline">
+            <a href="/dashboard/products?tab=structure" className="font-medium text-[#1d1d1f] hover:underline">
               Set up categories
             </a>{" "}
             or type a custom one.

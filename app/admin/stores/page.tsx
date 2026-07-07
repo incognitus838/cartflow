@@ -15,6 +15,7 @@ export default async function AdminStoresPage() {
         stores={stores.map((store) => ({
           ...store,
           createdAt: store.createdAt.toISOString(),
+          submittedAt: store.submittedAt?.toISOString() ?? null,
         }))}
       />
     </>

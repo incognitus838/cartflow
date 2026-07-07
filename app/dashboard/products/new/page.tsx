@@ -1,10 +1,10 @@
 import { ProductForm } from "@/components/dashboard/product-form";
 import { catalogCategoryNames, resolveCatalogSettings } from "@/lib/catalog/settings";
 import { toProductFormInitial } from "@/lib/products/form-initial";
-import { requirePermission } from "@/lib/auth-server";
+import { requireApprovedForProducts } from "@/lib/auth-server";
 
 export default async function NewProductPage() {
-  const { business } = await requirePermission("products");
+  const { business } = await requireApprovedForProducts();
   const catalog = await resolveCatalogSettings(business.id);
 
   return (

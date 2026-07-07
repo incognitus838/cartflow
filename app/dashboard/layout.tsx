@@ -26,6 +26,7 @@ export default async function DashboardLayout({
       accessPreset={accessPreset}
       permissions={permissions}
       accessibleStores={accessibleStores}
+      approvalStatus={business.approvalStatus}
     >
       {session?.impersonatorId ? (
         <ImpersonationBanner storeName={business.name} storeSlug={business.slug} />

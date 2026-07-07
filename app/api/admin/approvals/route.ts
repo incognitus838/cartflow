@@ -7,6 +7,7 @@ import {
 import { requireApiAdmin } from "@/lib/api/require-admin";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   const auth = await requireApiAdmin();
@@ -18,5 +19,8 @@ export async function GET() {
     countPendingStoreApprovals(),
   ]);
 
-  return NextResponse.json({ pending, recent, pendingCount });
+  return NextResponse.json(
+    { pending, recent, pendingCount },
+    { headers: { "Cache-Control": "no-store, max-age=0" } },
+  );
 }

@@ -3,6 +3,8 @@ import { OverviewPanel } from "@/components/admin/overview-panel";
 import { PageHeader } from "@/components/shared/page-header";
 import { getAdminStats } from "@/lib/admin/queries";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminPage() {
   const stats = await getAdminStats();
 
@@ -30,6 +32,7 @@ export default async function AdminPage() {
           recentBusinesses: stats.recentBusinesses.map((store) => ({
             ...store,
             createdAt: store.createdAt.toISOString(),
+            submittedAt: store.submittedAt?.toISOString() ?? null,
           })),
           recentOrders: stats.recentOrders.map((order) => ({
             id: order.id,

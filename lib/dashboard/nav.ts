@@ -1,3 +1,4 @@
+import { isNavAllowedDuringPending, isPendingApproval, type StoreApprovalSnapshot } from "@/lib/business/approval";
 import type { StoreAccessRole } from "@/lib/store-access-types";
 import { canAccessNavPath, type MemberPermissions } from "@/lib/team/permissions-shared";
 
@@ -13,11 +14,11 @@ export const DASHBOARD_NAV: DashboardNavItem[] = [
   { href: "/dashboard", label: "Overview", exact: true, staffAllowed: true },
   { href: "/dashboard/storefront", label: "Storefront", staffAllowed: false },
   { href: "/dashboard/products", label: "Products", staffAllowed: true },
-  { href: "/dashboard/catalog", label: "Catalog", staffAllowed: true },
   { href: "/dashboard/promotions", label: "Promotions", staffAllowed: true },
   { href: "/dashboard/orders", label: "Orders", staffAllowed: true },
   { href: "/dashboard/analytics", label: "Analytics", staffAllowed: true },
   { href: "/dashboard/billing", label: "Billing", staffAllowed: false },
+  { href: "/dashboard/stores", label: "My stores", staffAllowed: false },
   { href: "/dashboard/settings", label: "Settings", staffAllowed: false },
 ];
 
@@ -31,19 +32,42 @@ export function isOwnerOnlyDashboardPath(pathname: string) {
   );
 }
 
-export function navItemsForStoreRole(role: "owner" | "staff") {
-  if (role === "owner") return DASHBOARD_NAV;
-  return DASHBOARD_NAV.filter((item) => item.staffAllowed);
-}
-
 export function navItemsForPermissions(
   role: StoreAccessRole,
   permissions: MemberPermissions,
+  store?: StoreApprovalSnapshot,
 ) {
-  if (role === "owner") return DASHBOARD_NAV;
-  return DASHBOARD_NAV.filter(
-    (item) => item.staffAllowed && canAccessNavPath(permissions, item.href),
-  );
+  const base =
+    role === "owner"
+      ? DASHBOARD_NAV
+      : DASHBOARD_NAV.filter(
+          (item) => item.staffAllowed && canAccessNavPath(permissions, item.href),
+        );
+
+  if (!store || !isPendingApproval(store)) return base;
+
+  return base
+    .filter((item) => isNavAllowedDuringPending(item.href))
+    .map((item) =>
+      item.href === "/dashboard/products"
+        ? { ...item, label: "Catalog setup" }
+        : item,
+    );
+}
+
+export function navItemsForStoreRole(
+  role: "owner" | "staff",
+  store?: StoreApprovalSnapshot,
+) {
+  const base = role === "owner" ? DASHBOARD_NAV : DASHBOARD_NAV.filter((item) => item.staffAllowed);
+  if (!store || !isPendingApproval(store)) return base;
+  return base
+    .filter((item) => isNavAllowedDuringPending(item.href))
+    .map((item) =>
+      item.href === "/dashboard/products"
+        ? { ...item, label: "Catalog setup" }
+        : item,
+    );
 }
 
 export function presetLabel(preset: string | null | undefined) {

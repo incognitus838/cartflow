@@ -3,7 +3,9 @@
 import { useMemo, useState } from "react";
 import { AdminActions } from "@/components/admin/admin-actions";
 import { toast } from "sonner";
-import type { BusinessPlan } from "@prisma/client";
+import type { BusinessPlan, StoreApprovalStatus } from "@prisma/client";
+import Link from "next/link";
+import { APPROVAL_STATUS_LABEL } from "@/lib/business/approval";
 import { FilterToolbar } from "@/components/shared/filter-toolbar";
 
 export type AdminStoreRow = {
@@ -12,6 +14,8 @@ export type AdminStoreRow = {
   slug: string;
   plan: BusinessPlan;
   isActive: boolean;
+  approvalStatus: StoreApprovalStatus;
+  submittedAt?: string | null;
   createdAt: string;
   owner: { id: string; name: string; email: string };
   _count: { products: number; orders: number };
@@ -101,7 +105,8 @@ export function StoresTable({ stores: initial }: StoresTableProps) {
               <th scope="col">Owner</th>
               <th scope="col">Plan</th>
               <th scope="col">Catalog</th>
-              <th scope="col">Status</th>
+              <th scope="col">Approval</th>
+              <th scope="col">Live</th>
               <th scope="col">Actions</th>
             </tr>
           </thead>
@@ -139,6 +144,21 @@ export function StoresTable({ stores: initial }: StoresTableProps) {
                 </td>
                 <td className="text-[#6e6e73]">
                   {store._count.products} products · {store._count.orders} orders
+                </td>
+                <td>
+                  {store.approvalStatus === "PENDING" ? (
+                    <Link href="/admin/approvals" className="cf-badge cf-badge-pending">
+                      {APPROVAL_STATUS_LABEL.PENDING}
+                    </Link>
+                  ) : (
+                    <span
+                      className={`cf-badge ${
+                        store.approvalStatus === "APPROVED" ? "cf-badge-paid" : "cf-badge-cancelled"
+                      }`}
+                    >
+                      {APPROVAL_STATUS_LABEL[store.approvalStatus]}
+                    </span>
+                  )}
                 </td>
                 <td>
                   <button

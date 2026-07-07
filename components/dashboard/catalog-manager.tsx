@@ -18,6 +18,7 @@ import type { CatalogCategory, CatalogSettings } from "@/lib/catalog/settings";
 
 type CatalogManagerProps = {
   initial: CatalogSettings;
+  productCountByCategory?: Record<string, number>;
 };
 
 function createCategory(name: string, sortOrder: number): CatalogCategory {
@@ -28,7 +29,7 @@ function createCategory(name: string, sortOrder: number): CatalogCategory {
   };
 }
 
-export function CatalogManager({ initial }: CatalogManagerProps) {
+export function CatalogManager({ initial, productCountByCategory = {} }: CatalogManagerProps) {
   const [settings, setSettings] = useState(initial);
   const [newCategory, setNewCategory] = useState("");
   const [newTag, setNewTag] = useState("");
@@ -335,8 +336,8 @@ export function CatalogManager({ initial }: CatalogManagerProps) {
             <h2 className="text-sm font-semibold text-slate-900">Categories</h2>
           </div>
           <p className="mt-1 text-xs text-slate-500">
-            Shown as collection filters on your storefront. Renaming updates products using that
-            category.
+            Shown as storefront filters once products use these categories. Renaming updates assigned
+            products; new categories appear in the product form automatically.
           </p>
 
           {sortedCategories.length === 0 ? (
@@ -370,11 +371,19 @@ export function CatalogManager({ initial }: CatalogManagerProps) {
                       <ArrowDown className="h-3.5 w-3.5" />
                     </button>
                   </div>
-                  <input
-                    value={category.name}
-                    onChange={(e) => updateCategoryName(category.id, e.target.value)}
-                    className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-500"
-                  />
+                  <div className="min-w-0 flex-1">
+                    <input
+                      value={category.name}
+                      onChange={(e) => updateCategoryName(category.id, e.target.value)}
+                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-500"
+                    />
+                    {productCountByCategory[category.name] ? (
+                      <p className="mt-1 text-[11px] text-slate-500">
+                        {productCountByCategory[category.name]} product
+                        {productCountByCategory[category.name] === 1 ? "" : "s"}
+                      </p>
+                    ) : null}
+                  </div>
                   <button
                     type="button"
                     onClick={() => removeCategory(category.id)}

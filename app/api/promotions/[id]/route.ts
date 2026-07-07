@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireApiBusiness, requireApiPermission } from "@/lib/api/require-business";
+import { requireApiBusiness, requireLiveStore } from "@/lib/api/require-business";
 import { deletePromotion, updatePromotion } from "@/lib/promotions/mutations";
 import { parsePromotionInput } from "@/lib/promotions/validation";
 import { getBusinessPromotion } from "@/lib/queries/dashboard";
@@ -23,7 +23,7 @@ export async function GET(_request: Request, context: RouteContext) {
 }
 
 export async function PATCH(request: Request, context: RouteContext) {
-  const auth = await requireApiBusiness();
+  const auth = await requireLiveStore();
   if (auth.error) return auth.error;
 
   const { id } = await context.params;
@@ -45,8 +45,11 @@ export async function PATCH(request: Request, context: RouteContext) {
 }
 
 export async function DELETE(_request: Request, context: RouteContext) {
-  const auth = await requireApiPermission("promotionsDelete");
+  const auth = await requireLiveStore();
   if (auth.error) return auth.error;
+  if (!auth.permissions.promotionsDelete) {
+    return NextResponse.json({ error: "You do not have permission for this action." }, { status: 403 });
+  }
 
   const { id } = await context.params;
 

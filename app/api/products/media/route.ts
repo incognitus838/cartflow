@@ -2,7 +2,7 @@ import { randomUUID } from "crypto";
 import { mkdir, writeFile } from "fs/promises";
 import path from "path";
 import { NextResponse } from "next/server";
-import { requireApiBusiness } from "@/lib/api/require-business";
+import { requireApprovedStore } from "@/lib/api/require-business";
 import { detectMediaType } from "@/lib/media";
 
 export const runtime = "nodejs";
@@ -18,7 +18,7 @@ const ALLOWED = new Set([
 ]);
 
 export async function POST(request: Request) {
-  const auth = await requireApiBusiness();
+  const auth = await requireApprovedStore();
   if (auth.error) return auth.error;
 
   const formData = await request.formData().catch(() => null);

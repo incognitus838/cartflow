@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import type { BusinessPlan } from "@prisma/client";
 import { Check, ClipboardCheck, Layers, X } from "lucide-react";
@@ -26,9 +26,39 @@ type StoreApprovalsPanelProps = {
 export function StoreApprovalsPanel({ pending, recent, pendingCount }: StoreApprovalsPanelProps) {
   const router = useRouter();
   const [rows, setRows] = useState(pending);
+  const [queueCount, setQueueCount] = useState(pendingCount);
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [rejectId, setRejectId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState("");
+
+  useEffect(() => {
+    setRows(pending);
+    setQueueCount(pendingCount);
+  }, [pending, pendingCount]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function refreshQueue() {
+      try {
+        const res = await fetch("/api/admin/approvals", { cache: "no-store" });
+        if (!res.ok || cancelled) return;
+        const data = await res.json();
+        if (cancelled) return;
+        if (Array.isArray(data.pending)) setRows(data.pending);
+        if (typeof data.pendingCount === "number") setQueueCount(data.pendingCount);
+      } catch {
+        /* ignore transient network errors */
+      }
+    }
+
+    refreshQueue();
+    const timer = window.setInterval(refreshQueue, 15_000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, []);
 
   async function review(
     id: string,
@@ -98,10 +128,10 @@ export function StoreApprovalsPanel({ pending, recent, pendingCount }: StoreAppr
           <li>
             <AdminKpiCard
               label="Pending store reviews"
-              value={pendingCount}
+              value={queueCount}
               icon={ClipboardCheck}
               tone="amber"
-              highlight={pendingCount > 0}
+              highlight={queueCount > 0}
             />
           </li>
           <li>
@@ -159,10 +189,53 @@ export function StoreApprovalsPanel({ pending, recent, pendingCount }: StoreAppr
                   <ReadinessPill label="Bank on file" ok={store.readiness.hasBank} />
                   <ReadinessPill label="Contact info" ok={store.readiness.hasContact} />
                   <ReadinessPill
-                    label={`Catalog (${store._count.products} products)`}
+                    label={`Catalog (${store.readiness.categoryCount} categories)`}
                     ok={store.readiness.hasCatalog}
                   />
                   <ReadinessPill label="Owner email" ok={Boolean(store.readiness.ownerEmail)} />
+                </div>
+
+                <div className="grid gap-4 border-t border-black/[0.06] px-5 py-4 sm:grid-cols-2">
+                  <ApprovalDetailSection title="Bank on file" ok={store.readiness.hasBank}>
+                    <DetailRow label="Bank" value={store.bankName} />
+                    <DetailRow label="Account name" value={store.bankAccountName} />
+                    <DetailRow label="Account number" value={store.bankAccountNumber} mono />
+                  </ApprovalDetailSection>
+
+                  <ApprovalDetailSection title="Contact info" ok={store.readiness.hasContact}>
+                    <DetailRow label="Phone" value={store.phone} />
+                    <DetailRow label="WhatsApp" value={store.whatsapp} />
+                  </ApprovalDetailSection>
+
+                  <ApprovalDetailSection title="Owner" ok={Boolean(store.readiness.ownerEmail)}>
+                    <DetailRow label="Name" value={store.owner.name} />
+                    <DetailRow label="Email" value={store.owner.email} />
+                    <DetailRow
+                      label="Signed up"
+                      value={new Date(store.owner.createdAt).toLocaleDateString()}
+                    />
+                  </ApprovalDetailSection>
+
+                  <ApprovalDetailSection title="Catalog setup" ok={store.readiness.hasCatalog}>
+                    {store.catalog.templateLabel ? (
+                      <DetailRow label="Template" value={store.catalog.templateLabel} />
+                    ) : null}
+                    <DetailRow
+                      label="Categories"
+                      value={
+                        store.catalog.categories.length > 0
+                          ? store.catalog.categories.join(", ")
+                          : null
+                      }
+                    />
+                    {store.catalog.tags.length > 0 ? (
+                      <DetailRow label="Tags" value={store.catalog.tags.join(", ")} />
+                    ) : null}
+                    <DetailRow
+                      label="Products"
+                      value={`${store._count.products} (uploads unlock after approval)`}
+                    />
+                  </ApprovalDetailSection>
                 </div>
 
                 {store.description ? (
@@ -303,6 +376,56 @@ function ReadinessPill({ label, ok }: { label: string; ok: boolean }) {
       }`}
     >
       <span className="font-medium">{ok ? "✓" : "○"}</span> {label}
+    </div>
+  );
+}
+
+function ApprovalDetailSection({
+  title,
+  ok,
+  children,
+}: {
+  title: string;
+  ok: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <div
+      className={`rounded-[12px] border px-4 py-3 ${
+        ok ? "border-black/[0.06] bg-[#fbfbfd]" : "border-[#e8a317]/20 bg-[#fffdf5]"
+      }`}
+    >
+      <p className="text-[12px] font-semibold text-[#1d1d1f]">
+        <span className={ok ? "text-[#1a7f5a]" : "text-[#9a6700]"}>{ok ? "✓" : "○"}</span>{" "}
+        {title}
+      </p>
+      <dl className="mt-2 space-y-1.5">{children}</dl>
+    </div>
+  );
+}
+
+function DetailRow({
+  label,
+  value,
+  mono = false,
+}: {
+  label: string;
+  value: string | null | undefined;
+  mono?: boolean;
+}) {
+  const display = value?.trim() ? value.trim() : "Not provided";
+  const missing = !value?.trim();
+
+  return (
+    <div className="flex flex-wrap gap-x-2 text-[12px]">
+      <dt className="min-w-[6.5rem] text-[#86868b]">{label}</dt>
+      <dd
+        className={`min-w-0 flex-1 break-words ${mono ? "font-mono" : ""} ${
+          missing ? "italic text-[#9a6700]" : "text-[#1d1d1f]"
+        }`}
+      >
+        {display}
+      </dd>
     </div>
   );
 }

@@ -171,8 +171,9 @@ export function resolveMemberPermissions(
 
 export function canAccessNavPath(permissions: MemberPermissions, href: string) {
   if (href === "/dashboard" || href.startsWith("/dashboard/orders")) return permissions.orders;
-  if (href.startsWith("/dashboard/products")) return permissions.products;
-  if (href.startsWith("/dashboard/catalog")) return permissions.catalog;
+  if (href.startsWith("/dashboard/products") || href.startsWith("/dashboard/catalog")) {
+    return permissions.products || permissions.catalog;
+  }
   if (href.startsWith("/dashboard/promotions")) return permissions.promotions;
   if (href.startsWith("/dashboard/analytics")) return permissions.analytics;
   if (href.startsWith("/dashboard/storefront")) return permissions.storefront;

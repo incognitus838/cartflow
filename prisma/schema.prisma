@@ -213,8 +213,8 @@ model Business {
   showContactButton        Boolean         @default(true)
   catalogLayout            CatalogLayout   @default(GRID)
   catalogSettings          Json?
-  isActive                 Boolean      @default(true)
-  approvalStatus           StoreApprovalStatus @default(APPROVED)
+  isActive                 Boolean      @default(false)
+  approvalStatus           StoreApprovalStatus @default(PENDING)
   submittedAt              DateTime?
   approvalReviewedAt       DateTime?
   approvalReviewedBy       String?

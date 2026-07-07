@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
+import { LIVE_STORE_LOCKED_UNTIL_APPROVAL, PRODUCTS_LOCKED_UNTIL_APPROVAL } from "@/lib/business/approval";
 import { resolveStoreAccessContext } from "@/lib/store-access";
 import type { MemberPermissions } from "@/lib/team/permissions-shared";
 import { assertBusinessAccess, resolveActiveBusinessId } from "@/lib/tenant";
@@ -50,6 +51,34 @@ export async function requireApiPermission(permission: keyof MemberPermissions) 
   if (!auth.permissions[permission]) {
     return {
       error: NextResponse.json({ error: "You do not have permission for this action." }, { status: 403 }),
+    };
+  }
+  return auth;
+}
+
+export async function requireApprovedStore() {
+  const auth = await requireApiBusiness();
+  if (auth.error) return auth;
+  if (auth.business.approvalStatus !== "APPROVED") {
+    return {
+      error: NextResponse.json(
+        { error: PRODUCTS_LOCKED_UNTIL_APPROVAL, code: "STORE_NOT_APPROVED" },
+        { status: 403 },
+      ),
+    };
+  }
+  return auth;
+}
+
+export async function requireLiveStore() {
+  const auth = await requireApiBusiness();
+  if (auth.error) return auth;
+  if (auth.business.approvalStatus !== "APPROVED") {
+    return {
+      error: NextResponse.json(
+        { error: LIVE_STORE_LOCKED_UNTIL_APPROVAL, code: "STORE_NOT_LIVE" },
+        { status: 403 },
+      ),
     };
   }
   return auth;

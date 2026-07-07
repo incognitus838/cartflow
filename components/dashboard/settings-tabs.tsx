@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { Settings, Users } from "lucide-react";
+import { Settings, Store, Users } from "lucide-react";
 
 type SettingsTabsProps = {
-  active: "store" | "team";
+  active: "store" | "team" | "stores";
 };
 
 export function SettingsTabs({ active }: SettingsTabsProps) {
@@ -13,8 +13,9 @@ export function SettingsTabs({ active }: SettingsTabsProps) {
   const searchParams = useSearchParams();
   const base = pathname;
 
-  function href(tab: "store" | "team") {
+  function href(tab: "store" | "team" | "stores") {
     if (tab === "store") return base;
+    if (tab === "stores") return "/dashboard/stores";
     const params = new URLSearchParams(searchParams.toString());
     params.set("tab", "team");
     return `${base}?${params.toString()}`;
@@ -23,6 +24,7 @@ export function SettingsTabs({ active }: SettingsTabsProps) {
   const tabs = [
     { id: "store" as const, label: "Store", icon: Settings },
     { id: "team" as const, label: "Team", icon: Users },
+    { id: "stores" as const, label: "My stores", icon: Store },
   ];
 
   return (

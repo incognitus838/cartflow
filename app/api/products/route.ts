@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireApiBusiness } from "@/lib/api/require-business";
+import { requireApiBusiness, requireApprovedStore } from "@/lib/api/require-business";
 import { createProduct } from "@/lib/products/mutations";
 import { parseProductInput } from "@/lib/products/validation";
 import { listBusinessProducts } from "@/lib/queries/dashboard";
@@ -23,7 +23,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const auth = await requireApiBusiness();
+  const auth = await requireApprovedStore();
   if (auth.error) return auth.error;
 
   const body = await request.json().catch(() => null);

@@ -14,12 +14,68 @@ export function isStorePubliclyLive(store: StoreApprovalSnapshot) {
   return store.approvalStatus === "APPROVED" && store.isActive;
 }
 
+export const PRODUCTS_LOCKED_UNTIL_APPROVAL =
+  "Your store must be approved before you can add or edit products.";
+
+export const LIVE_STORE_LOCKED_UNTIL_APPROVAL =
+  "This feature unlocks once your store is approved.";
+
+/** Seller can create/edit products and run a live storefront. */
+export function isLiveStore(store: StoreApprovalSnapshot) {
+  return store.approvalStatus === "APPROVED";
+}
+
+export function canManageProducts(store: StoreApprovalSnapshot) {
+  return isLiveStore(store);
+}
+
+export function isPendingApproval(store: StoreApprovalSnapshot) {
+  return store.approvalStatus === "PENDING";
+}
+
+/** Dashboard routes available while approvalStatus is PENDING (owner onboarding). */
+export const PENDING_APPROVAL_NAV_HREFS = [
+  "/dashboard",
+  "/dashboard/products",
+  "/dashboard/catalog",
+  "/dashboard/stores",
+  "/dashboard/settings",
+] as const;
+
+export function isNavAllowedDuringPending(href: string) {
+  return PENDING_APPROVAL_NAV_HREFS.some(
+    (allowed) => href === allowed || href.startsWith(`${allowed}/`),
+  );
+}
+
+export type PendingSetupChecklist = {
+  hasBank: boolean;
+  hasContact: boolean;
+  hasCategories: boolean;
+  submittedAt: Date | null;
+};
+
+export function buildPendingSetupChecklist(input: {
+  bankAccountNumber: string | null;
+  phone: string | null;
+  whatsapp: string | null;
+  categoryCount: number;
+  submittedAt: Date | null;
+}): PendingSetupChecklist {
+  return {
+    hasBank: Boolean(input.bankAccountNumber?.trim()),
+    hasContact: Boolean(input.phone?.trim() || input.whatsapp?.trim()),
+    hasCategories: input.categoryCount > 0,
+    submittedAt: input.submittedAt,
+  };
+}
+
 export function sellerApprovalMessage(store: StoreApprovalSnapshot) {
   if (store.approvalStatus === "PENDING") {
     return {
       tone: "pending" as const,
-      title: "Awaiting platform approval",
-      body: "Your store application is in review. You'll get full access once an admin approves it — usually within 24 hours.",
+      title: "Store under review",
+      body: "Your application is with our team. Finish your setup checklist below — you can update bank details, contact info, and catalog categories. Products, orders, and your public storefront unlock after approval (usually within 24 hours).",
     };
   }
   if (store.approvalStatus === "REJECTED") {
@@ -39,6 +95,7 @@ export type ApprovalReadiness = {
   hasBank: boolean;
   hasContact: boolean;
   productCount: number;
+  categoryCount: number;
   hasCatalog: boolean;
   ownerEmail: string;
   daysWaiting: number;
@@ -49,6 +106,7 @@ export function computeReadiness(input: {
   phone: string | null;
   whatsapp: string | null;
   productCount: number;
+  categoryCount: number;
   ownerEmail: string;
   submittedAt: Date | null;
   createdAt: Date;
@@ -60,7 +118,8 @@ export function computeReadiness(input: {
     hasBank: Boolean(input.bankAccountNumber?.trim()),
     hasContact: Boolean(input.phone?.trim() || input.whatsapp?.trim()),
     productCount: input.productCount,
-    hasCatalog: input.productCount > 0,
+    categoryCount: input.categoryCount,
+    hasCatalog: input.categoryCount > 0,
     ownerEmail: input.ownerEmail,
     daysWaiting,
   };

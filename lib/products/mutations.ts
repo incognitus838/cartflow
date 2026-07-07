@@ -1,4 +1,5 @@
 import { Prisma } from "@prisma/client";
+import { syncCatalogFromProduct } from "@/lib/catalog/sync-from-product";
 import { prisma } from "@/lib/db";
 import { canAddProduct } from "@/lib/plans";
 import type { ProductInput } from "@/lib/products/types";
@@ -68,6 +69,11 @@ export async function createProduct(businessId: string, input: ProductInput) {
         },
       });
     }
+
+    await syncCatalogFromProduct(businessId, {
+      category: input.category,
+      metadata: input.metadata,
+    }, tx);
 
     return product;
   });
@@ -168,6 +174,11 @@ export async function updateProduct(
         },
       });
     }
+
+    await syncCatalogFromProduct(businessId, {
+      category: input.category,
+      metadata: input.metadata,
+    }, tx);
 
     return product;
   });

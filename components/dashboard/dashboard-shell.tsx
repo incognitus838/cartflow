@@ -5,6 +5,7 @@ import { Menu, ShoppingBag } from "lucide-react";
 import { DashboardSidebar } from "@/components/dashboard/sidebar";
 import type { StoreSwitcherOption } from "@/components/dashboard/store-switcher";
 import { useMobileNav } from "@/components/dashboard/use-mobile-nav";
+import type { StoreApprovalSnapshot } from "@/lib/business/approval";
 import { presetLabel } from "@/lib/dashboard/nav";
 import type { StoreAccessRole } from "@/lib/store-access-types";
 import type { MemberPermissions } from "@/lib/team/permissions-shared";
@@ -19,6 +20,7 @@ type DashboardShellProps = {
   accessPreset?: string | null;
   permissions?: MemberPermissions;
   accessibleStores?: StoreSwitcherOption[];
+  approvalStatus?: StoreApprovalSnapshot["approvalStatus"];
   children: ReactNode;
 };
 
@@ -32,6 +34,7 @@ export function DashboardShell({
   accessPreset = null,
   permissions,
   accessibleStores = [],
+  approvalStatus = "APPROVED",
   children,
 }: DashboardShellProps) {
   const { navOpen, setNavOpen } = useMobileNav();
@@ -89,6 +92,7 @@ export function DashboardShell({
         accessPreset={accessPreset}
         permissions={permissions}
         accessibleStores={accessibleStores}
+        approvalStatus={approvalStatus}
         mobileOpen={navOpen}
         onNavigate={() => setNavOpen(false)}
         onClose={() => setNavOpen(false)}

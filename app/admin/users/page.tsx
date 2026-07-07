@@ -2,6 +2,8 @@ import { UsersPanel } from "@/components/admin/users-panel";
 import { PageHeader } from "@/components/shared/page-header";
 import { getAdminUserStats, listAdminUsers } from "@/lib/admin/queries";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminUsersPage() {
   const [users, stats] = await Promise.all([listAdminUsers({ take: 500 }), getAdminUserStats()]);
 

@@ -3,11 +3,11 @@ import { Megaphone, Plus } from "lucide-react";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { PromotionsList } from "@/components/dashboard/promotions-list";
 import { PageHeader } from "@/components/shared/page-header";
-import { requirePermission } from "@/lib/auth-server";
+import { requireLivePermission } from "@/lib/auth-server";
 import { listBusinessPromotions } from "@/lib/queries/dashboard";
 
 export default async function PromotionsPage() {
-  const { business, permissions } = await requirePermission("promotions");
+  const { business, permissions } = await requireLivePermission("promotions");
   const promotions = await listBusinessPromotions(business.id);
 
   return (

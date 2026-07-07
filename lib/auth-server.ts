@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
+import { canManageProducts, isLiveStore } from "@/lib/business/approval";
 import { isDatabaseConfigured, prisma } from "@/lib/db";
 import { resolveStoreAccessContext } from "@/lib/store-access";
 import type { StoreAccessRole } from "@/lib/store-access-types";
@@ -95,6 +96,43 @@ export async function requirePermission(
   redirectTo = "/dashboard",
 ) {
   const ctx = await requireBusiness();
+  if (!ctx.permissions[permission]) {
+    redirect(redirectTo);
+  }
+  return ctx;
+}
+
+export async function requireApprovedForProducts(redirectTo = "/dashboard/products") {
+  const ctx = await requirePermission("products", redirectTo);
+  if (!canManageProducts(ctx.business)) {
+    redirect(redirectTo);
+  }
+  return ctx;
+}
+
+/** Products hub — list inventory and/or edit catalog structure. */
+export async function requireProductsHub(redirectTo = "/dashboard") {
+  const ctx = await requireBusiness();
+  if (!ctx.permissions.products && !ctx.permissions.catalog) {
+    redirect(redirectTo);
+  }
+  return ctx;
+}
+
+/** Pages/API for a live approved store (orders, promotions, analytics, etc.). */
+export async function requireLiveStore(redirectTo = "/dashboard") {
+  const ctx = await requireBusiness();
+  if (!isLiveStore(ctx.business)) {
+    redirect(redirectTo);
+  }
+  return ctx;
+}
+
+export async function requireLivePermission(
+  permission: keyof MemberPermissions,
+  redirectTo = "/dashboard",
+) {
+  const ctx = await requireLiveStore(redirectTo);
   if (!ctx.permissions[permission]) {
     redirect(redirectTo);
   }

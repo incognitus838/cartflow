@@ -1,6 +1,6 @@
 import { revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
-import { requireApiStoreOwner } from "@/lib/api/require-business";
+import { requireApiStoreOwner, requireLiveStore } from "@/lib/api/require-business";
 import {
   parseStorefrontProfileInput,
   toStorefrontProfile,
@@ -29,6 +29,8 @@ export async function GET() {
 }
 
 export async function PATCH(request: Request) {
+  const live = await requireLiveStore();
+  if (live.error) return live.error;
   const auth = await requireApiStoreOwner();
   if (auth.error) return auth.error;
 

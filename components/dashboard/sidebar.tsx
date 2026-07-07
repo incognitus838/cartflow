@@ -8,7 +8,6 @@ import {
   CreditCard,
   ExternalLink,
   Eye,
-  FolderTree,
   LayoutDashboard,
   LogOut,
   Megaphone,
@@ -17,6 +16,7 @@ import {
   Shield,
   ShoppingBag,
   ShoppingCart,
+  Store as StoreIcon,
   X,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -24,6 +24,8 @@ import {
   StoreSwitcher,
   type StoreSwitcherOption,
 } from "@/components/dashboard/store-switcher";
+import type { StoreApprovalSnapshot } from "@/lib/business/approval";
+import { isPendingApproval } from "@/lib/business/approval";
 import { navItemsForPermissions, navItemsForStoreRole, presetLabel } from "@/lib/dashboard/nav";
 import type { StoreAccessRole } from "@/lib/store-access-types";
 import type { MemberPermissions } from "@/lib/team/permissions-shared";
@@ -32,11 +34,11 @@ const NAV_ICONS = {
   "/dashboard": LayoutDashboard,
   "/dashboard/storefront": Eye,
   "/dashboard/products": Package,
-  "/dashboard/catalog": FolderTree,
   "/dashboard/promotions": Megaphone,
   "/dashboard/orders": ShoppingCart,
   "/dashboard/analytics": BarChart3,
   "/dashboard/billing": CreditCard,
+  "/dashboard/stores": StoreIcon,
   "/dashboard/settings": Settings,
 } as const;
 
@@ -51,6 +53,7 @@ type SidebarProps = {
   accessPreset?: string | null;
   permissions?: MemberPermissions;
   accessibleStores?: StoreSwitcherOption[];
+  approvalStatus?: StoreApprovalSnapshot["approvalStatus"];
   mobileOpen?: boolean;
   onNavigate?: () => void;
   onClose?: () => void;
@@ -67,6 +70,7 @@ export function DashboardSidebar({
   accessPreset = null,
   permissions,
   accessibleStores = [],
+  approvalStatus = "APPROVED",
   mobileOpen = false,
   onNavigate,
   onClose,
@@ -74,10 +78,12 @@ export function DashboardSidebar({
   const pathname = usePathname();
   const router = useRouter();
   const [isMobileNav, setIsMobileNav] = useState(false);
+  const storeSnapshot = { approvalStatus, isActive: true };
   const navItems =
     permissions && storeAccessRole === "staff"
-      ? navItemsForPermissions(storeAccessRole, permissions)
-      : navItemsForStoreRole(storeAccessRole);
+      ? navItemsForPermissions(storeAccessRole, permissions, storeSnapshot)
+      : navItemsForStoreRole(storeAccessRole, storeSnapshot);
+  const storePending = isPendingApproval(storeSnapshot);
   const roleBadge = storeAccessRole === "staff" ? presetLabel(accessPreset) : null;
 
   useEffect(() => {
@@ -130,12 +136,14 @@ export function DashboardSidebar({
         </div>
       </div>
 
-      {accessibleStores.length > 1 ? (
+      {accessibleStores.length > 0 &&
+      (accessibleStores.length > 1 || storeAccessRole === "owner") ? (
         <div className="px-4 pb-3 lg:px-5">
           <StoreSwitcher
             stores={accessibleStores}
             activeStoreId={businessId}
             compact
+            canAddStore={storeAccessRole === "owner"}
           />
         </div>
       ) : null}
@@ -171,16 +179,22 @@ export function DashboardSidebar({
       </nav>
 
       <div className="cf-dash-sidebar__footer">
-        <a
-          href={`/${businessSlug}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="cf-dash-nav-link text-[#6e6e73] hover:bg-[#f5f5f7] hover:text-[#1d1d1f]"
-          onClick={onNavigate}
-        >
-          <ExternalLink className="h-4 w-4" strokeWidth={1.75} aria-hidden />
-          View storefront
-        </a>
+        {storePending ? (
+          <p className="px-3 py-2 text-[11px] leading-relaxed text-[#86868b]">
+            Public storefront unlocks after platform approval.
+          </p>
+        ) : (
+          <a
+            href={`/${businessSlug}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="cf-dash-nav-link text-[#6e6e73] hover:bg-[#f5f5f7] hover:text-[#1d1d1f]"
+            onClick={onNavigate}
+          >
+            <ExternalLink className="h-4 w-4" strokeWidth={1.75} aria-hidden />
+            View storefront
+          </a>
+        )}
         {userRole === "ADMIN" ? (
           <Link
             href="/admin"

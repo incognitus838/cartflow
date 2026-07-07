@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { OrderDetailPanel } from "@/components/dashboard/order-detail-panel";
-import { requirePermission } from "@/lib/auth-server";
+import { requireLivePermission } from "@/lib/auth-server";
 import { orderHasReceipt } from "@/lib/orders/receipt-storage";
 import { getBusinessOrder } from "@/lib/queries/dashboard";
 
@@ -9,7 +9,7 @@ type OrderDetailPageProps = {
 };
 
 export default async function OrderDetailPage({ params }: OrderDetailPageProps) {
-  const { business, permissions } = await requirePermission("orders");
+  const { business, permissions } = await requireLivePermission("orders");
   const { id } = await params;
   const order = await getBusinessOrder(business.id, id);
 

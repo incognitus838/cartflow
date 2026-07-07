@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -38,7 +39,12 @@ function validateBankFields(
   return errors;
 }
 
-export function OnboardingWizard() {
+type OnboardingWizardProps = {
+  mode?: "initial" | "add";
+};
+
+export function OnboardingWizard({ mode = "initial" }: OnboardingWizardProps) {
+  const isAddStore = mode === "add";
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -134,13 +140,25 @@ export function OnboardingWizard() {
 
   return (
     <div className="mx-auto w-full max-w-lg px-4 py-12">
+      {isAddStore ? (
+        <Link
+          href="/dashboard/stores"
+          className="mb-4 inline-block text-sm font-medium text-slate-600 hover:text-slate-900"
+        >
+          ← Back to my stores
+        </Link>
+      ) : null}
       <div className="mb-8">
         <p className="text-sm font-medium text-emerald-700">
           Step {step} of {TOTAL_STEPS}
         </p>
-        <h1 className="mt-2 text-2xl font-bold text-slate-900">Set up your store</h1>
+        <h1 className="mt-2 text-2xl font-bold text-slate-900">
+          {isAddStore ? "Add a new store" : "Set up your store"}
+        </h1>
         <p className="mt-2 text-sm text-slate-600">
-          You&apos;ll get a shareable link for WhatsApp in under a minute.
+          {isAddStore
+            ? "Each store gets its own catalog, checkout link, and approval review."
+            : "You\u2019ll get a shareable link for WhatsApp in under a minute."}
         </p>
         <div className="mt-4 flex gap-2">
           {Array.from({ length: TOTAL_STEPS }, (_, i) => i + 1).map((n) => (
@@ -413,7 +431,7 @@ export function OnboardingWizard() {
                 disabled={loading}
                 className="btn-primary flex-1 py-2.5"
               >
-                {loading ? "Creating…" : "Launch store"}
+                {loading ? "Creating…" : isAddStore ? "Submit store" : "Launch store"}
               </button>
             </div>
           </form>

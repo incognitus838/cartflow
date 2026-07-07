@@ -2,12 +2,12 @@ import Link from "next/link";
 import { BarChart3 } from "lucide-react";
 import { AnalyticsDashboard } from "@/components/dashboard/analytics-dashboard";
 import { PageHeader } from "@/components/shared/page-header";
-import { requirePermission } from "@/lib/auth-server";
+import { requireLivePermission } from "@/lib/auth-server";
 import { getBusinessAnalytics } from "@/lib/analytics/business";
 import { hasAnalytics } from "@/lib/plans";
 
 export default async function AnalyticsPage() {
-  const { business } = await requirePermission("analytics");
+  const { business } = await requireLivePermission("analytics");
 
   if (!hasAnalytics(business.plan)) {
     return (

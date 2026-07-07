@@ -6,6 +6,8 @@ import {
   listRecentApprovalDecisions,
 } from "@/lib/admin/store-approval";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminApprovalsPage() {
   const [pending, recent, pendingCount] = await Promise.all([
     listPendingStoreApprovals(100),

@@ -3,7 +3,7 @@ import "server-only";
 import { createHash, randomBytes } from "crypto";
 import type { MemberAccessPreset, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import { sendNotification } from "@/lib/notifications/send";
+import { sendTeamInviteEmail } from "@/lib/email/transactional";
 import { logStoreActivity } from "@/lib/team/activity";
 import { assertCanAddTeamSeat } from "@/lib/team/members";
 import type { MemberPermissions } from "@/lib/team/permissions-shared";
@@ -92,21 +92,14 @@ export async function createStaffInvite(input: {
 
   const inviteUrl = `${input.appUrl.replace(/\/$/, "")}/invite/${invite.token}`;
 
-  await sendNotification({
+  sendTeamInviteEmail({
     businessId: input.businessId,
-    channel: "EMAIL",
-    recipient: email,
-    subject: `You're invited to ${input.storeName} on CartFlow`,
-    body: [
-      `Hi${input.name ? ` ${input.name}` : ""},`,
-      "",
-      `${input.invitedByName} invited you to help manage ${input.storeName} on CartFlow.`,
-      `Access level: ${input.accessPreset}`,
-      "",
-      `Accept your invite: ${inviteUrl}`,
-      "",
-      `This link expires in ${INVITE_TTL_DAYS} days.`,
-    ].join("\n"),
+    recipientEmail: email,
+    recipientName: input.name,
+    storeName: input.storeName,
+    invitedByName: input.invitedByName,
+    accessPreset: input.accessPreset,
+    inviteUrl,
   });
 
   await logStoreActivity({

@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { SettingsTabs } from "@/components/dashboard/settings-tabs";
 import { StoreSettingsForm } from "@/components/dashboard/store-settings-form";
@@ -13,7 +14,11 @@ type PageProps = {
 export default async function SettingsPage({ searchParams }: PageProps) {
   const { business } = await requireStoreOwner();
   const params = await searchParams;
-  const tab = params.tab === "team" ? "team" : "store";
+  const tab =
+    params.tab === "team" ? "team" : params.tab === "stores" ? "stores" : "store";
+  if (tab === "stores") {
+    redirect("/dashboard/stores");
+  }
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3001";
 
   return (

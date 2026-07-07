@@ -15,7 +15,15 @@ export async function getAdminStats() {
     prisma.business.findMany({
       orderBy: { createdAt: "desc" },
       take: 10,
-      include: {
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        plan: true,
+        isActive: true,
+        approvalStatus: true,
+        submittedAt: true,
+        createdAt: true,
         owner: { select: { id: true, name: true, email: true } },
         _count: { select: { products: true, orders: true } },
       },
@@ -83,7 +91,15 @@ export async function listAdminBusinesses(options?: { search?: string; take?: nu
       : undefined,
     orderBy: { createdAt: "desc" },
     take,
-    include: {
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      plan: true,
+      isActive: true,
+      approvalStatus: true,
+      submittedAt: true,
+      createdAt: true,
       owner: { select: { id: true, name: true, email: true } },
       _count: { select: { products: true, orders: true } },
     },

@@ -4,7 +4,7 @@ import { EmptyState } from "@/components/dashboard/empty-state";
 import { PageHeader } from "@/components/shared/page-header";
 import { mapOrderToInbox } from "@/components/dashboard/order-inbox-card";
 import { OrdersList } from "@/components/dashboard/orders-list";
-import { requirePermission } from "@/lib/auth-server";
+import { requireLivePermission } from "@/lib/auth-server";
 import { orderHasReceipt } from "@/lib/orders/receipt-storage";
 import { listBusinessOrders } from "@/lib/queries/dashboard";
 
@@ -23,7 +23,7 @@ type OrdersPageProps = {
 };
 
 export default async function OrdersPage({ searchParams }: OrdersPageProps) {
-  const { business } = await requirePermission("orders");
+  const { business } = await requireLivePermission("orders");
   const { status: statusParam } = await searchParams;
   const initialStatus =
     statusParam && VALID_STATUSES.includes(statusParam as OrderStatus)

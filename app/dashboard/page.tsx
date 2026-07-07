@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { Package, ShoppingCart, TrendingUp } from "lucide-react";
+import { PendingApprovalOverview } from "@/components/dashboard/pending-approval-overview";
 import { PageHeader } from "@/components/shared/page-header";
+import { buildPendingSetupChecklist, isPendingApproval } from "@/lib/business/approval";
 import { requireBusiness } from "@/lib/auth-server";
+import { resolveCatalogSettings } from "@/lib/catalog/settings";
 import { toNumber } from "@/lib/decimal";
 import { formatCurrency } from "@/lib/utils";
 import { getLowStockProducts } from "@/lib/inventory";
@@ -9,6 +12,29 @@ import { getBusinessStats } from "@/lib/queries/dashboard";
 
 export default async function DashboardPage() {
   const { business } = await requireBusiness();
+  const pending = isPendingApproval(business);
+
+  if (pending) {
+    const catalog = await resolveCatalogSettings(business.id);
+    const checklist = buildPendingSetupChecklist({
+      bankAccountNumber: business.bankAccountNumber,
+      phone: business.phone,
+      whatsapp: business.whatsapp,
+      categoryCount: catalog.categories.length,
+      submittedAt: business.submittedAt,
+    });
+
+    return (
+      <>
+        <PageHeader
+          title="Overview"
+          description="Complete your setup while we review your store application."
+        />
+        <PendingApprovalOverview storeName={business.name} checklist={checklist} />
+      </>
+    );
+  }
+
   const [stats, lowStockProducts] = await Promise.all([
     getBusinessStats(business.id),
     getLowStockProducts(business.id),

@@ -1,26 +1,29 @@
 import "server-only";
 
 import { prisma } from "@/lib/db";
+import type { AccessibleStore, OwnedStoreDetail } from "@/lib/team/store-types";
 
-export type AccessibleStore = {
-  id: string;
-  name: string;
-  slug: string;
-  access: "owner" | "staff";
-  accessPreset: string | null;
-};
+export type { AccessibleStore, OwnedStoreDetail } from "@/lib/team/store-types";
+
+const storeSelect = {
+  id: true,
+  name: true,
+  slug: true,
+  approvalStatus: true,
+  isActive: true,
+} as const;
 
 export async function listAccessibleStores(userId: string): Promise<AccessibleStore[]> {
   const [owned, memberships] = await Promise.all([
     prisma.business.findMany({
       where: { ownerId: userId },
-      select: { id: true, name: true, slug: true },
+      select: storeSelect,
       orderBy: { createdAt: "asc" },
     }),
     prisma.businessMember.findMany({
       where: { userId, isSuspended: false, role: "STAFF" },
       include: {
-        business: { select: { id: true, name: true, slug: true } },
+        business: { select: storeSelect },
       },
       orderBy: { createdAt: "asc" },
     }),
@@ -32,6 +35,8 @@ export async function listAccessibleStores(userId: string): Promise<AccessibleSt
     slug: b.slug,
     access: "owner" as const,
     accessPreset: null,
+    approvalStatus: b.approvalStatus,
+    isActive: b.isActive,
   }));
 
   for (const membership of memberships) {
@@ -42,9 +47,57 @@ export async function listAccessibleStores(userId: string): Promise<AccessibleSt
         slug: membership.business.slug,
         access: "staff",
         accessPreset: membership.accessPreset,
+        approvalStatus: membership.business.approvalStatus,
+        isActive: membership.business.isActive,
       });
     }
   }
 
   return stores;
+}
+
+export async function listOwnedStores(userId: string): Promise<OwnedStoreDetail[]> {
+  const businesses = await prisma.business.findMany({
+    where: { ownerId: userId },
+    select: {
+      ...storeSelect,
+      createdAt: true,
+      _count: { select: { products: true } },
+    },
+    orderBy: { createdAt: "asc" },
+  });
+
+  return businesses.map((b) => ({
+    id: b.id,
+    name: b.name,
+    slug: b.slug,
+    approvalStatus: b.approvalStatus,
+    isActive: b.isActive,
+    createdAt: b.createdAt,
+    productCount: b._count.products,
+  }));
+}
+
+export async function countOwnedStores(userId: string) {
+  return prisma.business.count({ where: { ownerId: userId } });
+}
+
+/** Owners may create multiple stores; staff-only accounts may not. */
+export async function canUserCreateStore(userId: string): Promise<{ allowed: boolean; reason?: string }> {
+  const [ownedCount, staffMembership] = await Promise.all([
+    countOwnedStores(userId),
+    prisma.businessMember.findFirst({
+      where: { userId, role: "STAFF" },
+      select: { id: true },
+    }),
+  ]);
+
+  if (ownedCount === 0 && staffMembership) {
+    return {
+      allowed: false,
+      reason: "Team members cannot create stores. Ask your store owner for access.",
+    };
+  }
+
+  return { allowed: true };
 }

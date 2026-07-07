@@ -169,6 +169,14 @@ async function main() {
   }
   results.push(migrate);
 
+  results.push(
+    await run(
+      "npx",
+      ["dotenv-cli", "-e", ".env.local", "--", "node", "scripts/apply-approval-schema.mjs"],
+      "apply-approval-schema",
+    ),
+  );
+
   results.push({ step: "clear-next-before-tsc", status: clearNext() });
   results.push(
     await run("npx", ["tsc", "--noEmit", "-p", "tsconfig.check.json"], "tsc"),

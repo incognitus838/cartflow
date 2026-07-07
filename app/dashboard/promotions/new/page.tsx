@@ -1,10 +1,10 @@
 import { PromotionForm } from "@/components/dashboard/promotion-form";
 import { PageHeader } from "@/components/shared/page-header";
-import { requirePermission } from "@/lib/auth-server";
+import { requireLivePermission } from "@/lib/auth-server";
 import { listBusinessProducts } from "@/lib/queries/dashboard";
 
 export default async function NewPromotionPage() {
-  const { business } = await requirePermission("promotions");
+  const { business } = await requireLivePermission("promotions");
   const products = await listBusinessProducts(business.id, { status: "ACTIVE" });
 
   return (

@@ -3,6 +3,8 @@ import { createSession, getSession } from "@/lib/auth";
 import { parseBankDetails } from "@/lib/business/bank";
 import { createBusinessForOwner } from "@/lib/business/create";
 import { isDatabaseConfigured, prisma } from "@/lib/db";
+import { sendStoreSubmittedEmail } from "@/lib/email/transactional";
+import { canUserCreateStore } from "@/lib/team/stores";
 import { getBusinessForUser } from "@/lib/tenant";
 
 export const runtime = "nodejs";
@@ -17,18 +19,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Not authenticated." }, { status: 401 });
   }
 
-  const existing = await prisma.business.findFirst({
-    where: {
-      OR: [
-        { ownerId: session.userId },
-        { members: { some: { userId: session.userId } } },
-      ],
-    },
-  });
-
-  if (existing) {
-    return NextResponse.json({ error: "You already have a store." }, { status: 409 });
+  const createCheck = await canUserCreateStore(session.userId);
+  if (!createCheck.allowed) {
+    return NextResponse.json({ error: createCheck.reason }, { status: 403 });
   }
+
+  const ownedCount = await prisma.business.count({ where: { ownerId: session.userId } });
+  const isAddStore = ownedCount > 0;
 
   const body = await request.json().catch(() => null);
   const name = typeof body?.name === "string" ? body.name.trim() : "";
@@ -71,6 +68,20 @@ export async function POST(request: Request) {
       businessId: business.id,
     });
 
+    const owner = await prisma.user.findUnique({
+      where: { id: session.userId },
+      select: { name: true, email: true },
+    });
+    if (owner) {
+      sendStoreSubmittedEmail({
+        ownerName: owner.name,
+        ownerEmail: owner.email,
+        storeName: business.name,
+        storeSlug: business.slug,
+        businessId: business.id,
+      });
+    }
+
     return NextResponse.json({
       ok: true,
       pendingApproval: business.approvalStatus === "PENDING",
@@ -81,7 +92,7 @@ export async function POST(request: Request) {
         currency: business.currency,
         approvalStatus: business.approvalStatus,
       },
-      redirectTo: "/dashboard",
+      redirectTo: isAddStore ? "/dashboard/stores" : "/dashboard",
     });
   } catch (error) {
     return NextResponse.json(

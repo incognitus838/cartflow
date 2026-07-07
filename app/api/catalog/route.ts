@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireApiBusiness } from "@/lib/api/require-business";
+import { requireApiPermission } from "@/lib/api/require-business";
 import {
   applyTemplateToSettings,
   parseCatalogSettings,
@@ -22,7 +22,7 @@ function parseCatalogBody(body: unknown): CatalogSettings | string {
 }
 
 export async function GET() {
-  const auth = await requireApiBusiness();
+  const auth = await requireApiPermission("catalog");
   if (auth.error) return auth.error;
 
   const settings = await resolveCatalogSettings(auth.business.id);
@@ -30,7 +30,7 @@ export async function GET() {
 }
 
 export async function PATCH(request: Request) {
-  const auth = await requireApiBusiness();
+  const auth = await requireApiPermission("catalog");
   if (auth.error) return auth.error;
 
   const body = await request.json().catch(() => null);

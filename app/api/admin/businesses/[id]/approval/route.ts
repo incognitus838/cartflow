@@ -4,6 +4,8 @@ import type { BusinessPlan } from "@prisma/client";
 import { reviewStoreApplication } from "@/lib/admin/store-approval";
 import { requireApiAdmin } from "@/lib/api/require-admin";
 import { VALID_APPROVAL_PLANS } from "@/lib/business/approval";
+import { sendStoreApprovedEmail, sendStoreRejectedEmail } from "@/lib/email/transactional";
+import { prisma } from "@/lib/db";
 
 export const runtime = "nodejs";
 
@@ -55,6 +57,40 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     revalidateTag(`store-${business.slug}`, { expire: 0 });
     revalidateTag(`catalog-${business.id}`, { expire: 0 });
+
+    const store = await prisma.business.findUnique({
+      where: { id: business.id },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        approvalStatus: true,
+        rejectionReason: true,
+        resubmissionAllowed: true,
+        owner: { select: { name: true, email: true } },
+      },
+    });
+
+    if (store?.owner) {
+      if (store.approvalStatus === "APPROVED") {
+        sendStoreApprovedEmail({
+          ownerName: store.owner.name,
+          ownerEmail: store.owner.email,
+          storeName: store.name,
+          storeSlug: store.slug,
+          businessId: store.id,
+        });
+      } else if (store.approvalStatus === "REJECTED" && store.rejectionReason) {
+        sendStoreRejectedEmail({
+          ownerName: store.owner.name,
+          ownerEmail: store.owner.email,
+          storeName: store.name,
+          businessId: store.id,
+          reason: store.rejectionReason,
+          canResubmit: store.resubmissionAllowed,
+        });
+      }
+    }
 
     return NextResponse.json({
       business: {

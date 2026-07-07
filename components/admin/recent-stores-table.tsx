@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { StorefrontLink } from "@/components/admin/storefront-link";
 import type { AdminStoreRow } from "@/components/admin/stores-table";
+import { APPROVAL_STATUS_LABEL } from "@/lib/business/approval";
 
 type RecentStoresTableProps = {
   stores: AdminStoreRow[];
@@ -17,7 +18,8 @@ export function RecentStoresTable({ stores }: RecentStoresTableProps) {
             <th scope="col">Store</th>
             <th scope="col">Owner</th>
             <th scope="col">Plan</th>
-            <th scope="col">Status</th>
+            <th scope="col">Approval</th>
+            <th scope="col">Live</th>
             <th scope="col">Storefront</th>
           </tr>
         </thead>
@@ -34,6 +36,21 @@ export function RecentStoresTable({ stores }: RecentStoresTableProps) {
               </td>
               <td>
                 <span className="cf-badge cf-badge-delivered">{store.plan}</span>
+              </td>
+              <td>
+                {store.approvalStatus === "PENDING" ? (
+                  <Link href="/admin/approvals" className="cf-badge cf-badge-pending">
+                    {APPROVAL_STATUS_LABEL.PENDING}
+                  </Link>
+                ) : (
+                  <span
+                    className={`cf-badge ${
+                      store.approvalStatus === "APPROVED" ? "cf-badge-paid" : "cf-badge-cancelled"
+                    }`}
+                  >
+                    {APPROVAL_STATUS_LABEL[store.approvalStatus]}
+                  </span>
+                )}
               </td>
               <td>
                 <span className={`cf-badge ${store.isActive ? "cf-badge-paid" : "cf-badge-cancelled"}`}>

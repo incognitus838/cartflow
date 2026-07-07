@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createSession, hashPassword, updateSessionBusiness } from "@/lib/auth";
 import { isDatabaseConfigured, prisma } from "@/lib/db";
+import { sendWelcomeOwnerEmail } from "@/lib/email/transactional";
 import { acceptStaffInvite } from "@/lib/team/invites";
 
 export const runtime = "nodejs";
@@ -75,6 +76,10 @@ export async function POST(request: Request) {
 
   if (businessId) {
     await updateSessionBusiness(businessId);
+  }
+
+  if (!inviteToken && user.role === "OWNER") {
+    sendWelcomeOwnerEmail({ name: user.name, email: user.email });
   }
 
   return NextResponse.json({

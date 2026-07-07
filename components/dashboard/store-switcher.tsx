@@ -1,9 +1,14 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { ChevronsUpDown, Store } from "lucide-react";
+import { ChevronsUpDown, Plus, Store } from "lucide-react";
 import { toast } from "sonner";
+import {
+  APPROVAL_STATUS_LABEL,
+  type StoreApprovalSnapshot,
+} from "@/lib/business/approval";
 import { presetLabel } from "@/lib/dashboard/nav";
 
 export type StoreSwitcherOption = {
@@ -12,20 +17,36 @@ export type StoreSwitcherOption = {
   slug: string;
   access: "owner" | "staff";
   accessPreset: string | null;
+  approvalStatus?: StoreApprovalSnapshot["approvalStatus"];
+  isActive?: boolean;
 };
 
 type StoreSwitcherProps = {
   stores: StoreSwitcherOption[];
   activeStoreId: string;
   compact?: boolean;
+  canAddStore?: boolean;
 };
 
-export function StoreSwitcher({ stores, activeStoreId, compact = false }: StoreSwitcherProps) {
+function approvalTone(status: StoreApprovalSnapshot["approvalStatus"] | undefined) {
+  if (status === "APPROVED") return "text-emerald-600";
+  if (status === "PENDING") return "text-amber-600";
+  if (status === "REJECTED") return "text-red-600";
+  return "text-[#86868b]";
+}
+
+export function StoreSwitcher({
+  stores,
+  activeStoreId,
+  compact = false,
+  canAddStore = false,
+}: StoreSwitcherProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [switching, setSwitching] = useState(false);
 
-  if (stores.length <= 1) return null;
+  if (stores.length === 0) return null;
+  if (stores.length <= 1 && !canAddStore) return null;
 
   const active = stores.find((s) => s.id === activeStoreId) ?? stores[0];
 
@@ -101,10 +122,27 @@ export function StoreSwitcher({ stores, activeStoreId, compact = false }: StoreS
                     {store.access === "staff"
                       ? ` · ${presetLabel(store.accessPreset)}`
                       : " · Owner"}
+                    {store.approvalStatus ? (
+                      <span className={` · ${approvalTone(store.approvalStatus)}`}>
+                        {APPROVAL_STATUS_LABEL[store.approvalStatus]}
+                      </span>
+                    ) : null}
                   </span>
                 </button>
               </li>
             ))}
+            {canAddStore ? (
+              <li className="border-t border-[#e8e8ed]">
+                <Link
+                  href="/dashboard/stores/new"
+                  onClick={() => setOpen(false)}
+                  className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-[13px] font-medium text-emerald-700 hover:bg-[#f5f5f7]"
+                >
+                  <Plus className="h-3.5 w-3.5" strokeWidth={1.75} />
+                  Add store
+                </Link>
+              </li>
+            ) : null}
           </ul>
         </>
       ) : null}

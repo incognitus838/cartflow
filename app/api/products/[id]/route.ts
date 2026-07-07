@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireApiBusiness, requireApiPermission } from "@/lib/api/require-business";
+import { requireApiBusiness, requireApiPermission, requireApprovedStore } from "@/lib/api/require-business";
 import { deleteProduct, updateProduct } from "@/lib/products/mutations";
 import { parseProductInput } from "@/lib/products/validation";
 import { getBusinessProduct } from "@/lib/queries/dashboard";
@@ -23,7 +23,7 @@ export async function GET(_request: Request, context: RouteContext) {
 }
 
 export async function PATCH(request: Request, context: RouteContext) {
-  const auth = await requireApiBusiness();
+  const auth = await requireApprovedStore();
   if (auth.error) return auth.error;
 
   const { id } = await context.params;

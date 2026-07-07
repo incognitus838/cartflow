@@ -22,6 +22,16 @@ export function StoreApprovalBanner({ store }: StoreApprovalBannerProps) {
     >
       <p className="text-[13px] font-semibold">{message.title}</p>
       <p className="mt-1 text-[12px] leading-relaxed opacity-90">{message.body}</p>
+      {message.tone === "pending" ? (
+        <div className="mt-2 flex flex-wrap gap-3 text-[12px] font-medium">
+          <Link href="/dashboard/settings" className="underline underline-offset-2">
+            Update application
+          </Link>
+          <Link href="/dashboard/products?tab=structure" className="underline underline-offset-2">
+            Catalog setup
+          </Link>
+        </div>
+      ) : null}
       {message.tone === "rejected" && message.canResubmit ? (
         <Link
           href="/dashboard/settings"

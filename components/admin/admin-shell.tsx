@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { Menu, Shield } from "lucide-react";
 import { AdminSidebar } from "@/components/admin/sidebar";
+import { useAdminLiveSync } from "@/components/admin/use-admin-live-sync";
 import { useMobileNav } from "@/components/dashboard/use-mobile-nav";
 
 type AdminShellProps = {
@@ -19,6 +20,7 @@ export function AdminShell({
   children,
 }: AdminShellProps) {
   const { navOpen, setNavOpen } = useMobileNav();
+  const livePendingApprovals = useAdminLiveSync(pendingApprovals);
 
   return (
     <div className="cf-dash-shell">
@@ -61,7 +63,7 @@ export function AdminShell({
         id="admin-dashboard-nav"
         userEmail={userEmail}
         userName={userName}
-        pendingApprovals={pendingApprovals}
+        pendingApprovals={livePendingApprovals}
         mobileOpen={navOpen}
         onNavigate={() => setNavOpen(false)}
         onClose={() => setNavOpen(false)}

@@ -1,3 +1,4 @@
+import { sendEmail } from "@/lib/email/client";
 import { prisma } from "@/lib/db";
 import type { NotificationChannel } from "@prisma/client";
 
@@ -9,29 +10,6 @@ type SendNotificationInput = {
   subject?: string;
   body: string;
 };
-
-async function deliverEmail(recipient: string, subject: string, body: string) {
-  const apiKey = process.env.RESEND_API_KEY?.trim();
-  const from = process.env.NOTIFICATION_FROM_EMAIL?.trim() || "orders@cartflow.app";
-
-  if (!apiKey) {
-    throw new Error("RESEND_API_KEY is not configured — email skipped.");
-  }
-
-  const res = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ from, to: [recipient], subject, text: body }),
-  });
-
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    throw new Error(data.message || "Email delivery failed.");
-  }
-}
 
 async function deliverSms(recipient: string, body: string) {
   const sid = process.env.TWILIO_ACCOUNT_SID?.trim();
@@ -81,7 +59,15 @@ export async function sendNotification(input: SendNotificationInput) {
 
   try {
     if (input.channel === "EMAIL") {
-      await deliverEmail(input.recipient, input.subject || "CartFlow", input.body);
+      const result = await sendEmail({
+        to: input.recipient,
+        subject: input.subject || "CartFlow",
+        text: input.body,
+        from: "notification",
+      });
+      if (!result.sent) {
+        throw new Error(result.error);
+      }
     } else {
       await deliverSms(input.recipient, input.body);
     }

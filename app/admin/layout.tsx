@@ -2,6 +2,8 @@ import { AdminShell } from "@/components/admin/admin-shell";
 import { countPendingStoreApprovals } from "@/lib/admin/store-approval";
 import { requireAdmin } from "@/lib/auth-server";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user } = await requireAdmin();
   const pendingApprovals = await countPendingStoreApprovals();

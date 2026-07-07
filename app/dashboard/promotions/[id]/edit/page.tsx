@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { PromotionForm } from "@/components/dashboard/promotion-form";
 import { PageHeader } from "@/components/shared/page-header";
-import { requirePermission } from "@/lib/auth-server";
+import { requireLivePermission } from "@/lib/auth-server";
 import { toNumber } from "@/lib/decimal";
 import { getBusinessPromotion, listBusinessProducts } from "@/lib/queries/dashboard";
 
@@ -16,7 +16,7 @@ function toLocalInput(value: Date | null) {
 }
 
 export default async function EditPromotionPage({ params }: EditPromotionPageProps) {
-  const { business } = await requirePermission("promotions");
+  const { business } = await requireLivePermission("promotions");
   const { id } = await params;
   const [promotion, products] = await Promise.all([
     getBusinessPromotion(business.id, id),

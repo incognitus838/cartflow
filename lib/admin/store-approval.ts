@@ -1,7 +1,9 @@
 import type { BusinessPlan } from "@prisma/client";
-import { prisma } from "@/lib/db";
+import { parseCatalogSettings } from "@/lib/catalog/settings";
+import { getCatalogTemplate } from "@/lib/catalog/templates";
 import { computeReadiness, VALID_APPROVAL_PLANS } from "@/lib/business/approval";
 import type { ApprovalReadiness } from "@/lib/business/approval";
+import { prisma } from "@/lib/db";
 
 export type PendingApprovalRecord = {
   id: string;
@@ -21,6 +23,12 @@ export type PendingApprovalRecord = {
   createdAt: string;
   owner: { id: string; name: string; email: string; createdAt: string };
   _count: { products: number; orders: number; customers: number };
+  catalog: {
+    categories: string[];
+    tags: string[];
+    templateId: string | null;
+    templateLabel: string | null;
+  };
   readiness: ApprovalReadiness;
 };
 
@@ -63,39 +71,53 @@ export async function listPendingStoreApprovals(take = 100): Promise<PendingAppr
     },
   });
 
-  return stores.map((store): PendingApprovalRecord => ({
-    id: store.id,
-    name: store.name,
-    slug: store.slug,
-    description: store.description,
-    currency: store.currency,
-    plan: store.plan,
-    phone: store.phone,
-    whatsapp: store.whatsapp,
-    bankName: store.bankName,
-    bankAccountName: store.bankAccountName,
-    bankAccountNumber: store.bankAccountNumber,
-    logoUrl: store.logoUrl,
-    approvalPriority: store.approvalPriority,
-    submittedAt: (store.submittedAt ?? store.createdAt).toISOString(),
-    createdAt: store.createdAt.toISOString(),
-    owner: {
-      id: store.owner.id,
-      name: store.owner.name,
-      email: store.owner.email,
-      createdAt: store.owner.createdAt.toISOString(),
-    },
-    _count: store._count,
-    readiness: computeReadiness({
-      bankAccountNumber: store.bankAccountNumber,
+  return stores.map((store): PendingApprovalRecord => {
+    const catalogSettings = parseCatalogSettings(store.catalogSettings);
+    const template = catalogSettings.templateId
+      ? getCatalogTemplate(catalogSettings.templateId)
+      : undefined;
+
+    return {
+      id: store.id,
+      name: store.name,
+      slug: store.slug,
+      description: store.description,
+      currency: store.currency,
+      plan: store.plan,
       phone: store.phone,
       whatsapp: store.whatsapp,
-      productCount: store._count.products,
-      ownerEmail: store.owner.email,
-      submittedAt: store.submittedAt,
-      createdAt: store.createdAt,
-    }),
-  }));
+      bankName: store.bankName,
+      bankAccountName: store.bankAccountName,
+      bankAccountNumber: store.bankAccountNumber,
+      logoUrl: store.logoUrl,
+      approvalPriority: store.approvalPriority,
+      submittedAt: (store.submittedAt ?? store.createdAt).toISOString(),
+      createdAt: store.createdAt.toISOString(),
+      owner: {
+        id: store.owner.id,
+        name: store.owner.name,
+        email: store.owner.email,
+        createdAt: store.owner.createdAt.toISOString(),
+      },
+      _count: store._count,
+      catalog: {
+        categories: catalogSettings.categories.map((category) => category.name),
+        tags: catalogSettings.tags,
+        templateId: catalogSettings.templateId ?? null,
+        templateLabel: template?.label ?? null,
+      },
+      readiness: computeReadiness({
+        bankAccountNumber: store.bankAccountNumber,
+        phone: store.phone,
+        whatsapp: store.whatsapp,
+        productCount: store._count.products,
+        categoryCount: catalogSettings.categories.length,
+        ownerEmail: store.owner.email,
+        submittedAt: store.submittedAt,
+        createdAt: store.createdAt,
+      }),
+    };
+  });
 }
 
 export async function listRecentApprovalDecisions(take = 20): Promise<RecentApprovalDecision[]> {
@@ -125,7 +147,16 @@ export async function listRecentApprovalDecisions(take = 20): Promise<RecentAppr
 export async function reviewStoreApplication(businessId: string, input: ReviewStoreInput) {
   const store = await prisma.business.findUnique({
     where: { id: businessId },
-    include: { _count: { select: { products: true } } },
+    select: {
+      plan: true,
+      planStartedAt: true,
+      approvalPriority: true,
+      bankAccountNumber: true,
+      phone: true,
+      whatsapp: true,
+      catalogSettings: true,
+      _count: { select: { products: true } },
+    },
   });
 
   if (!store) throw new Error("Store not found.");
@@ -145,7 +176,9 @@ export async function reviewStoreApplication(businessId: string, input: ReviewSt
         approvalNotes: input.approvalNotes?.trim() || null,
         resubmissionAllowed: true,
         bankVerified: input.bankVerified ?? Boolean(store.bankAccountNumber),
-        catalogVerified: input.catalogVerified ?? store._count.products > 0,
+        catalogVerified:
+          input.catalogVerified ??
+          parseCatalogSettings(store.catalogSettings).categories.length > 0,
         contactVerified: input.contactVerified ?? Boolean(store.phone || store.whatsapp),
         plan,
         planStartedAt: store.planStartedAt ?? new Date(),
