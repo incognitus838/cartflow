@@ -8,7 +8,7 @@ import { ProductActions } from "@/components/dashboard/product-actions";
 import { StatusBadge } from "@/components/dashboard/status-badge";
 import { StockBadge } from "@/components/dashboard/stock-badge";
 import { useLiveListSync } from "@/components/dashboard/use-live-list-sync";
-import { toNumber } from "@/lib/decimal";
+import { toNumber, type NumericInput } from "@/lib/decimal";
 import { normalizeProductsForList } from "@/lib/products/list-stock";
 import { formatCurrency } from "@/lib/utils";
 
@@ -16,7 +16,7 @@ export type ProductListRow = {
   id: string;
   title: string;
   category: string;
-  price: unknown;
+  price: NumericInput;
   stock: number;
   lowStockThreshold: number;
   status: "DRAFT" | "ACTIVE" | "ARCHIVED";
