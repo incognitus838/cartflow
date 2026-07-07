@@ -10,6 +10,8 @@
     "lint": "eslint",
     "postinstall": "prisma generate",
     "db:push": "npx dotenv-cli -e .env.local -- prisma db push",
+    "db:team": "npx dotenv-cli -e .env.local -- node scripts/apply-team-schema.mjs",
+    "run:all": "npx dotenv-cli -e .env.local -- node scripts/run-all.mjs",
     "db:migrate": "npx dotenv-cli -e .env.local -- prisma migrate dev",
     "db:studio": "npx dotenv-cli -e .env.local -- prisma studio",
     "db:seed": "npx dotenv-cli -e .env.local -- node prisma/seed.mjs",
