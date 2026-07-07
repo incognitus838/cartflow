@@ -68,7 +68,7 @@ export function toProductFormInitial(product?: {
     id: product.id,
     title: product.title,
     description: product.description ?? "",
-    category: product.category,
+    category: product.category?.trim() || "General",
     metadata,
     price: String(product.price),
     compareAtPrice: product.compareAtPrice ? String(product.compareAtPrice) : "",

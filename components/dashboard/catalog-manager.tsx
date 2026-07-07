@@ -14,7 +14,7 @@ import { toast } from "sonner";
 import { CatalogTypePicker } from "@/components/dashboard/catalog-type-picker";
 import { getCatalogTemplate, isCatalogProductType } from "@/lib/catalog/templates";
 import type { CatalogCategory, CatalogSettings } from "@/lib/catalog/catalog-shared";
-import { notifyCatalogChanged } from "@/lib/dashboard/live-sync";
+import { notifyCatalogChanged, notifyProductsChanged } from "@/lib/dashboard/live-sync";
 import type { ProductType } from "@/lib/products/product-types";
 
 type CatalogManagerProps = {
@@ -81,6 +81,14 @@ export function CatalogManager({
     onSettingsChange?.(next);
   }
 
+  function applySettings(updater: (prev: CatalogSettings) => CatalogSettings) {
+    setSettings((prev) => {
+      const next = updater(prev);
+      if (syncOnSave) onSettingsChange?.(next);
+      return next;
+    });
+  }
+
   async function persist(next: CatalogSettings, message = "Catalog saved") {
     setSaving(true);
     try {
@@ -98,6 +106,7 @@ export function CatalogManager({
 
       commitSettings(data.settings);
       notifyCatalogChanged();
+      notifyProductsChanged();
       toast.success(message);
       onSaved?.();
     } catch {
@@ -137,6 +146,7 @@ export function CatalogManager({
 
       commitSettings(data.settings);
       notifyCatalogChanged();
+      notifyProductsChanged();
       setTypePickerOpen(emphasizeTemplates);
       toast.success(
         embedded
@@ -152,7 +162,7 @@ export function CatalogManager({
   }
 
   function updateCategoryName(id: string, name: string) {
-    setSettings((prev) => ({
+    applySettings((prev) => ({
       ...prev,
       categories: prev.categories.map((category) =>
         category.id === id ? { ...category, name } : category,
@@ -167,14 +177,14 @@ export function CatalogManager({
     if (index < 0 || target < 0 || target >= list.length) return;
 
     [list[index], list[target]] = [list[target], list[index]];
-    setSettings((prev) => ({
+    applySettings((prev) => ({
       ...prev,
       categories: list.map((category, sortOrder) => ({ ...category, sortOrder })),
     }));
   }
 
   function removeCategory(id: string) {
-    setSettings((prev) => ({
+    applySettings((prev) => ({
       ...prev,
       categories: prev.categories.filter((category) => category.id !== id),
     }));
@@ -183,7 +193,7 @@ export function CatalogManager({
   function addCategory() {
     const name = newCategory.trim();
     if (!name) return;
-    setSettings((prev) => ({
+    applySettings((prev) => ({
       ...prev,
       categories: [...prev.categories, createCategory(name, prev.categories.length)],
     }));
@@ -197,12 +207,15 @@ export function CatalogManager({
       setNewTag("");
       return;
     }
-    setSettings((prev) => ({ ...prev, tags: [...prev.tags, tag] }));
+    applySettings((prev) => ({ ...prev, tags: [...prev.tags, tag] }));
     setNewTag("");
   }
 
   function removeTag(tag: string) {
-    setSettings((prev) => ({ ...prev, tags: prev.tags.filter((existing) => existing !== tag) }));
+    applySettings((prev) => ({
+      ...prev,
+      tags: prev.tags.filter((existing) => existing !== tag),
+    }));
   }
 
   const showTaxonomy = Boolean(activeType);

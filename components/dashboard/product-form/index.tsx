@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { CategoryTagsFields } from "@/components/dashboard/product-form/category-tags-fields";
@@ -13,14 +13,14 @@ import { ProductTypeSelector } from "@/components/dashboard/product-form/product
 import { RichTextEditor } from "@/components/dashboard/product-form/rich-text-editor";
 import { VariantsSection } from "@/components/dashboard/product-form/variants-section";
 import { detectMediaType } from "@/lib/media";
-import type { ProductFormInitial } from "@/lib/products/form-initial";
+import { toProductFormInitial, type ProductFormInitial } from "@/lib/products/form-initial";
 import type { ProductMetadata } from "@/lib/products/metadata";
 import { serializeProductMetadata } from "@/lib/products/metadata";
 import { PRODUCT_TYPE_CONFIG } from "@/lib/products/product-type-config";
 import { defaultVariantGroupName, PRODUCT_TYPES, type ProductType } from "@/lib/products/product-types";
 import { createVariantGroup } from "@/lib/products/variant-groups";
 import { emptyVariantRow, type VariantFormRow } from "@/lib/products/variants";
-import { notifyProductsChanged } from "@/lib/dashboard/live-sync";
+import { notifyCatalogChanged, notifyProductsChanged } from "@/lib/dashboard/live-sync";
 import { formatCurrency } from "@/lib/utils";
 
 export type { ProductFormInitial } from "@/lib/products/form-initial";
@@ -31,8 +31,11 @@ type ProductFormProps = {
   initial: ProductFormInitial;
   catalogCategories?: string[];
   catalogTags?: string[];
+  /** Bumps when catalog categories/tags change — keeps edit form in sync without refresh. */
+  catalogSyncKey?: string;
   /** Set when catalog type was chosen on /products/new — hides duplicate type picker */
   lockedProductType?: ProductType;
+  onSaved?: (next: ProductFormInitial) => void;
 };
 
 const STATUSES = [
@@ -47,7 +50,9 @@ export function ProductForm({
   initial,
   catalogCategories = [],
   catalogTags = [],
+  catalogSyncKey,
   lockedProductType,
+  onSaved,
 }: ProductFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -67,6 +72,12 @@ export function ProductForm({
   ]);
   const [useVariants, setUseVariants] = useState(initial.variants.length > 0);
   const [selectedTags, setSelectedTags] = useState(initial.metadata.tags);
+
+  useEffect(() => {
+    if (mode !== "edit") return;
+    setCategory(initial.category || "General");
+    setSelectedTags(initial.metadata.tags);
+  }, [mode, initial.category, initial.metadata.tags.join(","), catalogSyncKey, initial.id]);
 
   const typeConfig = PRODUCT_TYPE_CONFIG[metadata.productType];
 
@@ -106,10 +117,12 @@ export function ProductForm({
     const resolvedStatus = nextStatus ?? status;
     const tags = selectedTags.map((tag) => tag.trim()).filter(Boolean);
 
+    const resolvedCategory = (category || "General").trim() || "General";
+
     const payload = {
       title,
       description,
-      category,
+      category: resolvedCategory,
       metadata: serializeProductMetadata({ ...metadata, tags }),
       price: Number(price),
       compareAtPrice: compareAtPrice ? Number(compareAtPrice) : null,
@@ -154,6 +167,18 @@ export function ProductForm({
         return;
       }
 
+      notifyProductsChanged();
+      notifyCatalogChanged();
+
+      if (mode === "edit" && data.product) {
+        const saved = toProductFormInitial(data.product);
+        setCategory(saved.category);
+        setSelectedTags(saved.metadata.tags);
+        onSaved?.(saved);
+        toast.success("Product updated");
+        return;
+      }
+
       toast.success(
         mode === "create"
           ? resolvedStatus === "DRAFT"
@@ -161,7 +186,6 @@ export function ProductForm({
             : "Product created"
           : "Product updated",
       );
-      notifyProductsChanged();
       router.push("/dashboard/products");
     } catch {
       toast.error("Something went wrong. Try again.");

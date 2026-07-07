@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { normalizeCategoryName } from "@/lib/products/catalog-layout";
 
 type CategoryTagsFieldsProps = {
   category: string;
@@ -22,12 +23,23 @@ export function CategoryTagsFields({
   categoryPlaceholder = "General",
 }: CategoryTagsFieldsProps) {
   const [customCategory, setCustomCategory] = useState(false);
+  const displayCategory = normalizeCategoryName(category);
 
   const categoryOptions = useMemo(() => {
     const names = new Set(catalogCategories.map((name) => name.trim()).filter(Boolean));
-    if (category.trim()) names.add(category.trim());
+    names.add("General");
+    if (displayCategory) names.add(displayCategory);
     return [...names].sort((a, b) => a.localeCompare(b));
-  }, [catalogCategories, category]);
+  }, [catalogCategories, displayCategory]);
+
+  useEffect(() => {
+    const inList = categoryOptions.some(
+      (name) => name.toLowerCase() === displayCategory.toLowerCase(),
+    );
+    if (!inList && categoryOptions.length > 0) {
+      setCustomCategory(true);
+    }
+  }, [categoryOptions, displayCategory]);
 
   const availableTags = catalogTags.filter(
     (tag) => !tags.some((selected) => selected.toLowerCase() === tag.toLowerCase()),
@@ -48,7 +60,7 @@ export function CategoryTagsFields({
         <label htmlFor="category" className="cf-product-label">
           Category
         </label>
-        {customCategory || categoryOptions.length === 0 ? (
+        {customCategory || categoryOptions.length <= 1 ? (
           <input
             id="category"
             value={category}
@@ -59,7 +71,7 @@ export function CategoryTagsFields({
         ) : (
           <select
             id="category"
-            value={category}
+            value={displayCategory}
             onChange={(e) => {
               if (e.target.value === "__custom__") {
                 setCustomCategory(true);
@@ -69,7 +81,6 @@ export function CategoryTagsFields({
             }}
             className="cf-input mt-2"
           >
-            <option value="">Select category</option>
             {categoryOptions.map((name) => (
               <option key={name} value={name}>
                 {name}
