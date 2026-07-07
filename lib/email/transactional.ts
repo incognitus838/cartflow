@@ -59,32 +59,31 @@ function queueTransactionalEmail(build: () => EmailPayload) {
 export function sendWelcomeOwnerEmail(input: { name: string; email: string }) {
   queueTransactionalEmail(() => {
     const appUrl = getAppUrl();
-    const onboardingUrl = `${appUrl}/onboarding`;
+    const dashboardUrl = `${appUrl}/dashboard`;
     const subject = "Welcome to CartFlow";
     const text = [
       `Hi ${input.name},`,
       "",
-      "Thanks for signing up for CartFlow.",
+      "Your store application has been submitted to CartFlow.",
       "",
-      "Next step: create your store — add your business name, bank details, and contact info so we can review your application.",
+      "While we review your store, you can configure your catalog and dashboard settings.",
       "",
-      `Start setup: ${onboardingUrl}`,
+      `Open dashboard: ${dashboardUrl}`,
     ].join("\n");
 
     const html = renderEmailLayout({
-      preview: "Create your store on CartFlow",
+      preview: "Your CartFlow store is submitted",
       title: "Welcome to CartFlow",
       bodyHtml: [
         paragraph(`Hi ${input.name},`),
-        paragraph("Thanks for signing up. You're one step away from selling with manual bank-transfer checkout built for African sellers."),
-        paragraph("Create your store application next — we'll need your business details and bank info for admin review."),
+        paragraph("Thanks for launching your store on CartFlow. Your application is in the review queue."),
         bulletList([
-          "Set up your store name and URL",
-          "Add bank details for payouts",
           "Configure catalog categories while you wait",
+          "Add products once your store is approved",
+          "Share your checkout link on WhatsApp when live",
         ]),
       ].join(""),
-      cta: { label: "Create your store", href: onboardingUrl },
+      cta: { label: "Open dashboard", href: dashboardUrl },
       footerNote: "Product uploads and your public storefront unlock after platform approval.",
     });
 

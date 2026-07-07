@@ -13,8 +13,6 @@ const CURRENCIES = [
   { code: "USD", label: "US Dollar ($)" },
 ];
 
-const TOTAL_STEPS = 4;
-
 type FieldErrors = {
   bankName?: string;
   bankAccountName?: string;
@@ -40,17 +38,22 @@ function validateBankFields(
 }
 
 type OnboardingWizardProps = {
-  mode?: "initial" | "add";
+  mode?: "register" | "add";
 };
 
-export function OnboardingWizard({ mode = "initial" }: OnboardingWizardProps) {
+export function OnboardingWizard({ mode = "register" }: OnboardingWizardProps) {
+  const isRegister = mode === "register";
   const isAddStore = mode === "add";
+  const totalSteps = isRegister ? 5 : 4;
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [submitAttempted, setSubmitAttempted] = useState(false);
 
+  const [ownerName, setOwnerName] = useState("");
+  const [ownerEmail, setOwnerEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [slugTouched, setSlugTouched] = useState(false);
@@ -74,11 +77,25 @@ export function OnboardingWizard({ mode = "initial" }: OnboardingWizardProps) {
   const bankStepValid = Object.keys(bankErrors).length === 0;
   const slugValid = isValidSlug(finalSlug);
 
+  const businessStep = isRegister ? step - 1 : step;
+  const bankStep = totalSteps;
+
   async function handleSubmit() {
     setSubmitAttempted(true);
 
+    if (isRegister) {
+      if (!ownerName.trim() || ownerEmail.trim().length < 3 || password.length < 8) {
+        toast.error("Go back to step 1 and complete your account details.");
+        return;
+      }
+    }
+
     if (!name.trim()) {
-      toast.error("Go back to step 1 and enter your business name.");
+      toast.error(
+        isRegister
+          ? "Go back to step 2 and enter your business name."
+          : "Go back to step 1 and enter your business name.",
+      );
       return;
     }
 
@@ -97,21 +114,32 @@ export function OnboardingWizard({ mode = "initial" }: OnboardingWizardProps) {
 
     setLoading(true);
     try {
-      const res = await fetch("/api/business/onboarding", {
+      const payload = {
+        name: name.trim(),
+        slug: finalSlug,
+        currency,
+        logoUrl: logoUrl || undefined,
+        phone: phone || undefined,
+        whatsapp: whatsapp || phone || undefined,
+        description: description || undefined,
+        bankName: bankName.trim(),
+        bankAccountName: bankAccountName.trim(),
+        bankAccountNumber: bankAccountNumber.replace(/\s/g, ""),
+      };
+
+      const res = await fetch(isRegister ? "/api/business/register" : "/api/business/onboarding", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: name.trim(),
-          slug: finalSlug,
-          currency,
-          logoUrl: logoUrl || undefined,
-          phone: phone || undefined,
-          whatsapp: whatsapp || phone || undefined,
-          description: description || undefined,
-          bankName: bankName.trim(),
-          bankAccountName: bankAccountName.trim(),
-          bankAccountNumber: bankAccountNumber.replace(/\s/g, ""),
-        }),
+        body: JSON.stringify(
+          isRegister
+            ? {
+                ownerName: ownerName.trim(),
+                ownerEmail: ownerEmail.trim().toLowerCase(),
+                password,
+                ...payload,
+              }
+            : payload,
+        ),
       });
       const data = await res.json().catch(() => ({}));
 
@@ -147,21 +175,28 @@ export function OnboardingWizard({ mode = "initial" }: OnboardingWizardProps) {
         >
           ← Back to my stores
         </Link>
-      ) : null}
+      ) : (
+        <p className="mb-4 text-sm text-slate-600">
+          Already have an account?{" "}
+          <Link href="/login" className="font-medium text-emerald-700 hover:underline">
+            Log in
+          </Link>
+        </p>
+      )}
       <div className="mb-8">
         <p className="text-sm font-medium text-emerald-700">
-          Step {step} of {TOTAL_STEPS}
+          Step {step} of {totalSteps}
         </p>
         <h1 className="mt-2 text-2xl font-bold text-slate-900">
-          {isAddStore ? "Add a new store" : "Set up your store"}
+          {isAddStore ? "Add a new store" : "Start your store"}
         </h1>
         <p className="mt-2 text-sm text-slate-600">
           {isAddStore
             ? "Each store gets its own catalog, checkout link, and approval review."
-            : "You\u2019ll get a shareable link for WhatsApp in under a minute."}
+            : "Your account is only created when you finish setup — nothing is saved until then."}
         </p>
         <div className="mt-4 flex gap-2">
-          {Array.from({ length: TOTAL_STEPS }, (_, i) => i + 1).map((n) => (
+          {Array.from({ length: totalSteps }, (_, i) => i + 1).map((n) => (
             <div
               key={n}
               className={`h-1.5 flex-1 rounded-full ${n <= step ? "bg-emerald-500" : "bg-slate-200"}`}
@@ -171,7 +206,53 @@ export function OnboardingWizard({ mode = "initial" }: OnboardingWizardProps) {
       </div>
 
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        {step === 1 && (
+        {isRegister && step === 1 ? (
+          <div className="space-y-4">
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-slate-700">Your full name</label>
+              <input
+                value={ownerName}
+                onChange={(e) => setOwnerName(e.target.value)}
+                autoComplete="name"
+                className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                placeholder="Ada Okonkwo"
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-slate-700">Email</label>
+              <input
+                type="email"
+                value={ownerEmail}
+                onChange={(e) => setOwnerEmail(e.target.value)}
+                autoComplete="email"
+                className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                placeholder="you@example.com"
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-slate-700">Password</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="new-password"
+                minLength={8}
+                className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                placeholder="At least 8 characters"
+              />
+            </div>
+            <button
+              type="button"
+              disabled={ownerName.trim().length < 2 || !ownerEmail.includes("@") || password.length < 8}
+              onClick={() => setStep(2)}
+              className="btn-primary w-full py-2.5"
+            >
+              Continue
+            </button>
+          </div>
+        ) : null}
+
+        {businessStep === 1 ? (
           <div className="space-y-4">
             <div>
               <label className="mb-1.5 block text-sm font-medium text-slate-700">
@@ -204,18 +285,25 @@ export function OnboardingWizard({ mode = "initial" }: OnboardingWizardProps) {
                 </p>
               ) : null}
             </div>
-            <button
-              type="button"
-              disabled={!name.trim()}
-              onClick={() => setStep(2)}
-              className="btn-primary w-full py-2.5"
-            >
-              Continue
-            </button>
+            <div className="flex gap-3">
+              {isRegister ? (
+                <button type="button" onClick={() => setStep(1)} className="btn-secondary flex-1 py-2.5">
+                  Back
+                </button>
+              ) : null}
+              <button
+                type="button"
+                disabled={!name.trim()}
+                onClick={() => setStep(isRegister ? 3 : 2)}
+                className={`btn-primary py-2.5 ${isRegister ? "flex-1" : "w-full"}`}
+              >
+                Continue
+              </button>
+            </div>
           </div>
-        )}
+        ) : null}
 
-        {step === 2 && (
+        {businessStep === 2 ? (
           <div className="space-y-4">
             <div>
               <label className="mb-1.5 block text-sm font-medium text-slate-700">Currency</label>
@@ -262,17 +350,25 @@ export function OnboardingWizard({ mode = "initial" }: OnboardingWizardProps) {
               />
             </div>
             <div className="flex gap-3">
-              <button type="button" onClick={() => setStep(1)} className="btn-secondary flex-1 py-2.5">
+              <button
+                type="button"
+                onClick={() => setStep(isRegister ? 2 : 1)}
+                className="btn-secondary flex-1 py-2.5"
+              >
                 Back
               </button>
-              <button type="button" onClick={() => setStep(3)} className="btn-primary flex-1 py-2.5">
+              <button
+                type="button"
+                onClick={() => setStep(isRegister ? 4 : 3)}
+                className="btn-primary flex-1 py-2.5"
+              >
                 Continue
               </button>
             </div>
           </div>
-        )}
+        ) : null}
 
-        {step === 3 && (
+        {businessStep === 3 ? (
           <div className="space-y-4">
             <div>
               <label className="mb-1.5 block text-sm font-medium text-slate-700">
@@ -297,7 +393,11 @@ export function OnboardingWizard({ mode = "initial" }: OnboardingWizardProps) {
               />
             </div>
             <div className="flex gap-3">
-              <button type="button" onClick={() => setStep(2)} className="btn-secondary flex-1 py-2.5">
+              <button
+                type="button"
+                onClick={() => setStep(isRegister ? 3 : 2)}
+                className="btn-secondary flex-1 py-2.5"
+              >
                 Back
               </button>
               <button
@@ -306,7 +406,7 @@ export function OnboardingWizard({ mode = "initial" }: OnboardingWizardProps) {
                   if (!bankAccountName.trim() && name.trim()) {
                     setBankAccountName(name.trim());
                   }
-                  setStep(4);
+                  setStep(bankStep);
                 }}
                 className="btn-primary flex-1 py-2.5"
               >
@@ -314,9 +414,9 @@ export function OnboardingWizard({ mode = "initial" }: OnboardingWizardProps) {
               </button>
             </div>
           </div>
-        )}
+        ) : null}
 
-        {step === 4 && (
+        {step === bankStep ? (
           <form
             className="space-y-4"
             onSubmit={(e) => {
@@ -408,7 +508,7 @@ export function OnboardingWizard({ mode = "initial" }: OnboardingWizardProps) {
               {submitAttempted && !slugValid ? (
                 <p className="mt-2 text-xs text-red-600">
                   {fieldErrors.slug ??
-                    "Store URL must be 3–48 characters. Go back to step 1 to edit it."}
+                    `Store URL must be 3–48 characters. Go back to step ${isRegister ? 2 : 1} to edit it.`}
                 </p>
               ) : null}
             </div>
@@ -420,22 +520,18 @@ export function OnboardingWizard({ mode = "initial" }: OnboardingWizardProps) {
             <div className="flex gap-3">
               <button
                 type="button"
-                onClick={() => setStep(3)}
+                onClick={() => setStep(isRegister ? 4 : 3)}
                 disabled={loading}
                 className="btn-secondary flex-1 py-2.5"
               >
                 Back
               </button>
-              <button
-                type="submit"
-                disabled={loading}
-                className="btn-primary flex-1 py-2.5"
-              >
+              <button type="submit" disabled={loading} className="btn-primary flex-1 py-2.5">
                 {loading ? "Creating…" : isAddStore ? "Submit store" : "Launch store"}
               </button>
             </div>
           </form>
-        )}
+        ) : null}
       </div>
     </div>
   );

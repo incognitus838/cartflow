@@ -74,7 +74,7 @@ export async function requireAuth(redirectTo = "/login") {
 export async function requireBusiness() {
   const ctx = await requireAuth();
   if (!ctx.business || !ctx.storeAccessRole || !ctx.permissions) {
-    redirect("/onboarding");
+    redirect("/signup");
   }
   return ctx as typeof ctx & {
     business: NonNullable<typeof ctx.business>;

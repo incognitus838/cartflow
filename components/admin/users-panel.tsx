@@ -182,6 +182,7 @@ export function UsersPanel({ users }: UsersPanelProps) {
                       {user.isSuspended ? (
                         <span className="mt-1 cf-badge cf-badge-cancelled">Suspended</span>
                       ) : null}
+
                     </td>
                     <td>
                       <span className={roleBadge[user.role]}>{user.role}</span>

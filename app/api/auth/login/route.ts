@@ -48,6 +48,16 @@ export async function POST(request: Request) {
   const businessId =
     user.ownedBusinesses[0]?.id ?? user.memberships[0]?.businessId ?? undefined;
 
+  if (user.role === "OWNER" && !businessId) {
+    return NextResponse.json(
+      {
+        error:
+          "No store on this account. Create your store at /signup — your account is only saved when setup is complete.",
+      },
+      { status: 403 },
+    );
+  }
+
   await createSession({
     userId: user.id,
     email: user.email,
@@ -56,12 +66,7 @@ export async function POST(request: Request) {
     businessId,
   });
 
-  const redirectTo =
-    user.role === "ADMIN"
-      ? "/admin"
-      : businessId
-        ? "/dashboard"
-        : "/onboarding";
+  const redirectTo = user.role === "ADMIN" ? "/admin" : "/dashboard";
 
   return NextResponse.json({
     ok: true,

@@ -3,10 +3,19 @@ import { toNumber } from "@/lib/decimal";
 
 const FULFILLED_STATUSES = ["PAID", "PROCESSING", "SHIPPED", "DELIVERED"] as const;
 
+/** Platform accounts tied to a store or admin access — excludes abandoned signups. */
+const STORE_CONNECTED_USER_WHERE = {
+  OR: [
+    { role: "ADMIN" as const },
+    { ownedBusinesses: { some: {} } },
+    { memberships: { some: {} } },
+  ],
+};
+
 export async function getAdminStats() {
   const [businesses, users, orders, revenue, recentBusinesses, recentOrders] = await Promise.all([
     prisma.business.count(),
-    prisma.user.count(),
+    prisma.user.count({ where: STORE_CONNECTED_USER_WHERE }),
     prisma.order.count(),
     prisma.order.aggregate({
       where: { status: { in: [...FULFILLED_STATUSES] } },
@@ -108,9 +117,10 @@ export async function listAdminBusinesses(options?: { search?: string; take?: nu
 
 export async function getAdminUserStats() {
   const [total, roleBreakdown, ownersWithStores, staffOnly] = await Promise.all([
-    prisma.user.count(),
+    prisma.user.count({ where: STORE_CONNECTED_USER_WHERE }),
     prisma.user.groupBy({
       by: ["role"],
+      where: STORE_CONNECTED_USER_WHERE,
       _count: { _all: true },
     }),
     prisma.user.count({ where: { ownedBusinesses: { some: {} } } }),
@@ -135,21 +145,26 @@ export async function listAdminUsers(options?: { search?: string; take?: number 
   const take = options?.take ?? 200;
 
   return prisma.user.findMany({
-    where: search
-      ? {
-          OR: [
-            { name: { contains: search, mode: "insensitive" } },
-            { email: { contains: search, mode: "insensitive" } },
-            { ownedBusinesses: { some: { name: { contains: search, mode: "insensitive" } } } },
-            { ownedBusinesses: { some: { slug: { contains: search, mode: "insensitive" } } } },
-            {
-              memberships: {
-                some: { business: { name: { contains: search, mode: "insensitive" } } },
-              },
-            },
-          ],
-        }
-      : undefined,
+    where: {
+      AND: [
+        STORE_CONNECTED_USER_WHERE,
+        search
+          ? {
+              OR: [
+                { name: { contains: search, mode: "insensitive" } },
+                { email: { contains: search, mode: "insensitive" } },
+                { ownedBusinesses: { some: { name: { contains: search, mode: "insensitive" } } } },
+                { ownedBusinesses: { some: { slug: { contains: search, mode: "insensitive" } } } },
+                {
+                  memberships: {
+                    some: { business: { name: { contains: search, mode: "insensitive" } } },
+                  },
+                },
+              ],
+            }
+          : {},
+      ],
+    },
     orderBy: { createdAt: "desc" },
     take,
     include: {

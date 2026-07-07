@@ -14,7 +14,7 @@ export default async function AdminUsersPage() {
     <>
       <PageHeader
         title="Users"
-        description="Full platform directory — click any user for signup date, GMV, sales, subscriptions, and suspend controls."
+        description="Store owners, staff, and admins — only accounts connected to a store or platform admin access."
         alert={
           <p className="rounded-[var(--cf-radius-md)] border border-black/[0.06] bg-white px-4 py-3 text-[13px] text-[#6e6e73]">
             <span className="font-semibold text-[#1d1d1f]">What are members?</span>{" "}
@@ -32,7 +32,7 @@ export default async function AdminUsersPage() {
         </h2>
         <ul className="grid list-none gap-4 sm:grid-cols-2 lg:grid-cols-5" role="list">
           {[
-            { label: "Total accounts", value: stats.total },
+            { label: "Store-connected", value: stats.total },
             { label: "Admins", value: roleCount("ADMIN") },
             { label: "Owners", value: roleCount("OWNER") },
             { label: "Staff accounts", value: roleCount("STAFF") },
@@ -49,7 +49,7 @@ export default async function AdminUsersPage() {
         {stats.staffOnly > 0 ? (
           <p className="mt-3 text-[12px] text-[#86868b]">
             {stats.staffOnly} user{stats.staffOnly === 1 ? "" : "s"} with staff access only (no owned
-            stores)
+            stores).
           </p>
         ) : null}
       </section>
