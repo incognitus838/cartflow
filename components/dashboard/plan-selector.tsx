@@ -48,12 +48,12 @@ export function PlanSelector({ currentPlan, plans }: PlanSelectorProps) {
       {plans.map((plan) => {
         const active = plan.id === currentPlan;
         const features = planFeatureList(plan.id);
-        const highlight =
+        const highlights =
           plan.id === "PRO"
-            ? "5 team members"
+            ? ["5 team members", "Automated transfers soon"]
             : plan.id === "ENTERPRISE"
-              ? "2+ stores"
-              : null;
+              ? ["2+ stores", "Automated transfers soon"]
+              : [];
 
         return (
           <div
@@ -64,10 +64,17 @@ export function PlanSelector({ currentPlan, plans }: PlanSelectorProps) {
               plan.id === "PRO" || plan.id === "ENTERPRISE" ? "relative" : undefined,
             )}
           >
-            {highlight ? (
-              <span className="mb-2 inline-flex w-fit rounded-full bg-slate-900 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
-                {highlight}
-              </span>
+            {highlights.length > 0 ? (
+              <div className="mb-2 flex flex-wrap gap-1.5">
+                {highlights.map((label) => (
+                  <span
+                    key={label}
+                    className="inline-flex rounded-full bg-slate-900 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white"
+                  >
+                    {label}
+                  </span>
+                ))}
+              </div>
             ) : null}
             <div className="flex items-center justify-between">
               <h3 className="font-semibold text-slate-900">{plan.name}</h3>
@@ -85,10 +92,14 @@ export function PlanSelector({ currentPlan, plans }: PlanSelectorProps) {
                   <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600" />
                   <span
                     className={
-                      (plan.id === "PRO" && feature.includes("team")) ||
-                      (plan.id === "ENTERPRISE" && feature.includes("store"))
+                      (plan.id === "PRO" &&
+                        (feature.includes("team") || feature.includes("Automated"))) ||
+                      (plan.id === "ENTERPRISE" &&
+                        (feature.includes("store") || feature.includes("Automated")))
                         ? "font-semibold text-slate-900"
-                        : undefined
+                        : feature.includes("(soon)")
+                          ? "text-slate-700"
+                          : undefined
                     }
                   >
                     {feature}

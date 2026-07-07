@@ -13,6 +13,8 @@ export type PlanDefinition = {
   storeLimit: number | null;
   /** Reserved for Paystack/Flutterwave — not active yet; checkout is manual. */
   onlinePayments: boolean;
+  /** Shown on billing as an upcoming Pro/Enterprise perk. */
+  automatedTransfersSoon: boolean;
   description: string;
 };
 
@@ -27,6 +29,7 @@ export const PLANS: Record<BusinessPlan, PlanDefinition> = {
     staffSeatLimit: 0,
     storeLimit: 1,
     onlinePayments: false,
+    automatedTransfersSoon: false,
     description: "Up to 10 products, 1 store, manual bank transfer.",
   },
   STARTER: {
@@ -40,6 +43,7 @@ export const PLANS: Record<BusinessPlan, PlanDefinition> = {
     storeLimit: 1,
     // onlinePayments: true, // Paystack/Flutterwave — implement later
     onlinePayments: false,
+    automatedTransfersSoon: false,
     description: "Unlimited products, 1 store, manual payments, basic analytics.",
   },
   PRO: {
@@ -52,7 +56,8 @@ export const PLANS: Record<BusinessPlan, PlanDefinition> = {
     staffSeatLimit: 5,
     storeLimit: 1,
     onlinePayments: false,
-    description: "5 team members, unlimited products, analytics, priority support.",
+    automatedTransfersSoon: true,
+    description: "5 team members, automated transfers soon, analytics, priority support.",
   },
   ENTERPRISE: {
     id: "ENTERPRISE",
@@ -64,7 +69,8 @@ export const PLANS: Record<BusinessPlan, PlanDefinition> = {
     staffSeatLimit: null,
     storeLimit: null,
     onlinePayments: false,
-    description: "2+ stores, unlimited team, dedicated support, SLA.",
+    automatedTransfersSoon: true,
+    description: "2+ stores, automated transfers soon, unlimited team, dedicated support.",
   },
 };
 
@@ -104,6 +110,13 @@ export function formatStoreLimit(plan: BusinessPlan) {
   return limit === 1 ? "1 store" : `Up to ${limit} stores`;
 }
 
+export function formatPaymentsFeature(plan: BusinessPlan) {
+  if (PLANS[plan].automatedTransfersSoon) {
+    return "Automated transfers (soon)";
+  }
+  return "Manual bank transfer";
+}
+
 export function planFeatureList(plan: BusinessPlan): string[] {
   const def = PLANS[plan];
   const features = [
@@ -111,7 +124,7 @@ export function planFeatureList(plan: BusinessPlan): string[] {
     formatStoreLimit(plan),
     def.staffAccounts ? formatTeamLimit(plan) : "Owner only — no team seats",
     def.analytics ? "Analytics dashboard" : "Basic overview",
-    "Manual bank transfer",
+    formatPaymentsFeature(plan),
   ];
   return features;
 }
