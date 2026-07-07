@@ -20,7 +20,13 @@ export async function PATCH(request: Request) {
   const category =
     typeof data.category === "string" ? normalizeCategoryName(data.category) : "";
   const productIds = Array.isArray(data.productIds)
-    ? [...new Set(data.productIds.filter((id): id is string => typeof id === "string" && id.trim()))]
+    ? [
+        ...new Set(
+          data.productIds.filter(
+            (id): id is string => typeof id === "string" && id.trim().length > 0,
+          ),
+        ),
+      ]
     : [];
 
   if (!category) {
