@@ -56,6 +56,35 @@ export const CATALOG_TEMPLATES: CatalogTemplate[] = [
     categories: ["Phones", "Accessories", "Audio", "Home Tech", "Gaming", "Cables & Chargers"],
     tags: ["warranty", "refurbished", "new", "bestseller", "clearance"],
   },
+  {
+    id: "courses",
+    label: "Online courses",
+    description: "Self-paced programs, live cohorts, workshops, and digital learning products.",
+    categories: [
+      "Self-Paced Courses",
+      "Live Cohorts",
+      "Workshops & Webinars",
+      "Masterclasses",
+      "Certifications",
+      "Bundles & Programs",
+      "Templates & Downloads",
+      "Coaching & Mentorship",
+      "Free Previews",
+      "Membership",
+    ],
+    tags: [
+      "beginner",
+      "intermediate",
+      "advanced",
+      "lifetime access",
+      "certificate included",
+      "self-paced",
+      "live sessions",
+      "bestseller",
+      "new launch",
+      "early bird",
+    ],
+  },
 ];
 
 export function getCatalogTemplate(id: string) {

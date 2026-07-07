@@ -1,7 +1,17 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ArrowDown, ArrowUp, FolderOpen, Plus, Sparkles, Tag, Trash2 } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  FolderOpen,
+  GraduationCap,
+  Plus,
+  Sparkles,
+  Tag,
+  Trash2,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 import { CATALOG_TEMPLATES } from "@/lib/catalog/templates";
 import type { CatalogCategory, CatalogSettings } from "@/lib/catalog/settings";
@@ -25,6 +35,12 @@ export function CatalogManager({ initial }: CatalogManagerProps) {
   const [saving, setSaving] = useState(false);
   const [applyingTemplate, setApplyingTemplate] = useState<string | null>(null);
   const [templatesOpen, setTemplatesOpen] = useState(!initial.templateId);
+  const [pendingTemplateId, setPendingTemplateId] = useState<string | null>(null);
+
+  const pendingTemplate = useMemo(
+    () => CATALOG_TEMPLATES.find((t) => t.id === pendingTemplateId) ?? null,
+    [pendingTemplateId],
+  );
 
   const activeTemplate = useMemo(
     () => CATALOG_TEMPLATES.find((t) => t.id === settings.templateId) ?? null,
@@ -60,7 +76,20 @@ export function CatalogManager({ initial }: CatalogManagerProps) {
     }
   }
 
+  function requestApplyTemplate(templateId: string) {
+    const hasExisting =
+      settings.categories.length > 0 ||
+      settings.tags.length > 0 ||
+      Boolean(settings.templateId);
+    if (hasExisting && settings.templateId !== templateId) {
+      setPendingTemplateId(templateId);
+      return;
+    }
+    void handleApplyTemplate(templateId);
+  }
+
   async function handleApplyTemplate(templateId: string) {
+    setPendingTemplateId(null);
     setApplyingTemplate(templateId);
     try {
       const res = await fetch("/api/catalog", {
@@ -178,7 +207,7 @@ export function CatalogManager({ initial }: CatalogManagerProps) {
         </div>
 
         {templatesOpen ? (
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {CATALOG_TEMPLATES.map((template) => {
               const isActive = settings.templateId === template.id;
               return (
@@ -186,7 +215,7 @@ export function CatalogManager({ initial }: CatalogManagerProps) {
                   key={template.id}
                   type="button"
                   disabled={Boolean(applyingTemplate)}
-                  onClick={() => handleApplyTemplate(template.id)}
+                  onClick={() => requestApplyTemplate(template.id)}
                   className={`rounded-xl border p-4 text-left transition-colors disabled:opacity-60 ${
                     isActive
                       ? "border-emerald-400 bg-emerald-50/60 ring-1 ring-emerald-400/30"
@@ -208,6 +237,96 @@ export function CatalogManager({ initial }: CatalogManagerProps) {
           </div>
         ) : null}
       </section>
+
+      {activeTemplate?.id === "courses" ? (
+        <div className="flex items-start gap-3 rounded-2xl border border-indigo-200 bg-indigo-50/50 px-5 py-4">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-100 text-indigo-700">
+            <GraduationCap className="h-4 w-4" />
+          </span>
+          <div>
+            <p className="text-sm font-semibold text-slate-900">Online courses catalog</p>
+            <p className="mt-1 text-xs text-slate-600">
+              List each course as a product — use categories for format (self-paced, live cohort,
+              etc.) and tags for level, access type, or launch promos. Add modules or lesson counts
+              in the product description.
+            </p>
+          </div>
+        </div>
+      ) : null}
+
+      {pendingTemplate ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="template-confirm-title"
+        >
+          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl border border-slate-200 bg-white p-6 shadow-xl">
+            <div className="flex items-start justify-between gap-3">
+              <h3 id="template-confirm-title" className="text-base font-semibold text-slate-900">
+                Use {pendingTemplate.label}?
+              </h3>
+              <button
+                type="button"
+                onClick={() => setPendingTemplateId(null)}
+                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                aria-label="Close"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <p className="mt-2 text-sm text-slate-600">
+              This replaces your current categories and tags with the template below. Products in
+              removed categories move to General when you save.
+            </p>
+            <div className="mt-4 rounded-xl border border-slate-100 bg-slate-50 p-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                Categories ({pendingTemplate.categories.length})
+              </p>
+              <ul className="mt-2 flex flex-wrap gap-1.5">
+                {pendingTemplate.categories.map((name) => (
+                  <li
+                    key={name}
+                    className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] text-slate-700"
+                  >
+                    {name}
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-3 text-xs font-medium uppercase tracking-wide text-slate-500">
+                Tags ({pendingTemplate.tags.length})
+              </p>
+              <ul className="mt-2 flex flex-wrap gap-1.5">
+                {pendingTemplate.tags.map((tag) => (
+                  <li
+                    key={tag}
+                    className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] text-slate-700"
+                  >
+                    {tag}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={() => setPendingTemplateId(null)}
+                className="rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={Boolean(applyingTemplate)}
+                onClick={() => void handleApplyTemplate(pendingTemplate.id)}
+                className="btn-primary px-4 py-2.5 text-sm"
+              >
+                {applyingTemplate === pendingTemplate.id ? "Applying…" : "Replace catalog"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <div className="grid gap-6 lg:grid-cols-2">
         <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
