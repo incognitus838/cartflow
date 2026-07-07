@@ -107,7 +107,7 @@ export function StorefrontCustomizer({
 
   return (
     <div className="space-y-6">
-      <div className="sticky top-0 z-20 -mx-1 flex flex-wrap items-center justify-between gap-3 rounded-[var(--cf-radius-lg)] border border-black/[0.06] bg-white/90 px-4 py-3 backdrop-blur-xl">
+      <div className="cf-dash-sticky-toolbar -mx-1 flex flex-wrap items-center justify-between gap-3 rounded-[var(--cf-radius-lg)] border border-black/[0.06] bg-white/90 px-4 py-3 backdrop-blur-xl">
         <div>
           <p className="text-[13px] font-semibold text-[#1d1d1f]">Storefront designer</p>
           <p className="text-[11px] text-[#86868b]">

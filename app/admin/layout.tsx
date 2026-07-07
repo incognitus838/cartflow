@@ -1,4 +1,4 @@
-import { AdminSidebar } from "@/components/admin/sidebar";
+import { AdminShell } from "@/components/admin/admin-shell";
 import { countPendingStoreApprovals } from "@/lib/admin/store-approval";
 import { requireAdmin } from "@/lib/auth-server";
 
@@ -7,15 +7,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const pendingApprovals = await countPendingStoreApprovals();
 
   return (
-    <div className="cf-dash-shell">
-      <AdminSidebar
-        userEmail={user.email}
-        userName={user.name}
-        pendingApprovals={pendingApprovals}
-      />
-      <div className="cf-dash-main">
-        <main className="cf-dash-content">{children}</main>
-      </div>
-    </div>
+    <AdminShell
+      userEmail={user.email}
+      userName={user.name}
+      pendingApprovals={pendingApprovals}
+    >
+      <main className="cf-dash-content">{children}</main>
+    </AdminShell>
   );
 }

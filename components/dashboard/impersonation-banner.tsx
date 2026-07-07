@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Shield, X } from "lucide-react";
 import { toast } from "sonner";
@@ -11,7 +10,6 @@ type ImpersonationBannerProps = {
 };
 
 export function ImpersonationBanner({ storeName, storeSlug }: ImpersonationBannerProps) {
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
 
   async function endImpersonation() {
@@ -24,8 +22,7 @@ export function ImpersonationBanner({ storeName, storeSlug }: ImpersonationBanne
         return;
       }
       toast.success("Returned to admin");
-      router.push(data.redirectTo || "/admin");
-      router.refresh();
+      window.location.assign(data.redirectTo || "/admin");
     } catch {
       toast.error("Something went wrong");
     } finally {

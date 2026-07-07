@@ -14,7 +14,7 @@ export async function requireApiBusiness() {
   }
 
   try {
-    const business = await assertBusinessAccess(session.userId, businessId);
+    const business = await assertBusinessAccess(session.userId, businessId, session);
     return { session, business };
   } catch {
     return { error: NextResponse.json({ error: "Access denied." }, { status: 403 }) };

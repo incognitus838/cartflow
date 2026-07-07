@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { isDatabaseConfigured, prisma } from "@/lib/db";
-import { getBusinessForUser } from "@/lib/tenant";
+import { resolveBusinessForSession } from "@/lib/tenant";
 
 export async function getAuthContext() {
   const session = await getSession();
@@ -25,11 +25,8 @@ export async function getAuthContext() {
     return { session: null, user: null, business: null };
   }
 
-  let business = null;
-  if (session.businessId) {
-    business = await getBusinessForUser(session.userId, session.businessId);
-  }
-  if (!business) {
+  let business = await resolveBusinessForSession(session);
+  if (!business && !session.impersonatorId) {
     business =
       user.ownedBusinesses[0] ?? user.memberships[0]?.business ?? null;
   }

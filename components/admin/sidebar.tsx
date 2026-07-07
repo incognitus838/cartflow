@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -12,13 +13,18 @@ import {
   Shield,
   UserCircle,
   Users,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 
 type AdminSidebarProps = {
+  id?: string;
   userEmail: string;
   userName: string;
   pendingApprovals?: number;
+  mobileOpen?: boolean;
+  onNavigate?: () => void;
+  onClose?: () => void;
 };
 
 const navItems = [
@@ -31,9 +37,26 @@ const navItems = [
   { href: "/admin/orders", label: "Orders", icon: ShoppingCart },
 ];
 
-export function AdminSidebar({ userEmail, userName, pendingApprovals = 0 }: AdminSidebarProps) {
+export function AdminSidebar({
+  id,
+  userEmail,
+  userName,
+  pendingApprovals = 0,
+  mobileOpen = false,
+  onNavigate,
+  onClose,
+}: AdminSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const [isMobileNav, setIsMobileNav] = useState(false);
+
+  useEffect(() => {
+    const query = window.matchMedia("(max-width: 1023px)");
+    const sync = () => setIsMobileNav(query.matches);
+    sync();
+    query.addEventListener("change", sync);
+    return () => query.removeEventListener("change", sync);
+  }, []);
 
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -43,18 +66,34 @@ export function AdminSidebar({ userEmail, userName, pendingApprovals = 0 }: Admi
   }
 
   return (
-    <aside className="cf-dash-sidebar">
+    <aside
+      id={id}
+      className="cf-dash-sidebar"
+      data-open={mobileOpen ? "true" : "false"}
+      aria-hidden={isMobileNav && !mobileOpen ? true : undefined}
+    >
       <div className="cf-dash-sidebar__header">
         <div className="cf-dash-sidebar__brand">
-          <span className="cf-dash-sidebar__logo" aria-hidden>
+          <span className="cf-dash-sidebar__logo hidden lg:flex" aria-hidden>
             <Shield className="h-4 w-4" strokeWidth={1.75} />
           </span>
-          <div className="min-w-0">
+          <div className="hidden min-w-0 flex-1 lg:block">
             <p className="truncate text-[14px] font-semibold tracking-tight text-[#1d1d1f]">
               Platform admin
             </p>
             <p className="truncate text-[12px] text-[#86868b]">{userEmail}</p>
           </div>
+          <p className="flex-1 text-[14px] font-semibold tracking-tight text-[#1d1d1f] lg:hidden">
+            Menu
+          </p>
+          <button
+            type="button"
+            onClick={onClose}
+            className="cf-dash-menu-btn -mr-1 lg:hidden"
+            aria-label="Close menu"
+          >
+            <X className="h-5 w-5" strokeWidth={1.75} aria-hidden />
+          </button>
         </div>
       </div>
 
@@ -73,6 +112,7 @@ export function AdminSidebar({ userEmail, userName, pendingApprovals = 0 }: Admi
                   aria-current={active ? "page" : undefined}
                   data-active={active ? "true" : "false"}
                   className="cf-dash-nav-link relative"
+                  onClick={onNavigate}
                 >
                   <Icon
                     className={`h-4 w-4 ${active ? "text-[#d4bc94]" : ""}`}

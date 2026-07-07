@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { UserCog } from "lucide-react";
 import { toast } from "sonner";
 
@@ -18,7 +17,6 @@ export function ImpersonateButton({
   disabled = false,
   compact = false,
 }: ImpersonateButtonProps) {
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
 
   async function impersonate() {
@@ -34,9 +32,9 @@ export function ImpersonateButton({
         toast.error(data.error || "Could not impersonate");
         return;
       }
-      toast.success(`Viewing ${storeName} as seller`);
-      router.push(data.redirectTo || "/dashboard");
-      router.refresh();
+      const openedAs = data.store?.name ?? storeName;
+      toast.success(`Viewing ${openedAs} as seller`);
+      window.location.assign(data.redirectTo || "/dashboard");
     } catch {
       toast.error("Something went wrong");
     } finally {
