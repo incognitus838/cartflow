@@ -17,9 +17,6 @@ export default async function LoginPage({ searchParams }: PageProps) {
     if (ctx.user.role === "ADMIN") {
       redirect("/admin");
     }
-    if (ctx.user.role === "ADMIN") {
-      redirect("/admin");
-    }
     redirect(ctx.business ? "/dashboard" : "/signup");
   }
 
