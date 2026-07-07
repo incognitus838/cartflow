@@ -47,7 +47,13 @@ export async function POST(request: Request, context: RouteContext) {
     );
   }
 
-  return NextResponse.json({ order: toPublicOrderSnapshot(resolved.order) });
+  return NextResponse.json({
+    order: toPublicOrderSnapshot(resolved.order, {
+      name: resolved.store.name,
+      slug: resolved.store.slug,
+      currency: resolved.store.currency,
+    }),
+  });
 }
 
 /** GET — poll order status (requires matching phone query param). */
@@ -65,5 +71,11 @@ export async function GET(request: Request, context: RouteContext) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 403 });
   }
 
-  return NextResponse.json({ order: toPublicOrderSnapshot(resolved.order) });
+  return NextResponse.json({
+    order: toPublicOrderSnapshot(resolved.order, {
+      name: resolved.store.name,
+      slug: resolved.store.slug,
+      currency: resolved.store.currency,
+    }),
+  });
 }
