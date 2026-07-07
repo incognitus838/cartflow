@@ -25,16 +25,16 @@ function rank(status: OrderStatus): number {
   return FULFILLMENT_RANK[status];
 }
 
-type OrderTrackingInput = Pick<
+export type OrderTrackingInput = Pick<
   Order,
   | "status"
   | "paymentReceiptSubmittedAt"
   | "createdAt"
   | "updatedAt"
   | "paymentRejectionReason"
-  | "customerAddress"
-  | "deliveryFee"
 > & {
+  customerAddress?: string | null;
+  deliveryFee?: NumericInput;
   paymentReceiptData?: Uint8Array | Buffer | null;
   paymentReceiptMimeType?: string | null;
 };
