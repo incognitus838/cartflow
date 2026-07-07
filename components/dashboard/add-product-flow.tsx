@@ -38,7 +38,6 @@ export function AddProductFlow({
 
   function handleCatalogChange(next: CatalogSettings) {
     setCatalog(next);
-    router.refresh();
   }
 
   function handleCatalogTypeApplied() {
@@ -70,11 +69,11 @@ export function AddProductFlow({
           initial={catalog}
           embedded
           emphasizeTemplates
+          syncOnSave
           onSettingsChange={handleCatalogChange}
           onTemplateApplied={handleCatalogTypeApplied}
           onSaved={() => {
             router.push("/dashboard");
-            router.refresh();
           }}
           savedRedirectLabel="Save & back to overview"
         />
@@ -88,12 +87,13 @@ export function AddProductFlow({
         <section id="catalog" className="scroll-mt-6">
           <PageHeader
             title="What do you sell?"
-            description="Pick your catalog type first — categories and tags load automatically, then add your product below."
+            description="Pick what you sell, then add your own categories and tags before creating a product."
           />
           <CatalogManager
             initial={catalog}
             embedded
             emphasizeTemplates
+            syncOnSave
             onSettingsChange={handleCatalogChange}
             onTemplateApplied={handleCatalogTypeApplied}
           />
@@ -103,6 +103,7 @@ export function AddProductFlow({
       {productsUnlocked && catalogType && !needsCatalogType ? (
         <div ref={productFormRef} className="scroll-mt-6">
           <ProductForm
+            key={`${catalog.templateId}-${catalog.categories.map((c) => c.id).join(",")}-${catalog.tags.join(",")}`}
             mode="create"
             currency={currency}
             initial={toProductFormInitial(undefined, catalogType as ProductType)}
@@ -113,7 +114,9 @@ export function AddProductFlow({
         </div>
       ) : productsUnlocked && needsCatalogType ? (
         <p className="text-[13px] text-[#6e6e73]">
-          Select a catalog type above to unlock the product form.
+          {catalogType
+            ? "Add at least one category above, then save — the product form unlocks right away."
+            : "Select a catalog type above to unlock the product form."}
         </p>
       ) : canCatalog ? (
         <div className="rounded-[var(--cf-radius-md)] border border-[#e8a317]/30 bg-[#fffdf5] px-4 py-3 text-[13px] text-[#9a6700]">
@@ -131,6 +134,7 @@ export function AddProductFlow({
             <CatalogManager
               initial={catalog}
               embedded
+              syncOnSave
               onSettingsChange={handleCatalogChange}
               onTemplateApplied={handleCatalogTypeApplied}
             />

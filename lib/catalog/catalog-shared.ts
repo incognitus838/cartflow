@@ -86,12 +86,8 @@ export function applyTemplateToSettings(
   if (!template) return "Unknown catalog type.";
 
   return {
-    categories: template.categories.map((name, index) => ({
-      id: createId(),
-      name,
-      sortOrder: index,
-    })),
-    tags: [...template.tags],
+    categories: [],
+    tags: [],
     templateId: normalized,
   };
 }

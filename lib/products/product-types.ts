@@ -11,8 +11,8 @@ export const PRODUCT_TYPES = [
   },
   {
     value: "FOOD",
-    label: "Food / Farm Produce",
-    hint: "Fresh items with expiry and prep time.",
+    label: "Food & Drinks",
+    hint: "Meals, groceries, and beverages — add your own categories.",
   },
   {
     value: "SERVICE",

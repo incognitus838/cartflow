@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowDown,
   ArrowUp,
@@ -21,6 +21,8 @@ type CatalogManagerProps = {
   productCountByCategory?: Record<string, number>;
   embedded?: boolean;
   emphasizeTemplates?: boolean;
+  /** When true, syncs from parent `initial` and updates the product form on save without refresh. */
+  syncOnSave?: boolean;
   onSettingsChange?: (settings: CatalogSettings) => void;
   onTemplateApplied?: () => void;
   onSaved?: () => void;
@@ -40,6 +42,7 @@ export function CatalogManager({
   productCountByCategory = {},
   embedded = false,
   emphasizeTemplates = false,
+  syncOnSave = false,
   onSettingsChange,
   onTemplateApplied,
   onSaved,
@@ -63,6 +66,14 @@ export function CatalogManager({
     () => [...settings.categories].sort((a, b) => a.sortOrder - b.sortOrder),
     [settings.categories],
   );
+
+  useEffect(() => {
+    if (!syncOnSave) return;
+    setSettings(initial);
+    if (isCatalogProductType(initial.templateId) && initial.categories.length > 0) {
+      setTypePickerOpen(false);
+    }
+  }, [initial, syncOnSave]);
 
   function commitSettings(next: CatalogSettings) {
     setSettings(next);
@@ -123,11 +134,11 @@ export function CatalogManager({
       }
 
       commitSettings(data.settings);
-      setTypePickerOpen(emphasizeTemplates);
+      setTypePickerOpen(emphasizeTemplates || data.settings.categories.length === 0);
       toast.success(
         embedded
-          ? "Catalog ready — continue with your product below."
-          : "Catalog type saved with categories and tags.",
+          ? "Catalog type saved — add your categories below."
+          : "Catalog type saved — add your categories and tags.",
       );
       onTemplateApplied?.();
     } catch {
@@ -191,7 +202,7 @@ export function CatalogManager({
     setSettings((prev) => ({ ...prev, tags: prev.tags.filter((existing) => existing !== tag) }));
   }
 
-  const showTaxonomy = activeType && sortedCategories.length > 0;
+  const showTaxonomy = Boolean(activeType);
 
   return (
     <div className="space-y-6">
@@ -201,13 +212,13 @@ export function CatalogManager({
             <h2 className="text-sm font-semibold text-slate-900">Catalog type</h2>
             {typePickerOpen ? (
               <p className="mt-1 text-xs text-slate-500">
-                Pick what you sell — your categories and tags are stored on your store right away.
+                Pick what you sell, then create your own categories and tags below.
               </p>
             ) : activeTemplate ? (
               <p className="mt-1 text-xs text-slate-500">
                 Selling{" "}
-                <span className="font-medium text-slate-800">{activeTemplate.label}</span> — change
-                type to reload categories and tags.
+                <span className="font-medium text-slate-800">{activeTemplate.label}</span> — add or
+                edit your categories and tags below.
               </p>
             ) : (
               <p className="mt-1 text-xs text-slate-500">Choose a catalog type to get started.</p>
@@ -258,24 +269,9 @@ export function CatalogManager({
               </button>
             </div>
             <p className="mt-2 text-sm text-slate-600">
-              This replaces your current categories and tags. Products in removed categories move to
-              General when saved.
+              This clears your current categories and tags. You&apos;ll create new ones yourself.
+              Products in removed categories move to General when saved.
             </p>
-            <div className="mt-4 rounded-xl border border-slate-100 bg-slate-50 p-4">
-              <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                Categories ({pendingTemplate.categories.length})
-              </p>
-              <ul className="mt-2 flex flex-wrap gap-1.5">
-                {pendingTemplate.categories.map((name) => (
-                  <li
-                    key={name}
-                    className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] text-slate-700"
-                  >
-                    {name}
-                  </li>
-                ))}
-              </ul>
-            </div>
             <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
               <button
                 type="button"
@@ -305,10 +301,15 @@ export function CatalogManager({
               <h2 className="text-sm font-semibold text-slate-900">Categories</h2>
             </div>
             <p className="mt-1 text-xs text-slate-500">
-              Storefront filters — rename or reorder anytime. Save to sync to the database.
+              Create categories that match what you sell — rename or reorder anytime.
             </p>
 
             <ul className="mt-4 space-y-2">
+              {sortedCategories.length === 0 ? (
+                <li className="rounded-lg border border-dashed border-slate-200 bg-slate-50/60 px-3 py-4 text-center text-sm text-slate-500">
+                  No categories yet — add your first one below.
+                </li>
+              ) : null}
               {sortedCategories.map((category, index) => (
                 <li
                   key={category.id}
@@ -449,7 +450,9 @@ export function CatalogManager({
             onClick={() => persist(settings)}
             className="btn-primary px-6"
           >
-            {saving ? "Saving…" : savedRedirectLabel ?? "Save catalog"}
+            {saving
+              ? "Saving…"
+              : savedRedirectLabel ?? (syncOnSave ? "Save & update product form" : "Save catalog")}
           </button>
         </div>
       ) : null}
