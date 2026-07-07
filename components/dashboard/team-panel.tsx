@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { Clock, Mail, RefreshCw, UserMinus, UserX } from "lucide-react";
+import { Clock, Copy, KeyRound, Mail, RefreshCw, UserMinus, UserX } from "lucide-react";
 import { toast } from "sonner";
 import {
   defaultPermissionsForPreset,
@@ -39,6 +39,13 @@ type ActivityEntry = {
   createdAt: string;
 };
 
+type StaffCredentials = {
+  email: string;
+  name: string;
+  password: string;
+  accessPreset?: string;
+};
+
 type TeamData = {
   staffEnabled: boolean;
   upgradeMessage: string | null;
@@ -68,7 +75,9 @@ export function TeamPanel() {
   const [permissions, setPermissions] = useState<MemberPermissions>(
     defaultPermissionsForPreset("STAFF"),
   );
-  const [inviting, setInviting] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [resettingMemberId, setResettingMemberId] = useState<string | null>(null);
+  const [credentials, setCredentials] = useState<StaffCredentials | null>(null);
   const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
 
   const loadTeam = useCallback(async (silent = false) => {
@@ -103,27 +112,28 @@ export function TeamPanel() {
     setPermissions((prev) => ({ ...prev, [key]: value }));
   }
 
-  async function handleInvite(event: React.FormEvent) {
+  async function handleCreateMember(event: React.FormEvent) {
     event.preventDefault();
     if (!data?.staffEnabled) return;
-    setInviting(true);
+    setCreating(true);
     try {
-      const res = await fetch("/api/business/team/invites", {
+      const res = await fetch("/api/business/team/members", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email,
-          name: name || undefined,
+          name,
           accessPreset,
           permissions: accessPreset === "CUSTOM" ? permissions : undefined,
         }),
       });
       const json = await res.json();
       if (!res.ok) {
-        toast.error(json.error || "Could not send invite");
+        toast.error(json.error || "Could not create team member");
         return;
       }
-      toast.success(`Invite sent to ${email}`);
+      setCredentials(json.credentials);
+      toast.success("Team member created — copy their login details below.");
       setEmail("");
       setName("");
       setAccessPreset("STAFF");
@@ -133,7 +143,39 @@ export function TeamPanel() {
     } catch {
       toast.error("Something went wrong");
     } finally {
-      setInviting(false);
+      setCreating(false);
+    }
+  }
+
+  async function resetPassword(memberId: string) {
+    if (!confirm("Generate a new password for this team member? Their old password will stop working.")) {
+      return;
+    }
+    setResettingMemberId(memberId);
+    try {
+      const res = await fetch(`/api/business/team/members/${memberId}/password`, {
+        method: "POST",
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        toast.error(json.error || "Could not reset password");
+        return;
+      }
+      setCredentials(json.credentials);
+      toast.success("New password generated — share it with your team member.");
+    } catch {
+      toast.error("Something went wrong");
+    } finally {
+      setResettingMemberId(null);
+    }
+  }
+
+  async function copyText(value: string, label: string) {
+    try {
+      await navigator.clipboard.writeText(value);
+      toast.success(`${label} copied`);
+    } catch {
+      toast.error("Could not copy");
     }
   }
 
@@ -226,11 +268,12 @@ export function TeamPanel() {
         </div>
       ) : (
         <section className="rounded-2xl border border-slate-200 bg-white p-6">
-          <h2 className="text-sm font-semibold text-slate-900">Invite team member</h2>
+          <h2 className="text-sm font-semibold text-slate-900">Add team member</h2>
           <p className="mt-1 text-xs text-slate-500">
-            They&apos;ll get an email with a link to join. Invites expire in 7 days.
+            Creates a login immediately. Share the email and generated password with your team
+            member — they sign in at the login page.
           </p>
-          <form onSubmit={handleInvite} className="mt-4 space-y-4">
+          <form onSubmit={handleCreateMember} className="mt-4 space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-slate-700">Email</label>
@@ -244,10 +287,9 @@ export function TeamPanel() {
                 />
               </div>
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-slate-700">
-                  Name <span className="font-normal text-slate-400">(optional)</span>
-                </label>
+                <label className="mb-1.5 block text-sm font-medium text-slate-700">Name</label>
                 <input
+                  required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Jane"
@@ -261,12 +303,16 @@ export function TeamPanel() {
               permissions={permissions}
               onPermissionChange={handlePermissionChange}
             />
-            <button type="submit" disabled={inviting} className="btn-primary">
-              {inviting ? "Sending…" : "Send invite"}
+            <button type="submit" disabled={creating} className="btn-primary">
+              {creating ? "Creating…" : "Create login"}
             </button>
           </form>
         </section>
       )}
+
+      {credentials ? (
+        <CredentialsCard credentials={credentials} onDismiss={() => setCredentials(null)} onCopy={copyText} />
+      ) : null}
 
       {data.invites.length > 0 ? (
         <section className="rounded-2xl border border-slate-200 bg-white p-6">
@@ -326,7 +372,16 @@ export function TeamPanel() {
                   <p className="mt-0.5 text-xs text-slate-500">{member.user.email}</p>
                 </div>
                 {!member.isOwner && member.role !== "OWNER" ? (
-                  <div className="flex shrink-0 items-center gap-2">
+                  <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+                    <button
+                      type="button"
+                      disabled={resettingMemberId === member.id}
+                      onClick={() => void resetPassword(member.id)}
+                      className="inline-flex items-center gap-1 text-xs font-medium text-slate-600 hover:text-slate-900"
+                    >
+                      <KeyRound className="h-3 w-3" />
+                      {resettingMemberId === member.id ? "Generating…" : "New password"}
+                    </button>
                     <button
                       type="button"
                       onClick={() =>
@@ -389,7 +444,7 @@ export function TeamPanel() {
           ))}
         </ul>
         {staffMembers.length === 0 ? (
-          <p className="mt-2 text-sm text-slate-500">No staff yet — invite someone above.</p>
+          <p className="mt-2 text-sm text-slate-500">No staff yet — create a login above.</p>
         ) : null}
       </section>
 
@@ -414,6 +469,77 @@ export function TeamPanel() {
         </section>
       ) : null}
     </div>
+  );
+}
+
+function CredentialsCard({
+  credentials,
+  onDismiss,
+  onCopy,
+}: {
+  credentials: StaffCredentials;
+  onDismiss: () => void;
+  onCopy: (value: string, label: string) => void;
+}) {
+  const loginSummary = `Email: ${credentials.email}\nPassword: ${credentials.password}`;
+
+  return (
+    <section className="rounded-2xl border border-emerald-200 bg-emerald-50 p-6">
+      <h2 className="text-sm font-semibold text-emerald-900">Login details — copy now</h2>
+      <p className="mt-1 text-xs text-emerald-800">
+        This password is shown once. Share it with {credentials.name} securely.
+      </p>
+      <dl className="mt-4 space-y-3">
+        <div className="flex items-center justify-between gap-3 rounded-lg bg-white/80 px-3 py-2.5">
+          <div className="min-w-0">
+            <dt className="text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
+              Email
+            </dt>
+            <dd className="truncate font-mono text-sm text-emerald-950">{credentials.email}</dd>
+          </div>
+          <button
+            type="button"
+            onClick={() => void onCopy(credentials.email, "Email")}
+            className="shrink-0 rounded-lg border border-emerald-200 p-2 text-emerald-800 hover:bg-white"
+            aria-label="Copy email"
+          >
+            <Copy className="h-3.5 w-3.5" />
+          </button>
+        </div>
+        <div className="flex items-center justify-between gap-3 rounded-lg bg-white/80 px-3 py-2.5">
+          <div className="min-w-0">
+            <dt className="text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
+              Password
+            </dt>
+            <dd className="font-mono text-sm text-emerald-950">{credentials.password}</dd>
+          </div>
+          <button
+            type="button"
+            onClick={() => void onCopy(credentials.password, "Password")}
+            className="shrink-0 rounded-lg border border-emerald-200 p-2 text-emerald-800 hover:bg-white"
+            aria-label="Copy password"
+          >
+            <Copy className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </dl>
+      <div className="mt-4 flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => void onCopy(loginSummary, "Login details")}
+          className="rounded-lg bg-emerald-700 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-800"
+        >
+          Copy email + password
+        </button>
+        <button
+          type="button"
+          onClick={onDismiss}
+          className="rounded-lg border border-emerald-300 px-3 py-2 text-sm font-medium text-emerald-900 hover:bg-white/60"
+        >
+          Done
+        </button>
+      </div>
+    </section>
   );
 }
 

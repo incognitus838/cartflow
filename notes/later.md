@@ -23,7 +23,9 @@ Items we are intentionally not doing right now. Pick up when ready.
 
 - Welcome email on owner signup
 - Store submitted / approved / rejected emails
-- Team invite emails
+- Team invite emails (team accounts work via owner-generated passwords until this is on)
 - Order notification plumbing (`lib/email/`, `lib/notifications/`)
+
+**Team accounts without email:** Settings → Team → **Create login** generates a password synced to the DB. Owner shares credentials manually.
 
 **Related files:** `lib/email/`, `.env.example` (comments on domain vs app URL)
