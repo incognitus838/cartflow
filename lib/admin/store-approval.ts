@@ -1,6 +1,6 @@
 import type { BusinessPlan } from "@prisma/client";
 import { parseCatalogSettings } from "@/lib/catalog/settings";
-import { getCatalogTemplate } from "@/lib/catalog/templates";
+import { getCatalogTemplateLabel } from "@/lib/catalog/templates";
 import { computeReadiness, VALID_APPROVAL_PLANS } from "@/lib/business/approval";
 import type { ApprovalReadiness } from "@/lib/business/approval";
 import { prisma } from "@/lib/db";
@@ -73,10 +73,6 @@ export async function listPendingStoreApprovals(take = 100): Promise<PendingAppr
 
   return stores.map((store): PendingApprovalRecord => {
     const catalogSettings = parseCatalogSettings(store.catalogSettings);
-    const template = catalogSettings.templateId
-      ? getCatalogTemplate(catalogSettings.templateId)
-      : undefined;
-
     return {
       id: store.id,
       name: store.name,
@@ -104,7 +100,7 @@ export async function listPendingStoreApprovals(take = 100): Promise<PendingAppr
         categories: catalogSettings.categories.map((category) => category.name),
         tags: catalogSettings.tags,
         templateId: catalogSettings.templateId ?? null,
-        templateLabel: template?.label ?? null,
+        templateLabel: getCatalogTemplateLabel(catalogSettings.templateId),
       },
       readiness: computeReadiness({
         bankAccountNumber: store.bankAccountNumber,

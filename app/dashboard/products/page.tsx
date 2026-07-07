@@ -69,8 +69,8 @@ export default async function ProductsPage({ searchParams }: PageProps) {
               title={productsUnlocked ? "No products yet" : "Catalog not set up"}
               description={
                 productsUnlocked
-                  ? "Pick a template, choose a category, and add your first product."
-                  : "Choose an industry template and configure categories for admin review."
+                  ? "Choose your catalog type, pick a category, and add your first product."
+                  : "Choose Physical, Digital, Food, or Service to configure your catalog for admin review."
               }
               actionLabel={productsUnlocked ? "Add product" : "Set up catalog"}
               actionHref="/dashboard/products/new"

@@ -5,16 +5,16 @@ import {
   ArrowDown,
   ArrowUp,
   FolderOpen,
-  GraduationCap,
   Plus,
-  Sparkles,
   Tag,
   Trash2,
   X,
 } from "lucide-react";
 import { toast } from "sonner";
-import { CATALOG_TEMPLATES } from "@/lib/catalog/templates";
+import { CatalogTypePicker } from "@/components/dashboard/catalog-type-picker";
+import { getCatalogTemplate, isCatalogProductType } from "@/lib/catalog/templates";
 import type { CatalogCategory, CatalogSettings } from "@/lib/catalog/settings";
+import type { ProductType } from "@/lib/products/product-types";
 
 type CatalogManagerProps = {
   initial: CatalogSettings;
@@ -49,31 +49,25 @@ export function CatalogManager({
   const [newCategory, setNewCategory] = useState("");
   const [newTag, setNewTag] = useState("");
   const [saving, setSaving] = useState(false);
-  const [applyingTemplate, setApplyingTemplate] = useState<string | null>(null);
-  const [templatesOpen, setTemplatesOpen] = useState(
-    emphasizeTemplates || !initial.templateId || initial.categories.length === 0,
+  const [applyingType, setApplyingType] = useState<ProductType | null>(null);
+  const [typePickerOpen, setTypePickerOpen] = useState(
+    emphasizeTemplates || !isCatalogProductType(initial.templateId) || initial.categories.length === 0,
+  );
+  const [pendingType, setPendingType] = useState<ProductType | null>(null);
+
+  const activeType = isCatalogProductType(settings.templateId) ? settings.templateId : null;
+  const activeTemplate = activeType ? getCatalogTemplate(activeType) : null;
+  const pendingTemplate = pendingType ? getCatalogTemplate(pendingType) : null;
+
+  const sortedCategories = useMemo(
+    () => [...settings.categories].sort((a, b) => a.sortOrder - b.sortOrder),
+    [settings.categories],
   );
 
   function commitSettings(next: CatalogSettings) {
     setSettings(next);
     onSettingsChange?.(next);
   }
-  const [pendingTemplateId, setPendingTemplateId] = useState<string | null>(null);
-
-  const pendingTemplate = useMemo(
-    () => CATALOG_TEMPLATES.find((t) => t.id === pendingTemplateId) ?? null,
-    [pendingTemplateId],
-  );
-
-  const activeTemplate = useMemo(
-    () => CATALOG_TEMPLATES.find((t) => t.id === settings.templateId) ?? null,
-    [settings.templateId],
-  );
-
-  const sortedCategories = useMemo(
-    () => [...settings.categories].sort((a, b) => a.sortOrder - b.sortOrder),
-    [settings.categories],
-  );
 
   async function persist(next: CatalogSettings, message = "Catalog saved") {
     setSaving(true);
@@ -100,46 +94,46 @@ export function CatalogManager({
     }
   }
 
-  function requestApplyTemplate(templateId: string) {
+  function requestApplyType(type: ProductType) {
     const hasExisting =
       settings.categories.length > 0 ||
       settings.tags.length > 0 ||
-      Boolean(settings.templateId);
-    if (hasExisting && settings.templateId !== templateId) {
-      setPendingTemplateId(templateId);
+      isCatalogProductType(settings.templateId);
+    if (hasExisting && settings.templateId !== type) {
+      setPendingType(type);
       return;
     }
-    void handleApplyTemplate(templateId);
+    void handleApplyType(type);
   }
 
-  async function handleApplyTemplate(templateId: string) {
-    setPendingTemplateId(null);
-    setApplyingTemplate(templateId);
+  async function handleApplyType(type: ProductType) {
+    setPendingType(null);
+    setApplyingType(type);
     try {
       const res = await fetch("/api/catalog", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ applyTemplate: templateId }),
+        body: JSON.stringify({ applyTemplate: type }),
       });
       const data = await res.json();
 
       if (!res.ok) {
-        toast.error(data.error || "Could not apply template");
+        toast.error(data.error || "Could not set up catalog");
         return;
       }
 
       commitSettings(data.settings);
-      setTemplatesOpen(emphasizeTemplates ? true : false);
+      setTypePickerOpen(emphasizeTemplates);
       toast.success(
         embedded
-          ? "Template applied — continue with your product below."
-          : "Template applied — categories and tags replaced. Edit or save when ready.",
+          ? "Catalog ready — continue with your product below."
+          : "Catalog type saved with categories and tags.",
       );
       onTemplateApplied?.();
     } catch {
       toast.error("Something went wrong");
     } finally {
-      setApplyingTemplate(null);
+      setApplyingType(null);
     }
   }
 
@@ -197,107 +191,66 @@ export function CatalogManager({
     setSettings((prev) => ({ ...prev, tags: prev.tags.filter((existing) => existing !== tag) }));
   }
 
+  const showTaxonomy = activeType && sortedCategories.length > 0;
+
   return (
     <div className="space-y-6">
       <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
         <div className="flex items-start justify-between gap-3">
-          <div className="flex items-start gap-3">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-700">
-              <Sparkles className="h-5 w-5" />
-            </span>
-            <div>
-              <h2 className="text-sm font-semibold text-slate-900">Industry templates</h2>
-              {templatesOpen ? (
-                <p className="mt-1 text-xs text-slate-500">
-                  Pick a template to load its categories and tags. Switching replaces your current
-                  list — it does not add on top.
-                </p>
-              ) : activeTemplate ? (
-                <p className="mt-1 text-xs text-slate-500">
-                  Using <span className="font-medium text-slate-800">{activeTemplate.label}</span>.
-                  Change template to load a different set.
-                </p>
-              ) : (
-                <p className="mt-1 text-xs text-slate-500">
-                  Pick a template to get started with categories and tags.
-                </p>
-              )}
-            </div>
+          <div>
+            <h2 className="text-sm font-semibold text-slate-900">Catalog type</h2>
+            {typePickerOpen ? (
+              <p className="mt-1 text-xs text-slate-500">
+                Pick what you sell — your categories and tags are stored on your store right away.
+              </p>
+            ) : activeTemplate ? (
+              <p className="mt-1 text-xs text-slate-500">
+                Selling{" "}
+                <span className="font-medium text-slate-800">{activeTemplate.label}</span> — change
+                type to reload categories and tags.
+              </p>
+            ) : (
+              <p className="mt-1 text-xs text-slate-500">Choose a catalog type to get started.</p>
+            )}
           </div>
-          {!templatesOpen ? (
+          {!typePickerOpen && activeType ? (
             <button
               type="button"
-              onClick={() => setTemplatesOpen(true)}
+              onClick={() => setTypePickerOpen(true)}
               className="shrink-0 text-xs font-semibold text-emerald-700 hover:text-emerald-800"
             >
-              Change template
+              Change type
             </button>
           ) : null}
         </div>
 
-        {templatesOpen ? (
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {CATALOG_TEMPLATES.map((template) => {
-              const isActive = settings.templateId === template.id;
-              return (
-                <button
-                  key={template.id}
-                  type="button"
-                  disabled={Boolean(applyingTemplate)}
-                  onClick={() => requestApplyTemplate(template.id)}
-                  className={`rounded-xl border p-4 text-left transition-colors disabled:opacity-60 ${
-                    isActive
-                      ? "border-emerald-400 bg-emerald-50/60 ring-1 ring-emerald-400/30"
-                      : "border-slate-200 bg-slate-50/80 hover:border-emerald-300 hover:bg-emerald-50/40"
-                  }`}
-                >
-                  <p className="text-sm font-semibold text-slate-900">{template.label}</p>
-                  <p className="mt-1 text-xs text-slate-500">{template.description}</p>
-                  <p className="mt-2 text-[11px] font-medium text-emerald-700">
-                    {applyingTemplate === template.id
-                      ? "Applying…"
-                      : isActive
-                        ? "Active · click to reload"
-                        : `${template.categories.length} categories · ${template.tags.length} tags`}
-                  </p>
-                </button>
-              );
-            })}
+        {typePickerOpen ? (
+          <div className="mt-4">
+            <CatalogTypePicker
+              activeType={activeType}
+              applying={applyingType}
+              onSelect={requestApplyType}
+              compact
+            />
           </div>
         ) : null}
       </section>
-
-      {activeTemplate?.id === "courses" ? (
-        <div className="flex items-start gap-3 rounded-2xl border border-indigo-200 bg-indigo-50/50 px-5 py-4">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-100 text-indigo-700">
-            <GraduationCap className="h-4 w-4" />
-          </span>
-          <div>
-            <p className="text-sm font-semibold text-slate-900">Online courses catalog</p>
-            <p className="mt-1 text-xs text-slate-600">
-              List each course as a product — use categories for format (self-paced, live cohort,
-              etc.) and tags for level, access type, or launch promos. Add modules or lesson counts
-              in the product description.
-            </p>
-          </div>
-        </div>
-      ) : null}
 
       {pendingTemplate ? (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
           role="dialog"
           aria-modal="true"
-          aria-labelledby="template-confirm-title"
+          aria-labelledby="type-confirm-title"
         >
           <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl border border-slate-200 bg-white p-6 shadow-xl">
             <div className="flex items-start justify-between gap-3">
-              <h3 id="template-confirm-title" className="text-base font-semibold text-slate-900">
-                Use {pendingTemplate.label}?
+              <h3 id="type-confirm-title" className="text-base font-semibold text-slate-900">
+                Switch to {pendingTemplate.label}?
               </h3>
               <button
                 type="button"
-                onClick={() => setPendingTemplateId(null)}
+                onClick={() => setPendingType(null)}
                 className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
                 aria-label="Close"
               >
@@ -305,8 +258,8 @@ export function CatalogManager({
               </button>
             </div>
             <p className="mt-2 text-sm text-slate-600">
-              This replaces your current categories and tags with the template below. Products in
-              removed categories move to General when you save.
+              This replaces your current categories and tags. Products in removed categories move to
+              General when saved.
             </p>
             <div className="mt-4 rounded-xl border border-slate-100 bg-slate-50 p-4">
               <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
@@ -322,57 +275,39 @@ export function CatalogManager({
                   </li>
                 ))}
               </ul>
-              <p className="mt-3 text-xs font-medium uppercase tracking-wide text-slate-500">
-                Tags ({pendingTemplate.tags.length})
-              </p>
-              <ul className="mt-2 flex flex-wrap gap-1.5">
-                {pendingTemplate.tags.map((tag) => (
-                  <li
-                    key={tag}
-                    className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] text-slate-700"
-                  >
-                    {tag}
-                  </li>
-                ))}
-              </ul>
             </div>
             <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
               <button
                 type="button"
-                onClick={() => setPendingTemplateId(null)}
+                onClick={() => setPendingType(null)}
                 className="rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
               >
                 Cancel
               </button>
               <button
                 type="button"
-                disabled={Boolean(applyingTemplate)}
-                onClick={() => void handleApplyTemplate(pendingTemplate.id)}
+                disabled={Boolean(applyingType)}
+                onClick={() => void handleApplyType(pendingTemplate.id)}
                 className="btn-primary px-4 py-2.5 text-sm"
               >
-                {applyingTemplate === pendingTemplate.id ? "Applying…" : "Replace catalog"}
+                {applyingType === pendingTemplate.id ? "Applying…" : "Switch catalog type"}
               </button>
             </div>
           </div>
         </div>
       ) : null}
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
-          <div className="flex items-center gap-2">
-            <FolderOpen className="h-4 w-4 text-slate-600" />
-            <h2 className="text-sm font-semibold text-slate-900">Categories</h2>
-          </div>
-          <p className="mt-1 text-xs text-slate-500">
-            Shown as storefront filters once products use these categories. Renaming updates assigned
-            products; new categories appear in the product form automatically.
-          </p>
-
-          {sortedCategories.length === 0 ? (
-            <p className="mt-4 rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm text-slate-500">
-              No categories yet — pick a template or add your first one.
+      {showTaxonomy ? (
+        <div className="grid gap-6 lg:grid-cols-2">
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
+            <div className="flex items-center gap-2">
+              <FolderOpen className="h-4 w-4 text-slate-600" />
+              <h2 className="text-sm font-semibold text-slate-900">Categories</h2>
+            </div>
+            <p className="mt-1 text-xs text-slate-500">
+              Storefront filters — rename or reorder anytime. Save to sync to the database.
             </p>
-          ) : (
+
             <ul className="mt-4 space-y-2">
               {sortedCategories.map((category, index) => (
                 <li
@@ -423,99 +358,101 @@ export function CatalogManager({
                 </li>
               ))}
             </ul>
-          )}
 
-          <div className="mt-4 flex gap-2">
-            <input
-              value={newCategory}
-              onChange={(e) => setNewCategory(e.target.value)}
-              placeholder="New category name"
-              className="min-w-0 flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-emerald-500"
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  addCategory();
-                }
-              }}
-            />
-            <button
-              type="button"
-              onClick={addCategory}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-            >
-              <Plus className="h-4 w-4" />
-              Add
-            </button>
-          </div>
-        </section>
+            <div className="mt-4 flex gap-2">
+              <input
+                value={newCategory}
+                onChange={(e) => setNewCategory(e.target.value)}
+                placeholder="New category name"
+                className="min-w-0 flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-emerald-500"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    addCategory();
+                  }
+                }}
+              />
+              <button
+                type="button"
+                onClick={addCategory}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              >
+                <Plus className="h-4 w-4" />
+                Add
+              </button>
+            </div>
+          </section>
 
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
-          <div className="flex items-center gap-2">
-            <Tag className="h-4 w-4 text-slate-600" />
-            <h2 className="text-sm font-semibold text-slate-900">Tags</h2>
-          </div>
-          <p className="mt-1 text-xs text-slate-500">
-            Reusable labels for products — bestseller, new arrival, sale, and more.
-          </p>
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
+            <div className="flex items-center gap-2">
+              <Tag className="h-4 w-4 text-slate-600" />
+              <h2 className="text-sm font-semibold text-slate-900">Tags</h2>
+            </div>
+            <p className="mt-1 text-xs text-slate-500">
+              Reusable labels for products — bestseller, new arrival, sale, and more.
+            </p>
 
-          <div className="mt-4 flex flex-wrap gap-2">
-            {settings.tags.length === 0 ? (
-              <p className="text-sm text-slate-500">No tags yet.</p>
-            ) : (
-              settings.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700"
-                >
-                  {tag}
-                  <button
-                    type="button"
-                    onClick={() => removeTag(tag)}
-                    className="text-slate-400 hover:text-red-600"
-                    aria-label={`Remove ${tag}`}
+            <div className="mt-4 flex flex-wrap gap-2">
+              {settings.tags.length === 0 ? (
+                <p className="text-sm text-slate-500">No tags yet.</p>
+              ) : (
+                settings.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700"
                   >
-                    ×
-                  </button>
-                </span>
-              ))
-            )}
-          </div>
+                    {tag}
+                    <button
+                      type="button"
+                      onClick={() => removeTag(tag)}
+                      className="text-slate-400 hover:text-red-600"
+                      aria-label={`Remove ${tag}`}
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))
+              )}
+            </div>
 
-          <div className="mt-4 flex gap-2">
-            <input
-              value={newTag}
-              onChange={(e) => setNewTag(e.target.value)}
-              placeholder="New tag"
-              className="min-w-0 flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-emerald-500"
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  addTag();
-                }
-              }}
-            />
-            <button
-              type="button"
-              onClick={addTag}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-            >
-              <Plus className="h-4 w-4" />
-              Add
-            </button>
-          </div>
-        </section>
-      </div>
+            <div className="mt-4 flex gap-2">
+              <input
+                value={newTag}
+                onChange={(e) => setNewTag(e.target.value)}
+                placeholder="New tag"
+                className="min-w-0 flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-emerald-500"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    addTag();
+                  }
+                }}
+              />
+              <button
+                type="button"
+                onClick={addTag}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              >
+                <Plus className="h-4 w-4" />
+                Add
+              </button>
+            </div>
+          </section>
+        </div>
+      ) : null}
 
-      <div className="flex justify-end">
-        <button
-          type="button"
-          disabled={saving}
-          onClick={() => persist(settings)}
-          className="btn-primary px-6"
-        >
-          {saving ? "Saving…" : savedRedirectLabel ? savedRedirectLabel : "Save catalog"}
-        </button>
-      </div>
+      {showTaxonomy ? (
+        <div className="flex justify-end">
+          <button
+            type="button"
+            disabled={saving}
+            onClick={() => persist(settings)}
+            className="btn-primary px-6"
+          >
+            {saving ? "Saving…" : savedRedirectLabel ?? "Save catalog"}
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -89,9 +89,9 @@ export function PendingApprovalOverview({ storeName, checklist }: PendingApprova
           />
           <ChecklistRow
             ok={checklist.hasCategories}
-            label="Catalog categories configured"
+            label="Catalog type & categories configured"
             href="/dashboard/products/new"
-            action="Set up categories"
+            action="Choose catalog type"
           />
           <li className="flex items-start gap-3 rounded-[var(--cf-radius-md)] border border-black/[0.06] bg-[#fbfbfd] px-4 py-3">
             <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#e8a317]/15 text-[#9a6700]">

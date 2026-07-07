@@ -1,5 +1,5 @@
 import type { Prisma } from "@prisma/client";
-import { getCatalogTemplate } from "@/lib/catalog/templates";
+import { getCatalogTemplate, isCatalogProductType, normalizeCatalogTemplateId } from "@/lib/catalog/templates";
 import { prisma } from "@/lib/db";
 
 export type CatalogCategory = {
@@ -50,7 +50,7 @@ export function parseCatalogSettings(raw: unknown): CatalogSettings {
   }
 
   if (typeof data.templateId === "string") {
-    base.templateId = data.templateId;
+    base.templateId = normalizeCatalogTemplateId(data.templateId) ?? data.templateId;
   }
 
   return base;
@@ -105,8 +105,13 @@ export function applyTemplateToSettings(
   _current: CatalogSettings,
   templateId: string,
 ): CatalogSettings | string {
-  const template = getCatalogTemplate(templateId);
-  if (!template) return "Unknown catalog template.";
+  const normalized = normalizeCatalogTemplateId(templateId);
+  if (!normalized || !isCatalogProductType(normalized)) {
+    return "Choose a catalog type: Physical, Digital, Food, or Service.";
+  }
+
+  const template = getCatalogTemplate(normalized);
+  if (!template) return "Unknown catalog type.";
 
   return {
     categories: template.categories.map((name, index) => ({
@@ -115,7 +120,7 @@ export function applyTemplateToSettings(
       sortOrder: index,
     })),
     tags: [...template.tags],
-    templateId,
+    templateId: normalized,
   };
 }
 

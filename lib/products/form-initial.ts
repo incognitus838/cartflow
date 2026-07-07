@@ -4,6 +4,7 @@ import {
   parseProductMetadata,
   type ProductMetadata,
 } from "@/lib/products/metadata";
+import type { ProductType } from "@/lib/products/product-types";
 import { emptyVariantRow, type VariantFormRow } from "@/lib/products/variants";
 
 export type ProductFormInitial = {
@@ -40,13 +41,17 @@ export function toProductFormInitial(product?: {
     price: { toString(): string } | number | null;
     stock: number;
   }>;
-}): ProductFormInitial {
+}, catalogProductType?: ProductType): ProductFormInitial {
   if (!product) {
+    const metadata = emptyProductMetadata();
+    if (catalogProductType) {
+      metadata.productType = catalogProductType;
+    }
     return {
       title: "",
       description: "",
-      category: "General",
-      metadata: emptyProductMetadata(),
+      category: "",
+      metadata,
       price: "",
       compareAtPrice: "",
       status: "DRAFT",

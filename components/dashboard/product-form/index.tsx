@@ -17,7 +17,7 @@ import type { ProductFormInitial } from "@/lib/products/form-initial";
 import type { ProductMetadata } from "@/lib/products/metadata";
 import { serializeProductMetadata } from "@/lib/products/metadata";
 import { PRODUCT_TYPE_CONFIG } from "@/lib/products/product-type-config";
-import { defaultVariantGroupName, type ProductType } from "@/lib/products/product-types";
+import { defaultVariantGroupName, PRODUCT_TYPES, type ProductType } from "@/lib/products/product-types";
 import { createVariantGroup } from "@/lib/products/variant-groups";
 import { emptyVariantRow, type VariantFormRow } from "@/lib/products/variants";
 import { formatCurrency } from "@/lib/utils";
@@ -30,6 +30,8 @@ type ProductFormProps = {
   initial: ProductFormInitial;
   catalogCategories?: string[];
   catalogTags?: string[];
+  /** Set when catalog type was chosen on /products/new — hides duplicate type picker */
+  lockedProductType?: ProductType;
 };
 
 const STATUSES = [
@@ -44,6 +46,7 @@ export function ProductForm({
   initial,
   catalogCategories = [],
   catalogTags = [],
+  lockedProductType,
 }: ProductFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -228,10 +231,24 @@ export function ProductForm({
             </div>
           </div>
 
-          <ProductTypeSelector
-            value={metadata.productType}
-            onChange={handleProductTypeChange}
-          />
+          {lockedProductType ? (
+            <div className="rounded-[12px] border border-black/[0.06] bg-[#f5f5f7] px-4 py-3">
+              <p className="text-[11px] font-medium uppercase tracking-wide text-[#86868b]">
+                Catalog type
+              </p>
+              <p className="mt-1 text-[14px] font-semibold text-[#1d1d1f]">
+                {PRODUCT_TYPES.find((t) => t.value === lockedProductType)?.label ?? lockedProductType}
+              </p>
+              <p className="mt-0.5 text-[12px] text-[#6e6e73]">
+                {PRODUCT_TYPES.find((t) => t.value === lockedProductType)?.hint}
+              </p>
+            </div>
+          ) : (
+            <ProductTypeSelector
+              value={metadata.productType}
+              onChange={handleProductTypeChange}
+            />
+          )}
 
           <ProductTypeDetails
             type={metadata.productType}

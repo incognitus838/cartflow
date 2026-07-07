@@ -1,92 +1,93 @@
+import { PRODUCT_TYPES, type ProductType } from "@/lib/products/product-types";
+
 export type CatalogTemplate = {
-  id: string;
+  id: ProductType;
   label: string;
   description: string;
   categories: string[];
   tags: string[];
 };
 
+/** Catalog is defined by what you sell — one template per product type. */
 export const CATALOG_TEMPLATES: CatalogTemplate[] = [
   {
-    id: "beauty",
-    label: "Skincare & beauty",
-    description: "Lip care, oral care, skincare, hair, makeup, fragrance, and more.",
+    id: "PHYSICAL",
+    label: "Physical Goods",
+    description: "Shippable items with stock and SKU tracking.",
     categories: [
-      "Lip Care",
-      "Oral Care",
-      "Body Wash",
-      "Face Makeup",
-      "Eye Makeup",
-      "Nail Care",
-      "Skincare",
-      "Hair Care",
-      "Fragrance",
-      "Bath & Body",
+      "Fashion & Apparel",
+      "Electronics",
+      "Home & Living",
+      "Beauty & Personal Care",
+      "Sports & Outdoors",
+      "Books & Stationery",
+      "Other",
     ],
-    tags: ["bestseller", "new arrival", "vegan", "SPF", "sensitive skin", "sale", "limited edition"],
+    tags: ["bestseller", "new arrival", "sale", "limited stock", "free delivery"],
   },
   {
-    id: "clothing",
-    label: "Clothing & fashion",
-    description: "Apparel, shoes, bags, and accessories for fashion brands.",
+    id: "DIGITAL",
+    label: "Digital Product",
+    description: "Courses, eBooks, downloads — auto-delivery via link.",
     categories: [
-      "Dresses",
-      "Tops",
-      "Bottoms",
-      "Shoes",
-      "Accessories",
-      "Bags",
-      "Traditional Wear",
-      "Kids",
-      "New Arrivals",
+      "Courses",
+      "eBooks & Guides",
+      "Templates & Downloads",
+      "Software & Tools",
+      "Memberships",
+      "Bundles",
     ],
-    tags: ["bestseller", "new arrival", "sale", "limited stock", "custom order", "made to measure"],
+    tags: ["beginner", "advanced", "lifetime access", "bestseller", "new launch", "early bird"],
   },
   {
-    id: "food",
-    label: "Food & farm",
-    description: "Fresh produce, bakery, prepared meals, and drinks.",
-    categories: ["Farm Produce", "Bakery", "Prepared Meals", "Drinks", "Snacks", "Spices"],
+    id: "FOOD",
+    label: "Food / Farm Produce",
+    description: "Fresh items with expiry and prep time.",
+    categories: ["Farm Produce", "Bakery", "Prepared Meals", "Drinks", "Snacks", "Spices & Pantry"],
     tags: ["fresh", "organic", "seasonal", "bestseller", "pre-order"],
   },
   {
-    id: "electronics",
-    label: "Electronics",
-    description: "Phones, accessories, audio, and home tech.",
-    categories: ["Phones", "Accessories", "Audio", "Home Tech", "Gaming", "Cables & Chargers"],
-    tags: ["warranty", "refurbished", "new", "bestseller", "clearance"],
-  },
-  {
-    id: "courses",
-    label: "Online courses",
-    description: "Self-paced programs, live cohorts, workshops, and digital learning products.",
+    id: "SERVICE",
+    label: "Service / Restaurant",
+    description: "Menu items, bookings, or made-to-order services.",
     categories: [
-      "Self-Paced Courses",
-      "Live Cohorts",
-      "Workshops & Webinars",
-      "Masterclasses",
-      "Certifications",
-      "Bundles & Programs",
-      "Templates & Downloads",
-      "Coaching & Mentorship",
-      "Free Previews",
-      "Membership",
+      "Restaurant & Menu",
+      "Catering",
+      "Beauty & Wellness",
+      "Events",
+      "Consulting",
+      "Other Services",
     ],
-    tags: [
-      "beginner",
-      "intermediate",
-      "advanced",
-      "lifetime access",
-      "certificate included",
-      "self-paced",
-      "live sessions",
-      "bestseller",
-      "new launch",
-      "early bird",
-    ],
+    tags: ["popular", "booking required", "made to order", "bestseller"],
   },
 ];
 
+const LEGACY_TEMPLATE_MAP: Record<string, ProductType> = {
+  beauty: "PHYSICAL",
+  clothing: "PHYSICAL",
+  electronics: "PHYSICAL",
+  food: "FOOD",
+  courses: "DIGITAL",
+};
+
+export function isCatalogProductType(id: string | null | undefined): id is ProductType {
+  if (!id) return false;
+  return PRODUCT_TYPES.some((type) => type.value === id);
+}
+
+export function normalizeCatalogTemplateId(templateId: string | null | undefined): ProductType | null {
+  if (!templateId) return null;
+  if (isCatalogProductType(templateId)) return templateId;
+  return LEGACY_TEMPLATE_MAP[templateId] ?? null;
+}
+
 export function getCatalogTemplate(id: string) {
-  return CATALOG_TEMPLATES.find((template) => template.id === id);
+  const normalized = normalizeCatalogTemplateId(id);
+  if (!normalized) return undefined;
+  return CATALOG_TEMPLATES.find((template) => template.id === normalized);
+}
+
+export function getCatalogTemplateLabel(id: string | null | undefined) {
+  const template = id ? getCatalogTemplate(id) : undefined;
+  return template?.label ?? null;
 }
