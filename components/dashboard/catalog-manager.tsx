@@ -137,11 +137,11 @@ export function CatalogManager({
 
       commitSettings(data.settings);
       notifyCatalogChanged();
-      setTypePickerOpen(emphasizeTemplates || data.settings.categories.length === 0);
+      setTypePickerOpen(emphasizeTemplates);
       toast.success(
         embedded
-          ? "Catalog type saved — add your categories below."
-          : "Catalog type saved — add your categories and tags.",
+          ? "Catalog ready — suggested categories & tags loaded. Edit or add your own."
+          : "Catalog type saved — suggested categories & tags loaded.",
       );
       onTemplateApplied?.();
     } catch {
@@ -215,13 +215,14 @@ export function CatalogManager({
             <h2 className="text-sm font-semibold text-slate-900">Catalog type</h2>
             {typePickerOpen ? (
               <p className="mt-1 text-xs text-slate-500">
-                Pick what you sell, then create your own categories and tags below.
+                Pick what you sell — suggested categories and tags load right away. Edit, remove, or
+                add your own below.
               </p>
             ) : activeTemplate ? (
               <p className="mt-1 text-xs text-slate-500">
                 Selling{" "}
-                <span className="font-medium text-slate-800">{activeTemplate.label}</span> — add or
-                edit your categories and tags below.
+                <span className="font-medium text-slate-800">{activeTemplate.label}</span> — edit
+                suggested categories and tags, or add your own.
               </p>
             ) : (
               <p className="mt-1 text-xs text-slate-500">Choose a catalog type to get started.</p>
@@ -272,9 +273,38 @@ export function CatalogManager({
               </button>
             </div>
             <p className="mt-2 text-sm text-slate-600">
-              This clears your current categories and tags. You&apos;ll create new ones yourself.
-              Products in removed categories move to General when saved.
+              This replaces your current categories and tags with the suggestions below. You can
+              still edit or add your own afterward. Products in removed categories move to General
+              when saved.
             </p>
+            <div className="mt-4 rounded-xl border border-slate-100 bg-slate-50 p-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                Categories ({pendingTemplate.categories.length})
+              </p>
+              <ul className="mt-2 flex flex-wrap gap-1.5">
+                {pendingTemplate.categories.map((name) => (
+                  <li
+                    key={name}
+                    className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] text-slate-700"
+                  >
+                    {name}
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-4 text-xs font-medium uppercase tracking-wide text-slate-500">
+                Tags ({pendingTemplate.tags.length})
+              </p>
+              <ul className="mt-2 flex flex-wrap gap-1.5">
+                {pendingTemplate.tags.map((tag) => (
+                  <li
+                    key={tag}
+                    className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] text-emerald-800"
+                  >
+                    {tag}
+                  </li>
+                ))}
+              </ul>
+            </div>
             <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
               <button
                 type="button"
@@ -304,13 +334,13 @@ export function CatalogManager({
               <h2 className="text-sm font-semibold text-slate-900">Categories</h2>
             </div>
             <p className="mt-1 text-xs text-slate-500">
-              Create categories that match what you sell — rename or reorder anytime.
+              Suggested categories for your catalog type — rename, reorder, remove, or add your own.
             </p>
 
             <ul className="mt-4 space-y-2">
               {sortedCategories.length === 0 ? (
                 <li className="rounded-lg border border-dashed border-slate-200 bg-slate-50/60 px-3 py-4 text-center text-sm text-slate-500">
-                  No categories yet — add your first one below.
+                  No categories — add one below.
                 </li>
               ) : null}
               {sortedCategories.map((category, index) => (
@@ -393,12 +423,12 @@ export function CatalogManager({
               <h2 className="text-sm font-semibold text-slate-900">Tags</h2>
             </div>
             <p className="mt-1 text-xs text-slate-500">
-              Reusable labels for products — bestseller, new arrival, sale, and more.
+              Suggested tags are pre-loaded — remove any you don&apos;t need or add your own labels.
             </p>
 
             <div className="mt-4 flex flex-wrap gap-2">
               {settings.tags.length === 0 ? (
-                <p className="text-sm text-slate-500">No tags yet.</p>
+                <p className="text-sm text-slate-500">No tags — add one below.</p>
               ) : (
                 settings.tags.map((tag) => (
                   <span

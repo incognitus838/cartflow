@@ -12,7 +12,7 @@ export const PRODUCT_TYPES = [
   {
     value: "FOOD",
     label: "Food & Drinks",
-    hint: "Meals, groceries, and beverages — add your own categories.",
+    hint: "Meals, groceries, and beverages.",
   },
   {
     value: "SERVICE",

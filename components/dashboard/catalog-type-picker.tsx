@@ -31,7 +31,7 @@ export function CatalogTypePicker({
         What do you sell?
       </legend>
       <p className={cn("text-slate-500", compact ? "mt-1 text-xs" : "mt-1 text-[12px] text-[#86868b]")}>
-        Choose what you sell — you create your own categories and tags next.
+        Choose your catalog type — suggested categories and tags are included; edit or add your own.
       </p>
       <div
         className={cn("grid gap-2 sm:grid-cols-2", compact ? "mt-4" : "mt-3")}
@@ -72,10 +72,10 @@ export function CatalogTypePicker({
                   {template ? (
                     <span className="mt-1.5 block text-[10px] font-medium text-emerald-700">
                       {loading
-                        ? "Saving catalog type…"
+                        ? "Setting up catalog…"
                         : active
-                          ? "Selected — add your categories below"
-                          : "You add your own categories & tags"}
+                          ? "Active — edit or add categories & tags below"
+                          : `${template.categories.length} categories · ${template.tags.length} tags included`}
                     </span>
                   ) : null}
                 </span>
@@ -87,4 +87,3 @@ export function CatalogTypePicker({
     </fieldset>
   );
 }
-

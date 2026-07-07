@@ -87,7 +87,7 @@ export function AddProductFlow({
         <section id="catalog" className="scroll-mt-6">
           <PageHeader
             title="What do you sell?"
-            description="Pick what you sell, then add your own categories and tags before creating a product."
+            description="Pick what you sell — suggested categories and tags load automatically. Edit or add your own, then create a product."
           />
           <CatalogManager
             initial={catalog}
@@ -115,7 +115,7 @@ export function AddProductFlow({
       ) : productsUnlocked && needsCatalogType ? (
         <p className="text-[13px] text-[#6e6e73]">
           {catalogType
-            ? "Add at least one category above, then save — the product form unlocks right away."
+            ? "Keep at least one category, then save — the product form unlocks right away."
             : "Select a catalog type above to unlock the product form."}
         </p>
       ) : canCatalog ? (
