@@ -101,41 +101,20 @@ export async function resolveCatalogSettings(businessId: string): Promise<Catalo
   };
 }
 
-function mergeUniqueNames(existing: string[], incoming: string[]) {
-  const seen = new Set(existing.map((name) => name.toLowerCase()));
-  const merged = [...existing];
-
-  for (const name of incoming) {
-    const trimmed = name.trim();
-    if (!trimmed) continue;
-    const key = trimmed.toLowerCase();
-    if (seen.has(key)) continue;
-    seen.add(key);
-    merged.push(trimmed);
-  }
-
-  return merged;
-}
-
 export function applyTemplateToSettings(
-  current: CatalogSettings,
+  _current: CatalogSettings,
   templateId: string,
 ): CatalogSettings | string {
   const template = getCatalogTemplate(templateId);
   if (!template) return "Unknown catalog template.";
 
-  const categoryNames = mergeUniqueNames(
-    current.categories.map((category) => category.name),
-    template.categories,
-  );
-
   return {
-    categories: categoryNames.map((name, index) => ({
-      id: current.categories.find((c) => c.name.toLowerCase() === name.toLowerCase())?.id ?? createId(),
+    categories: template.categories.map((name, index) => ({
+      id: createId(),
       name,
       sortOrder: index,
     })),
-    tags: mergeUniqueNames(current.tags, template.tags),
+    tags: [...template.tags],
     templateId,
   };
 }

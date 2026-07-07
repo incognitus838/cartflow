@@ -24,6 +24,12 @@ export function CatalogManager({ initial }: CatalogManagerProps) {
   const [newTag, setNewTag] = useState("");
   const [saving, setSaving] = useState(false);
   const [applyingTemplate, setApplyingTemplate] = useState<string | null>(null);
+  const [templatesOpen, setTemplatesOpen] = useState(!initial.templateId);
+
+  const activeTemplate = useMemo(
+    () => CATALOG_TEMPLATES.find((t) => t.id === settings.templateId) ?? null,
+    [settings.templateId],
+  );
 
   const sortedCategories = useMemo(
     () => [...settings.categories].sort((a, b) => a.sortOrder - b.sortOrder),
@@ -70,7 +76,8 @@ export function CatalogManager({ initial }: CatalogManagerProps) {
       }
 
       setSettings(data.settings);
-      toast.success("Template applied — edit or remove anything you do not need.");
+      setTemplatesOpen(false);
+      toast.success("Template applied — categories and tags replaced. Edit or save when ready.");
     } catch {
       toast.error("Something went wrong");
     } finally {
@@ -135,36 +142,71 @@ export function CatalogManager({ initial }: CatalogManagerProps) {
   return (
     <div className="space-y-6">
       <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
-        <div className="flex items-start gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-700">
-            <Sparkles className="h-5 w-5" />
-          </span>
-          <div>
-            <h2 className="text-sm font-semibold text-slate-900">Industry templates</h2>
-            <p className="mt-1 text-xs text-slate-500">
-              Start with ready-made categories and tags for your business type. Templates merge with
-              what you already have.
-            </p>
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-start gap-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-700">
+              <Sparkles className="h-5 w-5" />
+            </span>
+            <div>
+              <h2 className="text-sm font-semibold text-slate-900">Industry templates</h2>
+              {templatesOpen ? (
+                <p className="mt-1 text-xs text-slate-500">
+                  Pick a template to load its categories and tags. Switching replaces your current
+                  list — it does not add on top.
+                </p>
+              ) : activeTemplate ? (
+                <p className="mt-1 text-xs text-slate-500">
+                  Using <span className="font-medium text-slate-800">{activeTemplate.label}</span>.
+                  Change template to load a different set.
+                </p>
+              ) : (
+                <p className="mt-1 text-xs text-slate-500">
+                  Pick a template to get started with categories and tags.
+                </p>
+              )}
+            </div>
           </div>
+          {!templatesOpen ? (
+            <button
+              type="button"
+              onClick={() => setTemplatesOpen(true)}
+              className="shrink-0 text-xs font-semibold text-emerald-700 hover:text-emerald-800"
+            >
+              Change template
+            </button>
+          ) : null}
         </div>
 
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          {CATALOG_TEMPLATES.map((template) => (
-            <button
-              key={template.id}
-              type="button"
-              disabled={Boolean(applyingTemplate)}
-              onClick={() => handleApplyTemplate(template.id)}
-              className="rounded-xl border border-slate-200 bg-slate-50/80 p-4 text-left transition-colors hover:border-emerald-300 hover:bg-emerald-50/40 disabled:opacity-60"
-            >
-              <p className="text-sm font-semibold text-slate-900">{template.label}</p>
-              <p className="mt-1 text-xs text-slate-500">{template.description}</p>
-              <p className="mt-2 text-[11px] font-medium text-emerald-700">
-                {applyingTemplate === template.id ? "Applying…" : `${template.categories.length} categories · ${template.tags.length} tags`}
-              </p>
-            </button>
-          ))}
-        </div>
+        {templatesOpen ? (
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            {CATALOG_TEMPLATES.map((template) => {
+              const isActive = settings.templateId === template.id;
+              return (
+                <button
+                  key={template.id}
+                  type="button"
+                  disabled={Boolean(applyingTemplate)}
+                  onClick={() => handleApplyTemplate(template.id)}
+                  className={`rounded-xl border p-4 text-left transition-colors disabled:opacity-60 ${
+                    isActive
+                      ? "border-emerald-400 bg-emerald-50/60 ring-1 ring-emerald-400/30"
+                      : "border-slate-200 bg-slate-50/80 hover:border-emerald-300 hover:bg-emerald-50/40"
+                  }`}
+                >
+                  <p className="text-sm font-semibold text-slate-900">{template.label}</p>
+                  <p className="mt-1 text-xs text-slate-500">{template.description}</p>
+                  <p className="mt-2 text-[11px] font-medium text-emerald-700">
+                    {applyingTemplate === template.id
+                      ? "Applying…"
+                      : isActive
+                        ? "Active · click to reload"
+                        : `${template.categories.length} categories · ${template.tags.length} tags`}
+                  </p>
+                </button>
+              );
+            })}
+          </div>
+        ) : null}
       </section>
 
       <div className="grid gap-6 lg:grid-cols-2">
