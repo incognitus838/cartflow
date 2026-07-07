@@ -1,12 +1,14 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { isDatabaseConfigured, prisma } from "@/lib/db";
+import { resolveStoreAccessRole } from "@/lib/store-access";
+import type { StoreAccessRole } from "@/lib/store-access-types";
 import { resolveBusinessForSession } from "@/lib/tenant";
 
 export async function getAuthContext() {
   const session = await getSession();
   if (!session || !isDatabaseConfigured()) {
-    return { session: null, user: null, business: null };
+    return { session: null, user: null, business: null, storeAccessRole: null };
   }
 
   const user = await prisma.user.findUnique({
@@ -22,7 +24,7 @@ export async function getAuthContext() {
   });
 
   if (!user) {
-    return { session: null, user: null, business: null };
+    return { session: null, user: null, business: null, storeAccessRole: null };
   }
 
   let business = await resolveBusinessForSession(session);
@@ -31,7 +33,11 @@ export async function getAuthContext() {
       user.ownedBusinesses[0] ?? user.memberships[0]?.business ?? null;
   }
 
-  return { session, user, business };
+  const storeAccessRole = business
+    ? await resolveStoreAccessRole(session, user.id, business.id)
+    : null;
+
+  return { session, user, business, storeAccessRole };
 }
 
 export async function requireAuth(redirectTo = "/login") {
@@ -44,10 +50,21 @@ export async function requireAuth(redirectTo = "/login") {
 
 export async function requireBusiness() {
   const ctx = await requireAuth();
-  if (!ctx.business) {
+  if (!ctx.business || !ctx.storeAccessRole) {
     redirect("/onboarding");
   }
-  return ctx as typeof ctx & { business: NonNullable<typeof ctx.business> };
+  return ctx as typeof ctx & {
+    business: NonNullable<typeof ctx.business>;
+    storeAccessRole: StoreAccessRole;
+  };
+}
+
+export async function requireStoreOwner(redirectTo = "/dashboard") {
+  const ctx = await requireBusiness();
+  if (ctx.storeAccessRole !== "owner") {
+    redirect(redirectTo);
+  }
+  return ctx;
 }
 
 export async function requireAdmin() {

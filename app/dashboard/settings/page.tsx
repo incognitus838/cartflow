@@ -1,10 +1,10 @@
 import { StoreSettingsForm } from "@/components/dashboard/store-settings-form";
 import { PageHeader } from "@/components/shared/page-header";
-import { requireBusiness } from "@/lib/auth-server";
+import { requireStoreOwner } from "@/lib/auth-server";
 import { toNumber } from "@/lib/decimal";
 
 export default async function SettingsPage() {
-  const { business } = await requireBusiness();
+  const { business } = await requireStoreOwner();
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3001";
 
   return (

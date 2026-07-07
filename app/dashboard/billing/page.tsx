@@ -1,10 +1,10 @@
 import { PlanSelector } from "@/components/dashboard/plan-selector";
 import { PageHeader } from "@/components/shared/page-header";
-import { requireBusiness } from "@/lib/auth-server";
+import { requireStoreOwner } from "@/lib/auth-server";
 import { PLANS } from "@/lib/plans";
 
 export default async function BillingPage() {
-  const { business } = await requireBusiness();
+  const { business } = await requireStoreOwner();
 
   return (
     <>

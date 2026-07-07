@@ -20,6 +20,20 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
+import { navItemsForStoreRole } from "@/lib/dashboard/nav";
+import type { StoreAccessRole } from "@/lib/store-access-types";
+
+const NAV_ICONS = {
+  "/dashboard": LayoutDashboard,
+  "/dashboard/storefront": Eye,
+  "/dashboard/products": Package,
+  "/dashboard/catalog": FolderTree,
+  "/dashboard/promotions": Megaphone,
+  "/dashboard/orders": ShoppingCart,
+  "/dashboard/analytics": BarChart3,
+  "/dashboard/billing": CreditCard,
+  "/dashboard/settings": Settings,
+} as const;
 
 type SidebarProps = {
   id?: string;
@@ -27,22 +41,11 @@ type SidebarProps = {
   businessSlug: string;
   userName: string;
   userRole?: string;
+  storeAccessRole?: StoreAccessRole;
   mobileOpen?: boolean;
   onNavigate?: () => void;
   onClose?: () => void;
 };
-
-const navItems = [
-  { href: "/dashboard", label: "Overview", icon: LayoutDashboard, exact: true },
-  { href: "/dashboard/storefront", label: "Storefront", icon: Eye },
-  { href: "/dashboard/products", label: "Products", icon: Package },
-  { href: "/dashboard/catalog", label: "Catalog", icon: FolderTree },
-  { href: "/dashboard/promotions", label: "Promotions", icon: Megaphone },
-  { href: "/dashboard/orders", label: "Orders", icon: ShoppingCart },
-  { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
-  { href: "/dashboard/billing", label: "Billing", icon: CreditCard },
-  { href: "/dashboard/settings", label: "Settings", icon: Settings },
-];
 
 export function DashboardSidebar({
   id,
@@ -50,6 +53,7 @@ export function DashboardSidebar({
   businessSlug,
   userName,
   userRole,
+  storeAccessRole = "owner",
   mobileOpen = false,
   onNavigate,
   onClose,
@@ -57,6 +61,7 @@ export function DashboardSidebar({
   const pathname = usePathname();
   const router = useRouter();
   const [isMobileNav, setIsMobileNav] = useState(false);
+  const navItems = navItemsForStoreRole(storeAccessRole);
 
   useEffect(() => {
     const query = window.matchMedia("(max-width: 1023px)");
@@ -89,7 +94,10 @@ export function DashboardSidebar({
             <p className="truncate text-[14px] font-semibold tracking-tight text-[#1d1d1f]">
               {businessName}
             </p>
-            <p className="truncate text-[12px] text-[#86868b]">/{businessSlug}</p>
+            <p className="truncate text-[12px] text-[#86868b]">
+              /{businessSlug}
+              {storeAccessRole === "staff" ? " · Staff" : ""}
+            </p>
           </div>
           <p className="flex-1 text-[14px] font-semibold tracking-tight text-[#1d1d1f] lg:hidden">
             Menu
@@ -111,7 +119,7 @@ export function DashboardSidebar({
             const active = item.exact
               ? pathname === item.href
               : pathname.startsWith(item.href);
-            const Icon = item.icon;
+            const Icon = NAV_ICONS[item.href as keyof typeof NAV_ICONS] ?? LayoutDashboard;
 
             return (
               <li key={item.href}>

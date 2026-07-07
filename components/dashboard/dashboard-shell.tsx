@@ -4,12 +4,14 @@ import type { ReactNode } from "react";
 import { Menu, ShoppingBag } from "lucide-react";
 import { DashboardSidebar } from "@/components/dashboard/sidebar";
 import { useMobileNav } from "@/components/dashboard/use-mobile-nav";
+import type { StoreAccessRole } from "@/lib/store-access-types";
 
 type DashboardShellProps = {
   businessName: string;
   businessSlug: string;
   userName: string;
   userRole?: string;
+  storeAccessRole?: StoreAccessRole;
   children: ReactNode;
 };
 
@@ -18,6 +20,7 @@ export function DashboardShell({
   businessSlug,
   userName,
   userRole,
+  storeAccessRole = "owner",
   children,
 }: DashboardShellProps) {
   const { navOpen, setNavOpen } = useMobileNav();
@@ -44,7 +47,10 @@ export function DashboardShell({
               <p className="truncate text-[14px] font-semibold tracking-tight text-[#1d1d1f]">
                 {businessName}
               </p>
-              <p className="truncate text-[11px] text-[#86868b]">/{businessSlug}</p>
+              <p className="truncate text-[11px] text-[#86868b]">
+                /{businessSlug}
+                {storeAccessRole === "staff" ? " · Staff" : ""}
+              </p>
             </div>
           </div>
         </header>
@@ -65,6 +71,7 @@ export function DashboardShell({
         businessSlug={businessSlug}
         userName={userName}
         userRole={userRole}
+        storeAccessRole={storeAccessRole}
         mobileOpen={navOpen}
         onNavigate={() => setNavOpen(false)}
         onClose={() => setNavOpen(false)}

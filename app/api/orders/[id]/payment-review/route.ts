@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireApiBusiness } from "@/lib/api/require-business";
+import { requireApiStoreOwner } from "@/lib/api/require-business";
 import { parsePaymentReview, reviewOrderPayment } from "@/lib/orders/payment-review";
 
 export const runtime = "nodejs";
@@ -7,7 +7,7 @@ export const runtime = "nodejs";
 type RouteContext = { params: Promise<{ id: string }> };
 
 export async function POST(request: Request, context: RouteContext) {
-  const auth = await requireApiBusiness();
+  const auth = await requireApiStoreOwner();
   if (auth.error) return auth.error;
 
   const { id } = await context.params;

@@ -9,9 +9,14 @@ import { toast } from "sonner";
 type ProductActionsProps = {
   productId: string;
   productTitle: string;
+  canDelete?: boolean;
 };
 
-export function ProductActions({ productId, productTitle }: ProductActionsProps) {
+export function ProductActions({
+  productId,
+  productTitle,
+  canDelete = true,
+}: ProductActionsProps) {
   const router = useRouter();
   const [deleting, setDeleting] = useState(false);
 
@@ -47,15 +52,17 @@ export function ProductActions({ productId, productTitle }: ProductActionsProps)
       >
         <Pencil className="h-4 w-4" />
       </Link>
-      <button
-        type="button"
-        disabled={deleting}
-        onClick={handleDelete}
-        className="rounded-lg p-2 text-slate-500 hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
-        title="Delete"
-      >
-        <Trash2 className="h-4 w-4" />
-      </button>
+      {canDelete ? (
+        <button
+          type="button"
+          disabled={deleting}
+          onClick={handleDelete}
+          className="rounded-lg p-2 text-slate-500 hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+          title="Delete"
+        >
+          <Trash2 className="h-4 w-4" />
+        </button>
+      ) : null}
     </div>
   );
 }

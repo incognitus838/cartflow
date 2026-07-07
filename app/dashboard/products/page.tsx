@@ -11,7 +11,7 @@ import { listBusinessProducts } from "@/lib/queries/dashboard";
 import { formatCurrency } from "@/lib/utils";
 
 export default async function ProductsPage() {
-  const { business } = await requireBusiness();
+  const { business, storeAccessRole } = await requireBusiness();
   const products = await listBusinessProducts(business.id);
 
   return (
@@ -107,7 +107,11 @@ export default async function ProductsPage() {
                         <StatusBadge status={product.status} />
                       </td>
                       <td className="text-right">
-                        <ProductActions productId={product.id} productTitle={product.title} />
+                        <ProductActions
+                          productId={product.id}
+                          productTitle={product.title}
+                          canDelete={storeAccessRole === "owner"}
+                        />
                       </td>
                     </tr>
                   );

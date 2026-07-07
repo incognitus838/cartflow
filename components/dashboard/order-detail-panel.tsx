@@ -76,6 +76,7 @@ type OrderDetailPanelProps = {
   receiptSrc?: string;
   patchUrl?: string;
   paymentReviewUrl?: string;
+  canApprovePayments?: boolean;
 };
 
 export function OrderDetailPanel({
@@ -86,6 +87,7 @@ export function OrderDetailPanel({
   receiptSrc: receiptSrcProp,
   patchUrl,
   paymentReviewUrl,
+  canApprovePayments = true,
 }: OrderDetailPanelProps) {
   const router = useRouter();
   const [status, setStatus] = useState(order.status);
@@ -108,7 +110,8 @@ export function OrderDetailPanel({
   const [saving, setSaving] = useState(false);
 
   const orderApi = patchUrl ?? `/api/orders/${order.id}`;
-  const canReviewPayment = order.status === "PENDING" && order.hasPaymentReceipt;
+  const canReviewPayment =
+    canApprovePayments && status === "PENDING" && order.hasPaymentReceipt;
   const itemsLocked = ["SHIPPED", "DELIVERED", "CANCELLED", "REFUNDED"].includes(order.status);
   const receiptSrc = receiptSrcProp ?? dashboardOrderReceiptUrl(order.id);
 

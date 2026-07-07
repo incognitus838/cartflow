@@ -39,9 +39,10 @@ function TypeIcon({ type }: { type: PromotionType }) {
 type PromotionsListProps = {
   promotions: DashboardPromotionRow[];
   currency: string;
+  canDelete?: boolean;
 };
 
-export function PromotionsList({ promotions, currency }: PromotionsListProps) {
+export function PromotionsList({ promotions, currency, canDelete = true }: PromotionsListProps) {
   const router = useRouter();
 
   async function handleDelete(id: string, title: string) {
@@ -125,14 +126,16 @@ export function PromotionsList({ promotions, currency }: PromotionsListProps) {
                 </span>
               </td>
               <td className="px-5 py-4 text-right">
-                <button
-                  type="button"
-                  onClick={() => handleDelete(promotion.id, promotion.title)}
-                  className="rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-600"
-                  aria-label={`Delete ${promotion.title}`}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
+                {canDelete ? (
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(promotion.id, promotion.title)}
+                    className="rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-600"
+                    aria-label={`Delete ${promotion.title}`}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                ) : null}
               </td>
             </tr>
           ))}

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireApiBusiness } from "@/lib/api/require-business";
+import { requireApiStoreOwner } from "@/lib/api/require-business";
 import {
   parseBusinessSettingsInput,
   updateBusinessSettings,
@@ -8,7 +8,7 @@ import {
 export const runtime = "nodejs";
 
 export async function GET() {
-  const auth = await requireApiBusiness();
+  const auth = await requireApiStoreOwner();
   if (auth.error) return auth.error;
 
   const { business } = auth;
@@ -36,7 +36,7 @@ export async function GET() {
 }
 
 export async function PATCH(request: Request) {
-  const auth = await requireApiBusiness();
+  const auth = await requireApiStoreOwner();
   if (auth.error) return auth.error;
 
   const body = await request.json().catch(() => null);

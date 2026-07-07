@@ -9,7 +9,7 @@ type OrderDetailPageProps = {
 };
 
 export default async function OrderDetailPage({ params }: OrderDetailPageProps) {
-  const { business } = await requireBusiness();
+  const { business, storeAccessRole } = await requireBusiness();
   const { id } = await params;
   const order = await getBusinessOrder(business.id, id);
 
@@ -20,6 +20,7 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
   return (
     <OrderDetailPanel
       currency={business.currency}
+      canApprovePayments={storeAccessRole === "owner"}
       order={{
         id: order.id,
         orderNumber: order.orderNumber,

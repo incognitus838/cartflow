@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireApiBusiness } from "@/lib/api/require-business";
+import { requireApiBusiness, requireApiStoreOwner } from "@/lib/api/require-business";
 import { deletePromotion, updatePromotion } from "@/lib/promotions/mutations";
 import { parsePromotionInput } from "@/lib/promotions/validation";
 import { getBusinessPromotion } from "@/lib/queries/dashboard";
@@ -45,7 +45,7 @@ export async function PATCH(request: Request, context: RouteContext) {
 }
 
 export async function DELETE(_request: Request, context: RouteContext) {
-  const auth = await requireApiBusiness();
+  const auth = await requireApiStoreOwner();
   if (auth.error) return auth.error;
 
   const { id } = await context.params;

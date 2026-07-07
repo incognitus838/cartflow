@@ -7,7 +7,7 @@ import { requireBusiness } from "@/lib/auth-server";
 import { listBusinessPromotions } from "@/lib/queries/dashboard";
 
 export default async function PromotionsPage() {
-  const { business } = await requireBusiness();
+  const { business, storeAccessRole } = await requireBusiness();
   const promotions = await listBusinessPromotions(business.id);
 
   return (
@@ -64,6 +64,7 @@ export default async function PromotionsPage() {
       ) : (
         <PromotionsList
           currency={business.currency}
+          canDelete={storeAccessRole === "owner"}
           promotions={promotions.map((promotion) => ({
             ...promotion,
             startsAt: promotion.startsAt?.toISOString() ?? null,

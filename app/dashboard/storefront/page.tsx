@@ -1,7 +1,7 @@
 import { StorefrontCustomizer } from "@/components/dashboard/storefront-customizer";
 import { PageHeader } from "@/components/shared/page-header";
 import { toStorefrontProfile } from "@/lib/business/storefront-profile";
-import { requireBusiness } from "@/lib/auth-server";
+import { requireStoreOwner } from "@/lib/auth-server";
 import {
   countActiveBusinessProducts,
   listStorefrontPreviewProducts,
@@ -9,7 +9,7 @@ import {
 import { serializeStoreProduct } from "@/lib/storefront/serialize-product";
 
 export default async function StorefrontPage() {
-  const { business } = await requireBusiness();
+  const { business } = await requireStoreOwner();
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3001";
 
   const [previewProducts, catalogTotalCount] = await Promise.all([
