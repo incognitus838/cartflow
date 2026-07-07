@@ -8,8 +8,13 @@ export type ProductMedia = {
   mediaType: ProductMediaType;
 };
 
-export function detectMediaType(url: string): ProductMediaType {
+export function detectMediaType(url: string, mimeType?: string | null): ProductMediaType {
+  if (mimeType === "image/gif") return "GIF";
+  if (mimeType?.startsWith("video/")) return "VIDEO";
+  if (mimeType?.startsWith("image/")) return "IMAGE";
+
   const path = url.toLowerCase().split("?")[0] ?? "";
+  if (path.includes("/api/products/media/")) return "IMAGE";
   if (path.endsWith(".gif")) return "GIF";
   if (/\.(mp4|webm|mov|m4v|ogg)$/.test(path)) return "VIDEO";
   return "IMAGE";

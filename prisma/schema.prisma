@@ -232,6 +232,7 @@ model Business {
   owner            User              @relation("BusinessOwner", fields: [ownerId], references: [id])
   members          BusinessMember[]
   products         Product[]
+  productMedia     ProductMediaAsset[]
   promotions       Promotion[]
   orders           Order[]
   customers        Customer[]
@@ -363,6 +364,21 @@ model ProductImage {
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@index([productId])
+  @@schema("cartflow")
+}
+
+model ProductMediaAsset {
+  id         String   @id @default(cuid())
+  businessId String
+  data       Bytes
+  mimeType   String
+  filename   String
+  createdAt  DateTime @default(now())
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
+  @@index([businessId, createdAt])
   @@schema("cartflow")
 }
 

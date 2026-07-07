@@ -1,0 +1,64 @@
+import { prisma } from "@/lib/db";
+import { toPrismaBytes } from "@/lib/orders/receipt-storage";
+import type { ParsedProductMedia } from "@/lib/uploads/product-media";
+
+export function productMediaPublicUrl(assetId: string) {
+  return `/api/products/media/${assetId}`;
+}
+
+export function isStoredProductMediaUrl(url: string) {
+  return url.startsWith("/api/products/media/");
+}
+
+export async function createProductMediaAsset(businessId: string, media: ParsedProductMedia) {
+  const asset = await prisma.productMediaAsset.create({
+    data: {
+      businessId,
+      data: toPrismaBytes(media.data),
+      mimeType: media.mimeType,
+      filename: media.filename,
+    },
+    select: { id: true, mimeType: true },
+  });
+
+  return {
+    id: asset.id,
+    url: productMediaPublicUrl(asset.id),
+    mediaType: media.mediaType,
+  };
+}
+
+export async function getProductMediaAsset(assetId: string) {
+  return prisma.productMediaAsset.findUnique({
+    where: { id: assetId },
+    select: {
+      id: true,
+      data: true,
+      mimeType: true,
+      filename: true,
+    },
+  });
+}
+
+export function buildProductMediaResponse(asset: {
+  data: Uint8Array | Buffer | null;
+  mimeType: string;
+  filename: string;
+}) {
+  if (!asset.data || asset.data.byteLength === 0) {
+    return null;
+  }
+
+  const mimeType = asset.mimeType || "application/octet-stream";
+  const filename = asset.filename || "product-media";
+  const body = Buffer.from(asset.data);
+
+  return new Response(body, {
+    headers: {
+      "Content-Type": mimeType,
+      "Content-Length": String(body.byteLength),
+      "Content-Disposition": `inline; filename="${filename.replace(/"/g, "")}"`,
+      "Cache-Control": "public, max-age=31536000, immutable",
+    },
+  });
+}
