@@ -59,10 +59,14 @@ export function OrdersList({ orders, currency, initialStatus = "" }: OrdersListP
         resultCount={filtered.length}
       />
 
-      <div className="space-y-4">
-        {filtered.map((order) => (
-          <OrderInboxCard key={order.id} order={order} currency={currency} />
-        ))}
+      <div className="cf-table-shell overflow-hidden rounded-[var(--cf-radius-lg)] border border-black/[0.06] bg-white">
+        <ul role="list">
+          {filtered.map((order) => (
+            <li key={order.id}>
+              <OrderInboxCard order={order} currency={currency} />
+            </li>
+          ))}
+        </ul>
       </div>
 
       {filtered.length === 0 ? (

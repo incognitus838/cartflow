@@ -2,7 +2,7 @@ import { ShoppingCart } from "lucide-react";
 import type { OrderStatus } from "@prisma/client";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { PageHeader } from "@/components/shared/page-header";
-import { mapOrderToInbox } from "@/components/dashboard/order-inbox-card";
+import { mapOrderToInbox } from "@/lib/orders/inbox-map";
 import { OrdersList } from "@/components/dashboard/orders-list";
 import { requireLivePermission } from "@/lib/auth-server";
 import { orderHasReceipt } from "@/lib/orders/receipt-storage";
