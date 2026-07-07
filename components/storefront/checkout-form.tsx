@@ -93,8 +93,9 @@ export function CheckoutForm({
       }
 
       clear();
-      toast.success(`Order placed! Your ID is ${data.order.orderNumber}`, { duration: 6000 });
-      router.push(orderConfirmationPath(storeSlug, data.order.orderNumber));
+      router.push(
+        orderConfirmationPath(storeSlug, data.order.orderNumber, { justPlaced: true }),
+      );
       router.refresh();
     } catch {
       toast.error("Something went wrong. Try again.");

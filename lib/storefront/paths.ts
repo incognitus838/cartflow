@@ -18,8 +18,13 @@ export function checkoutPath(storeSlug: string) {
   return `/${storeSlug}/checkout`;
 }
 
-export function orderConfirmationPath(storeSlug: string, orderNumber: string) {
-  return `/${storeSlug}/order/${orderNumber}`;
+export function orderConfirmationPath(
+  storeSlug: string,
+  orderNumber: string,
+  options?: { justPlaced?: boolean },
+) {
+  const base = `/${storeSlug}/order/${orderNumber}`;
+  return options?.justPlaced ? `${base}?placed=1` : base;
 }
 
 export function trackOrderPath(storeSlug: string) {

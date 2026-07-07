@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import { CheckCircle2, Clock } from "lucide-react";
+import { OrderPlacedBanner } from "@/components/storefront/order-placed-banner";
 import { PaymentReceiptViewer } from "@/components/payment-receipt-viewer";
 import { OrderIdCard } from "@/components/storefront/order-id-card";
 import { OrderStatusRefresh } from "@/components/storefront/order-status-refresh";
@@ -47,6 +49,10 @@ export default async function OrderConfirmationPage({ params }: OrderConfirmatio
   return (
     <div className="mx-auto max-w-2xl">
       <OrderStatusRefresh enabled={!isTerminal} />
+
+      <Suspense fallback={null}>
+        <OrderPlacedBanner orderNumber={order.orderNumber} storeName={store.name} />
+      </Suspense>
 
       <div
         className={`rounded-2xl border p-6 text-center sm:p-8 ${
