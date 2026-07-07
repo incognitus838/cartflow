@@ -4,6 +4,7 @@ import {
   type TrackingStep,
   type TrackingStepState,
 } from "@/lib/orders/tracking";
+import type { NumericInput } from "@/lib/decimal";
 import type { OrderStatus } from "@prisma/client";
 
 type OrderStatusTimelineProps = {
@@ -14,7 +15,7 @@ type OrderStatusTimelineProps = {
   receiptSubmittedAt: Date | null;
   paymentRejectionReason?: string | null;
   customerAddress?: string | null;
-  deliveryFee?: number | string | { toString(): string } | null;
+  deliveryFee?: NumericInput;
 };
 
 function StepIcon({ state }: { state: TrackingStepState }) {
