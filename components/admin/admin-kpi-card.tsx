@@ -57,6 +57,8 @@ export function AdminKpiCard({
   highlight = false,
 }: AdminKpiCardProps) {
   const styles = TONE_STYLES[highlight ? "amber" : tone];
+  const valueText = String(value);
+  const compactValue = valueText.length > 9;
 
   const content = (
     <article
@@ -86,7 +88,11 @@ export function AdminKpiCard({
             {label}
           </p>
           <p
-            className={`mt-0.5 truncate text-lg font-semibold tabular-nums tracking-tight sm:mt-1 sm:text-[1.65rem] ${styles.value}`}
+            className={`mt-0.5 font-semibold tabular-nums tracking-tight sm:mt-1 ${styles.value} ${
+              compactValue
+                ? "text-[13px] leading-tight sm:text-lg lg:text-[1.65rem]"
+                : "truncate text-lg sm:text-[1.65rem]"
+            }`}
           >
             {value}
           </p>

@@ -102,7 +102,7 @@ export function PlatformAnalyticsPanel({ data }: PlatformAnalyticsPanelProps) {
   const tierTotal = Object.values(tierCounts).reduce((sum, n) => sum + n, 0);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5 sm:space-y-8">
       <section aria-labelledby="platform-pulse">
         <h2 id="platform-pulse" className="sr-only">
           Platform pulse
@@ -110,12 +110,12 @@ export function PlatformAnalyticsPanel({ data }: PlatformAnalyticsPanelProps) {
         <ul className="grid list-none grid-cols-2 gap-2 sm:gap-4 sm:grid-cols-2 xl:grid-cols-4" role="list">
           <li>
             <AdminKpiCard
-              label={`GMV (${data.periodDays}d)`}
+              label={`GMV · ${data.periodDays}d`}
               value={formatCurrency(pulse.gmv, "NGN")}
               icon={TrendingUp}
               tone="gold"
             />
-            <p className="mt-1.5 px-1">
+            <p className="mt-1 hidden px-1 sm:block">
               <ChangeBadge value={pulse.gmvChange} />
             </p>
           </li>
@@ -126,7 +126,7 @@ export function PlatformAnalyticsPanel({ data }: PlatformAnalyticsPanelProps) {
               icon={ShoppingCart}
               tone="emerald"
             />
-            <p className="mt-1.5 px-1">
+            <p className="mt-1 hidden px-1 sm:block">
               <ChangeBadge value={pulse.ordersChange} />
             </p>
           </li>
@@ -137,7 +137,7 @@ export function PlatformAnalyticsPanel({ data }: PlatformAnalyticsPanelProps) {
               icon={BarChart3}
               tone="blue"
             />
-            <p className="mt-1.5 px-1 text-[11px] text-[#86868b]">GMV ÷ fulfilled orders</p>
+            <p className="mt-1 hidden px-1 text-[11px] text-[#86868b] sm:block">GMV ÷ fulfilled orders</p>
           </li>
           <li>
             <AdminKpiCard
@@ -146,7 +146,7 @@ export function PlatformAnalyticsPanel({ data }: PlatformAnalyticsPanelProps) {
               icon={Store}
               tone="slate"
             />
-            <p className="mt-1.5 px-1 text-[11px] text-[#86868b]">
+            <p className="mt-1 hidden px-1 text-[11px] text-[#86868b] sm:block">
               of {pulse.totalStores} stores · {pulse.dormantSellers} dormant
             </p>
           </li>
@@ -157,7 +157,7 @@ export function PlatformAnalyticsPanel({ data }: PlatformAnalyticsPanelProps) {
               icon={Repeat}
               tone="emerald"
             />
-            <p className="mt-1.5 px-1 text-[11px] text-[#86868b]">
+            <p className="mt-1 hidden px-1 text-[11px] text-[#86868b] sm:block">
               {pulse.repeatCustomers} of {pulse.customersWithOrders} buyers
             </p>
           </li>
@@ -170,7 +170,7 @@ export function PlatformAnalyticsPanel({ data }: PlatformAnalyticsPanelProps) {
               highlight={pulse.pendingReceiptBacklog > 0}
               href="/admin/orders?status=PENDING"
             />
-            <p className="mt-1.5 px-1 text-[11px] text-[#86868b]">PENDING + receipt uploaded</p>
+            <p className="mt-1 hidden px-1 text-[11px] text-[#86868b] sm:block">PENDING + receipt uploaded</p>
           </li>
           <li>
             <AdminKpiCard
@@ -179,7 +179,7 @@ export function PlatformAnalyticsPanel({ data }: PlatformAnalyticsPanelProps) {
               icon={Activity}
               tone="gold"
             />
-            <p className="mt-1.5 px-1 text-[11px] text-[#86868b]">
+            <p className="mt-1 hidden px-1 text-[11px] text-[#86868b] sm:block">
               bank {pct(pulse.bankCompletionRate)} · catalog {pct(pulse.catalogRate)}
             </p>
           </li>
@@ -191,22 +191,22 @@ export function PlatformAnalyticsPanel({ data }: PlatformAnalyticsPanelProps) {
               tone="blue"
               href="/admin/customers"
             />
-            <p className="mt-1.5 px-1 text-[11px] text-[#86868b]">
+            <p className="mt-1 hidden px-1 text-[11px] text-[#86868b] sm:block">
               {pulse.totalCustomers} total on platform
             </p>
           </li>
         </ul>
       </section>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
         <section aria-labelledby="daily-gmv" className="cf-stat-card lg:col-span-2">
-          <h2 id="daily-gmv" className="text-[15px] font-semibold tracking-tight text-[#1d1d1f]">
+          <h2 id="daily-gmv" className="text-[13px] font-semibold tracking-tight text-[#1d1d1f] sm:text-[15px]">
             Daily GMV & order volume
           </h2>
-          <p className="mt-1 text-[12px] text-[#86868b]">
+          <p className="mt-1 hidden text-[12px] text-[#86868b] sm:block">
             Fulfilled revenue (gold) and total order count (blue) by calendar day.
           </p>
-          <div className="mt-5">
+          <div className="mt-3 sm:mt-5">
             <DailyGmvChart daily={daily} />
           </div>
         </section>
@@ -241,11 +241,11 @@ export function PlatformAnalyticsPanel({ data }: PlatformAnalyticsPanelProps) {
       </div>
 
       <section aria-labelledby="seller-health-tiers" className="cf-stat-card">
-        <h2 id="seller-health-tiers" className="text-[15px] font-semibold tracking-tight text-[#1d1d1f]">
+        <h2 id="seller-health-tiers" className="text-[13px] font-semibold tracking-tight text-[#1d1d1f] sm:text-[15px]">
           Seller health distribution
         </h2>
-        <p className="mt-1 text-[12px] text-[#86868b]">
-          {tierTotal} stores classified by recency, catalog, and activity.
+        <p className="mt-1 text-[11px] text-[#86868b] sm:text-[12px]">
+          {tierTotal} stores by health tier
         </p>
 
         {tierTotal > 0 ? (
@@ -277,11 +277,11 @@ export function PlatformAnalyticsPanel({ data }: PlatformAnalyticsPanelProps) {
           </div>
         ) : null}
 
-        <ul className="mt-4 grid list-none gap-2 sm:grid-cols-2 lg:grid-cols-3" role="list">
+        <ul className="mt-3 grid list-none grid-cols-2 gap-1.5 sm:mt-4 sm:gap-2 lg:grid-cols-3" role="list">
           {tierFilters.map((tier) => (
-            <li key={tier} className="flex items-center justify-between rounded-lg bg-[#fbfbfd] px-3 py-2">
-              <span className={HEALTH_TIER_BADGE[tier]}>{HEALTH_TIER_LABELS[tier]}</span>
-              <span className="text-[13px] font-semibold tabular-nums text-[#1d1d1f]">
+            <li key={tier} className="flex items-center justify-between rounded-lg bg-[#fbfbfd] px-2.5 py-1.5 sm:px-3 sm:py-2">
+              <span className={`${HEALTH_TIER_BADGE[tier]} !text-[10px] sm:!text-[11px]`}>{HEALTH_TIER_LABELS[tier]}</span>
+              <span className="text-[12px] font-semibold tabular-nums text-[#1d1d1f] sm:text-[13px]">
                 {tierCounts[tier]}
               </span>
             </li>
@@ -290,8 +290,8 @@ export function PlatformAnalyticsPanel({ data }: PlatformAnalyticsPanelProps) {
       </section>
 
       <section aria-labelledby="seller-health-table">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <h2 id="seller-health-table" className="text-[17px] font-semibold tracking-tight text-[#1d1d1f]">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2 sm:mb-4 sm:gap-3">
+          <h2 id="seller-health-table" className="text-[15px] font-semibold tracking-tight text-[#1d1d1f] sm:text-[17px]">
             Seller health — ranked by period GMV
           </h2>
           <Link href="/admin/customers" className="text-[13px] font-medium text-[#b8956a] hover:underline">

@@ -24,7 +24,7 @@ export default async function AdminAnalyticsPage({ searchParams }: AdminAnalytic
     <>
       <PageHeader
         title="Platform analytics"
-        description="Data-proven seller and marketplace intelligence — GMV, health scores, activation, and receipt backlog. Every metric is defined and actionable."
+        description="GMV, seller health, activation, and receipt backlog."
         actions={
           <Suspense fallback={null}>
             <PeriodSelector active={periodDays} />
@@ -32,7 +32,7 @@ export default async function AdminAnalyticsPage({ searchParams }: AdminAnalytic
         }
       />
 
-      <div className="grid gap-8 xl:grid-cols-[1fr_20rem]">
+      <div className="grid gap-4 sm:gap-6 xl:grid-cols-[1fr_20rem] xl:gap-8">
         <PlatformAnalyticsPanel data={data} />
         <aside aria-label="Metric reference" className="xl:sticky xl:top-6 xl:self-start">
           <MetricGlossary />

@@ -58,15 +58,15 @@ export function BreakdownPanel({
       aria-labelledby={id}
       className="cf-breakdown-card overflow-hidden"
     >
-      <div className="flex items-start justify-between gap-4 border-b border-black/[0.04] px-5 py-4">
-        <div>
-          <h2 id={id} className="text-[15px] font-semibold tracking-tight text-[#1d1d1f]">
+      <div className="flex items-start justify-between gap-3 border-b border-black/[0.04] px-3 py-3 sm:gap-4 sm:px-5 sm:py-4">
+        <div className="min-w-0">
+          <h2 id={id} className="text-[13px] font-semibold tracking-tight text-[#1d1d1f] sm:text-[15px]">
             {title}
           </h2>
-          <p className="mt-0.5 text-[12px] text-[#86868b]">{subtitle}</p>
+          <p className="mt-0.5 hidden text-[12px] text-[#86868b] sm:block">{subtitle}</p>
         </div>
-        <div className="text-right">
-          <p className="text-[22px] font-semibold tabular-nums tracking-tight text-[#1d1d1f]">
+        <div className="shrink-0 text-right">
+          <p className="text-lg font-semibold tabular-nums tracking-tight text-[#1d1d1f] sm:text-[22px]">
             {total}
           </p>
           <p className="text-[10px] font-medium uppercase tracking-wide text-[#86868b]">Total</p>
@@ -100,28 +100,28 @@ export function BreakdownPanel({
               const planText = variant === "plans" ? planStyleFor(row.key).text : "";
 
               return (
-                <li key={row.key} className="px-5 py-3.5">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex min-w-0 items-center gap-2.5">
+                <li key={row.key} className="px-3 py-2.5 sm:px-5 sm:py-3.5">
+                  <div className="flex items-center justify-between gap-2 sm:gap-3">
+                    <div className="flex min-w-0 items-center gap-2 sm:gap-2.5">
                       <span
-                        className={`h-2.5 w-2.5 shrink-0 rounded-full ${barClass(variant, row.key)}`}
+                        className={`h-2 w-2 shrink-0 rounded-full sm:h-2.5 sm:w-2.5 ${barClass(variant, row.key)}`}
                         aria-hidden
                       />
-                      <span className={`truncate text-[13px] font-medium ${planText || "text-[#1d1d1f]"}`}>
+                      <span className={`truncate text-[12px] font-medium sm:text-[13px] ${planText || "text-[#1d1d1f]"}`}>
                         {row.label}
                       </span>
-                      <span className={badgeClass(variant, row.key)}>{row.key}</span>
+                      <span className={`${badgeClass(variant, row.key)} hidden sm:inline-flex`}>{row.key}</span>
                     </div>
-                    <div className="flex shrink-0 items-center gap-3">
-                      <span className="text-[13px] font-semibold tabular-nums text-[#1d1d1f]">
+                    <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+                      <span className="text-[12px] font-semibold tabular-nums text-[#1d1d1f] sm:text-[13px]">
                         {row.count}
                       </span>
-                      <span className="w-10 text-right text-[11px] tabular-nums text-[#86868b]">
+                      <span className="w-8 text-right text-[10px] tabular-nums text-[#86868b] sm:w-10 sm:text-[11px]">
                         {pct.toFixed(0)}%
                       </span>
                     </div>
                   </div>
-                  <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#f5f5f7]">
+                  <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-[#f5f5f7] sm:mt-2 sm:h-1.5">
                     <div
                       className={`h-full rounded-full ${barClass(variant, row.key)} transition-all`}
                       style={{ width: `${pct}%` }}
@@ -133,11 +133,11 @@ export function BreakdownPanel({
           </ul>
         </>
       ) : (
-        <p className="px-5 py-8 text-center text-[13px] text-[#86868b]">No data yet.</p>
+        <p className="px-3 py-6 text-center text-[13px] text-[#86868b] sm:px-5 sm:py-8">No data yet.</p>
       )}
 
       {href ? (
-        <div className="border-t border-black/[0.04] bg-[#fbfbfd] px-5 py-3">
+        <div className="border-t border-black/[0.04] bg-[#fbfbfd] px-3 py-2.5 sm:px-5 sm:py-3">
           <Link href={href} className="cf-link-action cf-link-action-gold">
             {linkLabel}
             <ArrowRight className="h-3.5 w-3.5" aria-hidden />
