@@ -13,7 +13,7 @@ import {
 import { toast } from "sonner";
 import { CatalogTypePicker } from "@/components/dashboard/catalog-type-picker";
 import { getCatalogTemplate, isCatalogProductType } from "@/lib/catalog/templates";
-import type { CatalogCategory, CatalogSettings } from "@/lib/catalog/settings";
+import type { CatalogCategory, CatalogSettings } from "@/lib/catalog/catalog-shared";
 import type { ProductType } from "@/lib/products/product-types";
 
 type CatalogManagerProps = {

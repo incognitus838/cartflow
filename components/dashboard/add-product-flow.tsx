@@ -6,8 +6,7 @@ import { CatalogManager } from "@/components/dashboard/catalog-manager";
 import { ProductForm } from "@/components/dashboard/product-form";
 import { PageHeader } from "@/components/shared/page-header";
 import { isCatalogProductType } from "@/lib/catalog/templates";
-import type { CatalogSettings } from "@/lib/catalog/settings";
-import { catalogCategoryNames } from "@/lib/catalog/settings";
+import { catalogCategoryNames, type CatalogSettings } from "@/lib/catalog/catalog-shared";
 import { toProductFormInitial } from "@/lib/products/form-initial";
 import type { ProductType } from "@/lib/products/product-types";
 
