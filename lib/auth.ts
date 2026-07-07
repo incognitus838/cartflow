@@ -3,8 +3,9 @@ import { cookies } from "next/headers";
 import bcrypt from "bcryptjs";
 import type { UserRole } from "@prisma/client";
 
+import { SESSION_MAX_AGE_SEC } from "@/lib/auth/config";
+
 const SESSION_COOKIE = "cartflow_session";
-const SESSION_MAX_AGE = 60 * 60 * 24 * 7;
 
 export type SessionPayload = {
   userId: string;
@@ -36,7 +37,7 @@ export async function createSession(payload: SessionPayload) {
   const token = await new SignJWT({ ...payload })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
-    .setExpirationTime(`${SESSION_MAX_AGE}s`)
+    .setExpirationTime(`${SESSION_MAX_AGE_SEC}s`)
     .sign(getAuthSecret());
 
   const cookieStore = await cookies();
@@ -45,7 +46,7 @@ export async function createSession(payload: SessionPayload) {
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
-    maxAge: SESSION_MAX_AGE,
+    maxAge: SESSION_MAX_AGE_SEC,
   });
 }
 

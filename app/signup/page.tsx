@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { SignupForm } from "@/components/auth/signup-form";
 import { OnboardingWizard } from "@/components/onboarding/onboarding-wizard";
+import { clearSession } from "@/lib/auth";
 import { getAuthContext } from "@/lib/auth-server";
 
 type PageProps = {
@@ -17,7 +18,8 @@ export default async function SignupPage({ searchParams }: PageProps) {
     if (ctx.business) {
       redirect("/dashboard");
     }
-    redirect("/login");
+    await clearSession();
+    redirect("/login?reason=access_revoked");
   }
 
   if (params.invite) {

@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { CatalogTypePicker } from "@/components/dashboard/catalog-type-picker";
 import { getCatalogTemplate, isCatalogProductType } from "@/lib/catalog/templates";
 import type { CatalogCategory, CatalogSettings } from "@/lib/catalog/catalog-shared";
+import { notifyCatalogChanged } from "@/lib/dashboard/live-sync";
 import type { ProductType } from "@/lib/products/product-types";
 
 type CatalogManagerProps = {
@@ -96,6 +97,7 @@ export function CatalogManager({
       }
 
       commitSettings(data.settings);
+      notifyCatalogChanged();
       toast.success(message);
       onSaved?.();
     } catch {
@@ -134,6 +136,7 @@ export function CatalogManager({
       }
 
       commitSettings(data.settings);
+      notifyCatalogChanged();
       setTypePickerOpen(emphasizeTemplates || data.settings.categories.length === 0);
       toast.success(
         embedded

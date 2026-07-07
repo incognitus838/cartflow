@@ -1,23 +1,24 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { notifyProductsChanged } from "@/lib/dashboard/live-sync";
 
 type ProductActionsProps = {
   productId: string;
   productTitle: string;
   canDelete?: boolean;
+  onDeleted?: (productId: string) => void;
 };
 
 export function ProductActions({
   productId,
   productTitle,
   canDelete = true,
+  onDeleted,
 }: ProductActionsProps) {
-  const router = useRouter();
   const [deleting, setDeleting] = useState(false);
 
   async function handleDelete() {
@@ -35,7 +36,8 @@ export function ProductActions({
       }
 
       toast.success("Product deleted");
-      router.refresh();
+      onDeleted?.(productId);
+      notifyProductsChanged();
     } catch {
       toast.error("Something went wrong. Try again.");
     } finally {

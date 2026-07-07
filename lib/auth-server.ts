@@ -1,9 +1,11 @@
 import { redirect } from "next/navigation";
-import { getSession } from "@/lib/auth";
+import { clearSession, getSession, updateSessionBusiness } from "@/lib/auth";
+import { forceLogoutRedirect } from "@/lib/auth/force-logout-server";
 import { canManageProducts, isLiveStore } from "@/lib/business/approval";
 import { isDatabaseConfigured, prisma } from "@/lib/db";
 import { resolveStoreAccessContext } from "@/lib/store-access";
 import type { StoreAccessRole } from "@/lib/store-access-types";
+import { listAccessibleStores } from "@/lib/team/stores";
 import type { MemberPermissions } from "@/lib/team/permissions-shared";
 import { resolveBusinessForSession } from "@/lib/tenant";
 
@@ -32,7 +34,7 @@ export async function getAuthContext() {
     },
   });
 
-  if (!user) {
+  if (!user || user.isSuspended) {
     return {
       session: null,
       user: null,
@@ -64,6 +66,20 @@ export async function getAuthContext() {
 }
 
 export async function requireAuth(redirectTo = "/login") {
+  const session = await getSession();
+  if (!session) {
+    redirect(redirectTo);
+  }
+
+  const user = await prisma.user.findUnique({ where: { id: session.userId } });
+  if (!user) {
+    await clearSession();
+    redirect(redirectTo);
+  }
+  if (user.isSuspended) {
+    await forceLogoutRedirect("suspended", redirectTo);
+  }
+
   const ctx = await getAuthContext();
   if (!ctx.session || !ctx.user) {
     redirect(redirectTo);
@@ -73,9 +89,16 @@ export async function requireAuth(redirectTo = "/login") {
 
 export async function requireBusiness() {
   const ctx = await requireAuth();
+
   if (!ctx.business || !ctx.storeAccessRole || !ctx.permissions) {
-    redirect("/signup");
+    const stores = await listAccessibleStores(ctx.user.id);
+    if (stores.length > 0) {
+      await updateSessionBusiness(stores[0].id);
+      redirect("/dashboard");
+    }
+    await forceLogoutRedirect("access_revoked");
   }
+
   return ctx as typeof ctx & {
     business: NonNullable<typeof ctx.business>;
     storeAccessRole: StoreAccessRole;
@@ -140,7 +163,7 @@ export async function requireLivePermission(
 }
 
 export async function requireAdmin() {
-  const ctx = await requireAuth();
+  const ctx = await requireAuth("/login");
   if (ctx.user.role !== "ADMIN") {
     redirect("/dashboard");
   }

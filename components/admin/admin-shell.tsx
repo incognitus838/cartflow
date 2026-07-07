@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { Menu, Shield } from "lucide-react";
+import { SessionGuard } from "@/components/auth/session-guard";
 import { AdminSidebar } from "@/components/admin/sidebar";
 import { useAdminLiveSync } from "@/components/admin/use-admin-live-sync";
 import { useMobileNav } from "@/components/dashboard/use-mobile-nav";
@@ -24,6 +25,7 @@ export function AdminShell({
 
   return (
     <div className="cf-dash-shell">
+      <SessionGuard scope="admin" />
       <div className="cf-dash-chrome lg:hidden">
         <header className="cf-dash-mobile-bar">
           <button

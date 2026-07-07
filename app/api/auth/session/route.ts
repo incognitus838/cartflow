@@ -1,31 +1,16 @@
 import { NextResponse } from "next/server";
-import { getAuthContext } from "@/lib/auth-server";
+import { clearSession } from "@/lib/auth";
+import { validateActiveSession } from "@/lib/auth/validate-session";
 
 export const runtime = "nodejs";
 
 export async function GET() {
-  const ctx = await getAuthContext();
+  const result = await validateActiveSession();
 
-  if (!ctx.session || !ctx.user) {
-    return NextResponse.json({ authenticated: false }, { status: 401 });
+  if (!result.ok) {
+    await clearSession();
+    return NextResponse.json({ ok: false, reason: result.reason }, { status: 401 });
   }
 
-  return NextResponse.json({
-    authenticated: true,
-    user: {
-      id: ctx.user.id,
-      email: ctx.user.email,
-      name: ctx.user.name,
-      role: ctx.user.role,
-    },
-    business: ctx.business
-      ? {
-          id: ctx.business.id,
-          name: ctx.business.name,
-          slug: ctx.business.slug,
-          currency: ctx.business.currency,
-          logoUrl: ctx.business.logoUrl,
-        }
-      : null,
-  });
+  return NextResponse.json({ ok: true });
 }

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { getSession } from "@/lib/auth";
+import { clearSession, getSession } from "@/lib/auth";
+import { prisma } from "@/lib/db";
 import { LIVE_STORE_LOCKED_UNTIL_APPROVAL, PRODUCTS_LOCKED_UNTIL_APPROVAL } from "@/lib/business/approval";
 import { resolveStoreAccessContext } from "@/lib/store-access";
 import type { MemberPermissions } from "@/lib/team/permissions-shared";
@@ -11,16 +12,42 @@ export async function requireApiBusiness() {
     return { error: NextResponse.json({ error: "Not authenticated." }, { status: 401 }) };
   }
 
+  const user = await prisma.user.findUnique({
+    where: { id: session.userId },
+    select: { isSuspended: true },
+  });
+  if (!user || user.isSuspended) {
+    await clearSession();
+    return {
+      error: NextResponse.json(
+        { error: "Your account has been suspended.", reason: "suspended" },
+        { status: 401 },
+      ),
+    };
+  }
+
   const businessId = await resolveActiveBusinessId(session);
   if (!businessId) {
-    return { error: NextResponse.json({ error: "No store found." }, { status: 404 }) };
+    await clearSession();
+    return {
+      error: NextResponse.json(
+        { error: "Your store access was removed.", reason: "access_revoked" },
+        { status: 401 },
+      ),
+    };
   }
 
   try {
     const business = await assertBusinessAccess(session.userId, businessId, session);
     const access = await resolveStoreAccessContext(session, session.userId, businessId);
     if (!access) {
-      return { error: NextResponse.json({ error: "Access denied." }, { status: 403 }) };
+      await clearSession();
+      return {
+        error: NextResponse.json(
+          { error: "Your store access was removed.", reason: "access_revoked" },
+          { status: 401 },
+        ),
+      };
     }
     return {
       session,
@@ -30,7 +57,13 @@ export async function requireApiBusiness() {
       accessPreset: access.accessPreset,
     };
   } catch {
-    return { error: NextResponse.json({ error: "Access denied." }, { status: 403 }) };
+    await clearSession();
+    return {
+      error: NextResponse.json(
+        { error: "Your store access was removed.", reason: "access_revoked" },
+        { status: 401 },
+      ),
+    };
   }
 }
 

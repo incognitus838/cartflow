@@ -96,7 +96,7 @@ export function UserDetailPanel({ user: initial }: UserDetailPanelProps) {
         return;
       }
       setUser(data.user);
-      toast.success(action === "suspend" ? "User suspended and stores hidden" : "User restored");
+      toast.success(action === "suspend" ? "User suspended — they will be logged out immediately" : "User restored");
       router.refresh();
     } catch {
       toast.error("Something went wrong");
@@ -282,7 +282,7 @@ export function UserDetailPanel({ user: initial }: UserDetailPanelProps) {
             Account controls
           </h2>
           <p className="mt-1 text-[12px] text-[#86868b]">
-            Suspend blocks login and hides all owned storefronts. Staff memberships are unaffected.
+            Suspend blocks login and ends active sessions. Customer storefronts stay online.
           </p>
           {user.isSuspended ? (
             <button

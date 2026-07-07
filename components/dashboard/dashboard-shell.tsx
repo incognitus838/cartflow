@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { Menu, ShoppingBag } from "lucide-react";
+import { SessionGuard } from "@/components/auth/session-guard";
 import { DashboardSidebar } from "@/components/dashboard/sidebar";
 import type { StoreSwitcherOption } from "@/components/dashboard/store-switcher";
 import { useMobileNav } from "@/components/dashboard/use-mobile-nav";
@@ -43,6 +44,7 @@ export function DashboardShell({
 
   return (
     <div className="cf-dash-shell">
+      <SessionGuard scope="dashboard" />
       <div className="cf-dash-chrome lg:hidden">
         <header className="cf-dash-mobile-bar">
           <button

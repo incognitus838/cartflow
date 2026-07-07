@@ -2,19 +2,34 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { AuthCard } from "@/components/auth/auth-card";
 
-type LoginFormProps = {
-  nextPath?: string;
+const REASON_MESSAGES: Record<string, string> = {
+  suspended: "Your account has been suspended. Contact CartFlow support if you need help.",
+  access_revoked: "Your access was removed. Log in with an account that still has store access.",
+  timeout: "You were logged out after a period of inactivity.",
+  session_expired: "Your session ended. Please log in again.",
 };
 
-export function LoginForm({ nextPath }: LoginFormProps) {
+type LoginFormProps = {
+  nextPath?: string;
+  reason?: string;
+};
+
+export function LoginForm({ nextPath, reason }: LoginFormProps) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const reasonShown = useRef(false);
+
+  useEffect(() => {
+    if (!reason || reasonShown.current) return;
+    reasonShown.current = true;
+    toast.message(REASON_MESSAGES[reason] ?? "Please log in to continue.");
+  }, [reason]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

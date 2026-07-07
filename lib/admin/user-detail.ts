@@ -114,35 +114,23 @@ export async function suspendAdminUser(userId: string, reason?: string) {
   if (!user) throw new Error("User not found.");
   if (user.role === "ADMIN") throw new Error("Cannot suspend platform admins.");
 
-  return prisma.$transaction(async (tx) => {
-    await tx.business.updateMany({
-      where: { ownerId: userId },
-      data: { isActive: false },
-    });
-    return tx.user.update({
-      where: { id: userId },
-      data: {
-        isSuspended: true,
-        suspendedAt: new Date(),
-        suspendReason: reason?.trim() || "Suspended by platform admin",
-      },
-    });
+  return prisma.user.update({
+    where: { id: userId },
+    data: {
+      isSuspended: true,
+      suspendedAt: new Date(),
+      suspendReason: reason?.trim() || "Suspended by platform admin",
+    },
   });
 }
 
 export async function unsuspendAdminUser(userId: string) {
-  return prisma.$transaction(async (tx) => {
-    await tx.business.updateMany({
-      where: { ownerId: userId },
-      data: { isActive: true },
-    });
-    return tx.user.update({
+  return prisma.user.update({
       where: { id: userId },
-      data: {
-        isSuspended: false,
-        suspendedAt: null,
-        suspendReason: null,
-      },
-    });
+    data: {
+      isSuspended: false,
+      suspendedAt: null,
+      suspendReason: null,
+    },
   });
 }

@@ -20,6 +20,7 @@ import { PRODUCT_TYPE_CONFIG } from "@/lib/products/product-type-config";
 import { defaultVariantGroupName, PRODUCT_TYPES, type ProductType } from "@/lib/products/product-types";
 import { createVariantGroup } from "@/lib/products/variant-groups";
 import { emptyVariantRow, type VariantFormRow } from "@/lib/products/variants";
+import { notifyProductsChanged } from "@/lib/dashboard/live-sync";
 import { formatCurrency } from "@/lib/utils";
 
 export type { ProductFormInitial } from "@/lib/products/form-initial";
@@ -160,8 +161,8 @@ export function ProductForm({
             : "Product created"
           : "Product updated",
       );
+      notifyProductsChanged();
       router.push("/dashboard/products");
-      router.refresh();
     } catch {
       toast.error("Something went wrong. Try again.");
     } finally {
