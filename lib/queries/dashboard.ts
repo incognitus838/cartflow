@@ -35,7 +35,7 @@ export async function listBusinessProducts(
           ]
         : undefined,
     },
-    orderBy: { updatedAt: "desc" },
+    orderBy: [{ category: "asc" }, { sortOrder: "asc" }, { updatedAt: "desc" }],
     take: options?.limit,
     include: {
       images: { orderBy: { sortOrder: "asc" }, take: 1 },

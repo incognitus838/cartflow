@@ -2,8 +2,22 @@ import { Prisma } from "@prisma/client";
 import { syncCatalogFromProduct } from "@/lib/catalog/sync-from-product";
 import { prisma } from "@/lib/db";
 import { canAddProduct } from "@/lib/plans";
+import { normalizeCategoryName } from "@/lib/products/catalog-layout";
 import type { ProductInput } from "@/lib/products/types";
 import { scopedProductWhere } from "@/lib/tenant";
+
+async function nextSortOrderInCategory(
+  tx: Prisma.TransactionClient,
+  businessId: string,
+  category: string,
+) {
+  const normalized = normalizeCategoryName(category);
+  const result = await tx.product.aggregate({
+    where: { businessId, category: normalized },
+    _max: { sortOrder: true },
+  });
+  return (result._max.sortOrder ?? -1) + 1;
+}
 
 function resolvedProductStock(input: ProductInput) {
   if (input.variants.length > 0) {
@@ -23,12 +37,16 @@ export async function createProduct(businessId: string, input: ProductInput) {
   }
 
   return prisma.$transaction(async (tx) => {
+    const category = normalizeCategoryName(input.category);
+    const sortOrder = await nextSortOrderInCategory(tx, businessId, category);
+
     const product = await tx.product.create({
       data: {
         businessId,
         title: input.title,
         description: input.description,
-        category: input.category ?? "General",
+        category,
+        sortOrder,
         metadata: input.metadata,
         price: input.price,
         compareAtPrice: input.compareAtPrice,
@@ -143,12 +161,19 @@ export async function updateProduct(
       }
     }
 
+    const nextCategory = normalizeCategoryName(input.category);
+    const categoryChanged = normalizeCategoryName(existing.category) !== nextCategory;
+    const nextSortOrder = categoryChanged
+      ? await nextSortOrderInCategory(tx, businessId, nextCategory)
+      : undefined;
+
     const product = await tx.product.update({
       where: { id: productId },
       data: {
         title: input.title,
         description: input.description,
-        category: input.category ?? "General",
+        category: nextCategory,
+        sortOrder: nextSortOrder,
         metadata: input.metadata,
         price: input.price,
         compareAtPrice: input.compareAtPrice,
@@ -194,4 +219,82 @@ export async function deleteProduct(businessId: string, productId: string) {
   });
   if (!existing) throw new Error("Product not found");
   await prisma.product.delete({ where: { id: productId } });
+}
+
+export async function moveProductToCategory(
+  businessId: string,
+  productId: string,
+  category: string,
+) {
+  const normalized = normalizeCategoryName(category);
+  const existing = await prisma.product.findFirst({
+    where: scopedProductWhere(businessId, productId),
+    select: { id: true, category: true, metadata: true },
+  });
+  if (!existing) throw new Error("Product not found");
+  if (normalizeCategoryName(existing.category) === normalized) {
+    return prisma.product.findFirstOrThrow({ where: { id: productId } });
+  }
+
+  return prisma.$transaction(async (tx) => {
+    const sortOrder = await nextSortOrderInCategory(tx, businessId, normalized);
+    const product = await tx.product.update({
+      where: { id: productId },
+      data: { category: normalized, sortOrder },
+    });
+
+    await syncCatalogFromProduct(
+      businessId,
+      { category: normalized, metadata: existing.metadata },
+      tx,
+    );
+
+    return product;
+  });
+}
+
+export async function reorderProductInCategory(
+  businessId: string,
+  productId: string,
+  direction: "up" | "down",
+) {
+  const product = await prisma.product.findFirst({
+    where: scopedProductWhere(businessId, productId),
+    select: { id: true, category: true, sortOrder: true },
+  });
+  if (!product) throw new Error("Product not found");
+
+  const category = normalizeCategoryName(product.category);
+  const siblings = await prisma.product.findMany({
+    where: { businessId, category },
+    orderBy: [{ sortOrder: "asc" }, { updatedAt: "desc" }],
+    select: { id: true, sortOrder: true },
+  });
+
+  const index = siblings.findIndex((row) => row.id === productId);
+  if (index < 0) throw new Error("Product not found");
+
+  const targetIndex = direction === "up" ? index - 1 : index + 1;
+  if (targetIndex < 0 || targetIndex >= siblings.length) {
+    return product;
+  }
+
+  const current = siblings[index];
+  const neighbor = siblings[targetIndex];
+
+  await prisma.$transaction([
+    prisma.product.update({
+      where: { id: current.id },
+      data: { sortOrder: neighbor.sortOrder },
+    }),
+    prisma.product.update({
+      where: { id: neighbor.id },
+      data: { sortOrder: current.sortOrder },
+    }),
+  ]);
+
+  return prisma.product.findFirst({
+    where: { id: productId },
+    select: { id: true, category: true, sortOrder: true },
+  });
 }

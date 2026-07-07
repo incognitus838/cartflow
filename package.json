@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "npx prisma generate && npx next dev --webpack -p 3001",
     "build": "npx next build",
-    "vercel-build": "prisma generate && node scripts/apply-approval-schema.mjs && next build",
+    "vercel-build": "prisma generate && node scripts/apply-approval-schema.mjs && node scripts/apply-product-sort-schema.mjs && next build",
     "start": "npx next start",
     "lint": "eslint",
     "postinstall": "prisma generate",

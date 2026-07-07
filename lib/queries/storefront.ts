@@ -53,7 +53,7 @@ export const getStorefrontBySlug = cache((slug: string) =>
 async function fetchActiveProductsForStore(businessId: string) {
   const products = await prisma.product.findMany({
     where: { businessId, status: "ACTIVE" },
-    orderBy: { createdAt: "desc" },
+    orderBy: [{ category: "asc" }, { sortOrder: "asc" }, { createdAt: "desc" }],
     select: {
       id: true,
       title: true,

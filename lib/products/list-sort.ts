@@ -1,6 +1,14 @@
 import { toNumber, type NumericInput } from "@/lib/decimal";
+import { sortProductsByCatalog, type CatalogSortableProduct } from "@/lib/products/catalog-layout";
 
-export type ProductSortField = "updated" | "title" | "category" | "price" | "stock" | "status";
+export type ProductSortField =
+  | "updated"
+  | "title"
+  | "category"
+  | "catalog"
+  | "price"
+  | "stock"
+  | "status";
 export type ProductSortDirection = "asc" | "desc";
 
 export type ProductSort = {
@@ -8,9 +16,10 @@ export type ProductSort = {
   direction: ProductSortDirection;
 };
 
-export const DEFAULT_PRODUCT_SORT: ProductSort = { field: "updated", direction: "desc" };
+export const DEFAULT_PRODUCT_SORT: ProductSort = { field: "catalog", direction: "asc" };
 
 export const PRODUCT_SORT_PRESETS: Array<{ id: string; label: string; sort: ProductSort }> = [
+  { id: "catalog-asc", label: "By catalog", sort: { field: "catalog", direction: "asc" } },
   { id: "updated-desc", label: "Recently updated", sort: { field: "updated", direction: "desc" } },
   { id: "title-asc", label: "Name A–Z", sort: { field: "title", direction: "asc" } },
   { id: "title-desc", label: "Name Z–A", sort: { field: "title", direction: "desc" } },
@@ -26,14 +35,21 @@ export function sortPresetId(sort: ProductSort) {
   return `${sort.field}-${sort.direction}`;
 }
 
-export function sortProducts<T extends {
+export function sortProducts<T extends CatalogSortableProduct & {
   title: string;
-  category: string;
   price: NumericInput;
   stock: number;
   status: string;
-  updatedAt: string | Date;
-}>(products: T[], sort: ProductSort): T[] {
+}>(
+  products: T[],
+  sort: ProductSort,
+  categoryOrder: string[] = [],
+): T[] {
+  if (sort.field === "catalog") {
+    const ordered = sortProductsByCatalog(products, categoryOrder);
+    return sort.direction === "desc" ? ordered.reverse() : ordered;
+  }
+
   const list = [...products];
   const dir = sort.direction === "asc" ? 1 : -1;
 
@@ -68,4 +84,8 @@ export function toggleSortField(current: ProductSort, field: ProductSortField): 
   const defaultDirection: ProductSortDirection =
     field === "updated" || field === "price" || field === "stock" ? "desc" : "asc";
   return { field, direction: defaultDirection };
+}
+
+export function isCatalogViewSort(sort: ProductSort) {
+  return sort.field === "catalog";
 }

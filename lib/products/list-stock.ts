@@ -22,6 +22,7 @@ export function normalizeProductForList<T extends ListProductLike>(product: T) {
     ...product,
     stock,
     lowStockThreshold,
+    sortOrder: Number(product.sortOrder ?? 0),
     variants,
   };
 }

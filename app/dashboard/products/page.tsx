@@ -5,6 +5,8 @@ import { ProductsList } from "@/components/dashboard/products-list";
 import { PageHeader } from "@/components/shared/page-header";
 import { canManageProducts, isPendingApproval } from "@/lib/business/approval";
 import { requireProductsHub } from "@/lib/auth-server";
+import { catalogCategoryNames } from "@/lib/catalog/catalog-shared";
+import { resolveCatalogSettings } from "@/lib/catalog/settings";
 import { normalizeProductsForList } from "@/lib/products/list-stock";
 import { listBusinessProducts } from "@/lib/queries/dashboard";
 
@@ -23,9 +25,15 @@ export default async function ProductsPage({ searchParams }: PageProps) {
   const productsUnlocked = canManageProducts(business);
   const storePending = isPendingApproval(business);
 
-  const products = canProducts
-    ? normalizeProductsForList(await listBusinessProducts(business.id))
-    : [];
+  const [productsRaw, catalog] = canProducts
+    ? await Promise.all([
+        listBusinessProducts(business.id),
+        resolveCatalogSettings(business.id),
+      ])
+    : [[], { categories: [], tags: [], templateId: null }];
+
+  const products = canProducts ? normalizeProductsForList(productsRaw) : [];
+  const catalogCategories = catalogCategoryNames(catalog);
 
   return (
     <>
@@ -34,7 +42,7 @@ export default async function ProductsPage({ searchParams }: PageProps) {
         description={
           storePending
             ? "Your store is awaiting approval. Set up your catalog first — product uploads unlock after review."
-            : "Manage inventory, pricing, and stock."
+            : "Manage inventory, move products between catalog categories, and arrange display order."
         }
         actions={
           canProducts ? (
@@ -63,6 +71,7 @@ export default async function ProductsPage({ searchParams }: PageProps) {
 
           <ProductsList
             initialProducts={products}
+            catalogCategories={catalogCategories}
             currency={business.currency}
             canDelete={permissions.productsDelete}
             productsUnlocked={productsUnlocked}

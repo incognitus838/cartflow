@@ -310,6 +310,7 @@ model Product {
   title             String
   description       String?
   category          String        @default("General")
+  sortOrder         Int           @default(0)
   metadata          Json?
   price             Decimal       @db.Decimal(12, 2)
   compareAtPrice    Decimal?      @db.Decimal(12, 2)
@@ -329,6 +330,7 @@ model Product {
   @@index([businessId])
   @@index([status])
   @@index([businessId, category])
+  @@index([businessId, category, sortOrder])
   @@schema("cartflow")
 }
 
