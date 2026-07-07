@@ -47,6 +47,13 @@ scripts/.seed-glow-beauty.lock
 
 # local dev artifacts
 *.log
+*.err
+*.pid
+.run-all.lock
+run-all-*.log
+run-all-*.err
+run-all-*.pid
+run-all-bg.pid
 *.txt
 !prompts/*.txt
 test-results/
