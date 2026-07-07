@@ -69,7 +69,7 @@ export function OrderStatusTimeline({
     createdAt,
     updatedAt,
     paymentReceiptSubmittedAt: receiptSubmittedAt,
-    paymentRejectionReason,
+    paymentRejectionReason: paymentRejectionReason ?? null,
     paymentReceiptData: hasReceipt ? new Uint8Array([1]) : null,
   });
 

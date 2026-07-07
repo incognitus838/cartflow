@@ -1,6 +1,6 @@
 import type { OrderPaymentEventAction } from "@prisma/client";
 import { CheckCircle2, FileUp, XCircle } from "lucide-react";
-import { PAYMENT_EVENT_LABELS } from "@/lib/orders/payment-events";
+import { PAYMENT_EVENT_LABELS } from "@/lib/orders/payment-event-labels";
 
 export type PaymentReviewEvent = {
   id: string;

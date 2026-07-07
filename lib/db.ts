@@ -1,11 +1,8 @@
-import { createHash } from "crypto";
-import { readFileSync } from "fs";
-import { join } from "path";
+import "server-only";
 import { PrismaClient } from "@prisma/client";
 
 type PrismaGlobal = {
   prisma?: PrismaClient;
-  prismaFingerprint?: string;
 };
 
 const globalForPrisma = globalThis as unknown as PrismaGlobal;
@@ -20,19 +17,6 @@ export function getDatabaseUrl() {
   );
 }
 
-function getPrismaFingerprint() {
-  try {
-    const schema = readFileSync(join(process.cwd(), "prisma/schema.prisma"), "utf8");
-    const client = readFileSync(
-      join(process.cwd(), "node_modules/.prisma/client/index.js"),
-      "utf8",
-    );
-    return createHash("sha256").update(schema).update(client).digest("hex");
-  } catch {
-    return "unknown";
-  }
-}
-
 function createPrismaClient() {
   const url = getDatabaseUrl();
   return new PrismaClient({
@@ -41,27 +25,11 @@ function createPrismaClient() {
   });
 }
 
-const fingerprint = getPrismaFingerprint();
+export const prisma = globalForPrisma.prisma ?? createPrismaClient();
 
-if (
-  process.env.NODE_ENV !== "production" &&
-  globalForPrisma.prisma &&
-  globalForPrisma.prismaFingerprint !== fingerprint
-) {
-  void globalForPrisma.prisma.$disconnect().catch(() => {});
-  globalForPrisma.prisma = undefined;
+if (process.env.NODE_ENV !== "production") {
+  globalForPrisma.prisma = prisma;
 }
-
-export const prisma =
-  globalForPrisma.prisma ??
-  (() => {
-    const client = createPrismaClient();
-    if (process.env.NODE_ENV !== "production") {
-      globalForPrisma.prisma = client;
-      globalForPrisma.prismaFingerprint = fingerprint;
-    }
-    return client;
-  })();
 
 export function isDatabaseConfigured() {
   return Boolean(getDatabaseUrl());

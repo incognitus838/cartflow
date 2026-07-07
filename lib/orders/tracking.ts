@@ -33,7 +33,10 @@ type OrderTrackingInput = Pick<
 };
 
 export function getOrderTrackingSteps(order: OrderTrackingInput): TrackingStep[] {
-  const hasReceipt = orderHasReceipt(order);
+  const hasReceipt = orderHasReceipt({
+    paymentReceiptData: order.paymentReceiptData ?? null,
+    paymentReceiptMimeType: order.paymentReceiptMimeType,
+  });
   const receiptAt = order.paymentReceiptSubmittedAt;
   const status = order.status;
 

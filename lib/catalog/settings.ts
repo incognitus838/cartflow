@@ -46,7 +46,7 @@ export function parseCatalogSettings(raw: unknown): CatalogSettings {
   }
 
   if (Array.isArray(data.tags)) {
-    base.tags = [...new Set(data.tags.filter((tag): tag is string => typeof tag === "string" && tag.trim()).map((tag) => tag.trim()))];
+    base.tags = [...new Set(data.tags.filter((tag): tag is string => typeof tag === "string" && tag.trim().length > 0).map((tag) => tag.trim()))];
   }
 
   if (typeof data.templateId === "string") {
