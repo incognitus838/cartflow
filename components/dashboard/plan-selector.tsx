@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Check } from "lucide-react";
 import { toast } from "sonner";
 import type { BusinessPlan } from "@prisma/client";
-import type { PlanDefinition } from "@/lib/plans";
+import { planFeatureList, type PlanDefinition } from "@/lib/plans";
 import { cn } from "@/lib/utils";
 
 type PlanSelectorProps = {
@@ -47,12 +47,13 @@ export function PlanSelector({ currentPlan, plans }: PlanSelectorProps) {
     <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-4">
       {plans.map((plan) => {
         const active = plan.id === currentPlan;
-        const features = [
-          plan.productLimit ? `Up to ${plan.productLimit} products` : "Unlimited products",
-          plan.analytics ? "Analytics dashboard" : "Basic overview",
-          "Manual bank transfer",
-          // plan.onlinePayments ? "Paystack & Flutterwave" : null, // implement later
-        ].filter(Boolean) as string[];
+        const features = planFeatureList(plan.id);
+        const highlight =
+          plan.id === "PRO"
+            ? "5 team members"
+            : plan.id === "ENTERPRISE"
+              ? "2+ stores"
+              : null;
 
         return (
           <div
@@ -60,8 +61,14 @@ export function PlanSelector({ currentPlan, plans }: PlanSelectorProps) {
             className={cn(
               "flex flex-col rounded-2xl border p-5",
               active ? "border-emerald-300 bg-emerald-50/40" : "border-slate-200 bg-white",
+              plan.id === "PRO" || plan.id === "ENTERPRISE" ? "relative" : undefined,
             )}
           >
+            {highlight ? (
+              <span className="mb-2 inline-flex w-fit rounded-full bg-slate-900 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+                {highlight}
+              </span>
+            ) : null}
             <div className="flex items-center justify-between">
               <h3 className="font-semibold text-slate-900">{plan.name}</h3>
               {active ? (
@@ -76,7 +83,16 @@ export function PlanSelector({ currentPlan, plans }: PlanSelectorProps) {
               {features.map((feature) => (
                 <li key={feature} className="flex items-start gap-2 text-xs text-slate-600">
                   <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600" />
-                  {feature}
+                  <span
+                    className={
+                      (plan.id === "PRO" && feature.includes("team")) ||
+                      (plan.id === "ENTERPRISE" && feature.includes("store"))
+                        ? "font-semibold text-slate-900"
+                        : undefined
+                    }
+                  >
+                    {feature}
+                  </span>
                 </li>
               ))}
             </ul>

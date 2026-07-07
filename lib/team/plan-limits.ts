@@ -1,18 +1,16 @@
 import type { BusinessPlan } from "@prisma/client";
-import { getPlan } from "@/lib/plans";
+import { getPlan, planStaffSeatLimit } from "@/lib/plans";
 
 export function planAllowsStaff(plan: BusinessPlan) {
   return getPlan(plan).staffAccounts;
 }
 
 export function staffSeatLimit(plan: BusinessPlan): number | null {
-  if (plan === "PRO") return 5;
-  if (plan === "ENTERPRISE") return null;
-  return 0;
+  const limit = planStaffSeatLimit(plan);
+  return limit === 0 ? 0 : limit;
 }
 
 export function staffUpgradeMessage(plan: BusinessPlan) {
-  if (plan === "ENTERPRISE") return null;
-  if (plan === "PRO") return null;
-  return "Upgrade to Pro to invite team members (up to 5 seats).";
+  if (plan === "ENTERPRISE" || plan === "PRO") return null;
+  return "Upgrade to Pro for up to 5 team members.";
 }

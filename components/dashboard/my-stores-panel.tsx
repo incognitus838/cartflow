@@ -16,6 +16,8 @@ type MyStoresPanelProps = {
   sellerEmail: string;
   stores: OwnedStoreDetail[];
   activeStoreId: string;
+  canAddStore?: boolean;
+  addStoreBlockedReason?: string;
 };
 
 function approvalBadgeClass(status: StoreApprovalSnapshot["approvalStatus"]) {
@@ -29,6 +31,8 @@ export function MyStoresPanel({
   sellerEmail,
   stores,
   activeStoreId,
+  canAddStore = true,
+  addStoreBlockedReason,
 }: MyStoresPanelProps) {
   const router = useRouter();
 
@@ -80,14 +84,26 @@ export function MyStoresPanel({
               Each store is reviewed and approved separately.
             </p>
           </div>
-          <Link
-            href="/dashboard/stores/new"
-            className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700"
-          >
-            <Plus className="h-4 w-4" strokeWidth={1.75} />
-            Add store
-          </Link>
+          {canAddStore ? (
+            <Link
+              href="/dashboard/stores/new"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700"
+            >
+              <Plus className="h-4 w-4" strokeWidth={1.75} />
+              Add store
+            </Link>
+          ) : (
+            <Link
+              href="/dashboard/billing"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+            >
+              Upgrade for more stores
+            </Link>
+          )}
         </div>
+        {!canAddStore && addStoreBlockedReason ? (
+          <p className="border-b border-slate-100 px-6 py-3 text-xs text-amber-800">{addStoreBlockedReason}</p>
+        ) : null}
 
         <ul className="divide-y divide-slate-100" role="list">
           {stores.map((store) => {

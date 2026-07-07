@@ -1,11 +1,14 @@
 import { MyStoresPanel } from "@/components/dashboard/my-stores-panel";
 import { PageHeader } from "@/components/shared/page-header";
 import { requireStoreOwner } from "@/lib/auth-server";
-import { listOwnedStores } from "@/lib/team/stores";
+import { canUserCreateStore, listOwnedStores } from "@/lib/team/stores";
 
 export default async function StoresPage() {
   const { user, business } = await requireStoreOwner();
-  const stores = await listOwnedStores(user.id);
+  const [stores, createCheck] = await Promise.all([
+    listOwnedStores(user.id),
+    canUserCreateStore(user.id),
+  ]);
 
   return (
     <>
@@ -18,6 +21,8 @@ export default async function StoresPage() {
         sellerEmail={user.email}
         stores={stores}
         activeStoreId={business.id}
+        canAddStore={createCheck.allowed}
+        addStoreBlockedReason={createCheck.reason}
       />
     </>
   );

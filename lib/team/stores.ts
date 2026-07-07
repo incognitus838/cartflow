@@ -1,6 +1,8 @@
 import "server-only";
 
+import type { BusinessPlan } from "@prisma/client";
 import { prisma } from "@/lib/db";
+import { planStoreLimit } from "@/lib/plans";
 import type { AccessibleStore, OwnedStoreDetail } from "@/lib/team/store-types";
 
 export type { AccessibleStore, OwnedStoreDetail } from "@/lib/team/store-types";
@@ -82,20 +84,36 @@ export async function countOwnedStores(userId: string) {
   return prisma.business.count({ where: { ownerId: userId } });
 }
 
-/** Owners may create multiple stores; staff-only accounts may not. */
+function ownerStoreCap(plans: BusinessPlan[]): number | null {
+  if (plans.some((plan) => planStoreLimit(plan) === null)) return null;
+  return 1;
+}
+
+/** Owners may create multiple stores on Enterprise; staff-only accounts may not. */
 export async function canUserCreateStore(userId: string): Promise<{ allowed: boolean; reason?: string }> {
-  const [ownedCount, staffMembership] = await Promise.all([
-    countOwnedStores(userId),
+  const [owned, staffMembership] = await Promise.all([
+    prisma.business.findMany({
+      where: { ownerId: userId },
+      select: { plan: true },
+    }),
     prisma.businessMember.findFirst({
       where: { userId, role: "STAFF" },
       select: { id: true },
     }),
   ]);
 
-  if (ownedCount === 0 && staffMembership) {
+  if (owned.length === 0 && staffMembership) {
     return {
       allowed: false,
       reason: "Team members cannot create stores. Ask your store owner for access.",
+    };
+  }
+
+  const cap = ownerStoreCap(owned.map((store) => store.plan));
+  if (cap !== null && owned.length >= cap) {
+    return {
+      allowed: false,
+      reason: "Upgrade to Enterprise for 2+ stores.",
     };
   }
 
