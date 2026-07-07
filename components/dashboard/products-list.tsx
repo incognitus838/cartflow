@@ -10,7 +10,7 @@ import { StatusBadge } from "@/components/dashboard/status-badge";
 import { StockBadge } from "@/components/dashboard/stock-badge";
 import { useLiveListSync } from "@/components/dashboard/use-live-list-sync";
 import { FilterToolbar } from "@/components/shared/filter-toolbar";
-import { notifyProductsChanged } from "@/lib/dashboard/live-sync";
+import { notifyCatalogChanged, notifyProductsChanged } from "@/lib/dashboard/live-sync";
 import { toNumber, type NumericInput } from "@/lib/decimal";
 import {
   buildCategoryOrder,
@@ -109,6 +109,8 @@ type ProductRowProps = {
   canMoveUp: boolean;
   canMoveDown: boolean;
   reordering: boolean;
+  selected: boolean;
+  onToggleSelect: (productId: string) => void;
   onCategoryChange: (productId: string, category: string) => void;
   onReorder: (productId: string, direction: "up" | "down") => void;
   onDeleted: (productId: string) => void;
@@ -123,6 +125,8 @@ function ProductRow({
   canMoveUp,
   canMoveDown,
   reordering,
+  selected,
+  onToggleSelect,
   onCategoryChange,
   onReorder,
   onDeleted,
@@ -130,7 +134,18 @@ function ProductRow({
   const thumbnail = product.images[0]?.url;
 
   return (
-    <tr className="transition-colors hover:bg-[#fbfbfd]">
+    <tr
+      className={`transition-colors hover:bg-[#fbfbfd] ${selected ? "bg-emerald-50/40" : ""}`}
+    >
+      <td className="w-10">
+        <input
+          type="checkbox"
+          checked={selected}
+          onChange={() => onToggleSelect(product.id)}
+          aria-label={`Select ${product.title}`}
+          className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+        />
+      </td>
       {showReorder ? (
         <td className="w-10">
           <div className="flex flex-col gap-0.5">
@@ -179,7 +194,7 @@ function ProductRow({
           </span>
         </Link>
       </td>
-      <td className="hidden sm:table-cell">
+      <td className="min-w-[9rem]">
         <label className="sr-only" htmlFor={`category-${product.id}`}>
           Category for {product.title}
         </label>
@@ -187,7 +202,7 @@ function ProductRow({
           id={`category-${product.id}`}
           value={normalizeCategoryName(product.category)}
           onChange={(e) => onCategoryChange(product.id, e.target.value)}
-          className="cf-input max-w-[12rem] py-1.5 text-[12px]"
+          className="cf-input w-full max-w-[12rem] py-1.5 text-[12px]"
         >
           {categoryOptions.map((category) => (
             <option key={category} value={category}>
@@ -237,7 +252,12 @@ export function ProductsList({
   const [categoryFilter, setCategoryFilter] = useState("");
   const [sort, setSort] = useState<ProductSort>(DEFAULT_PRODUCT_SORT);
   const [reorderingId, setReorderingId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
+  const [bulkCategory, setBulkCategory] = useState("");
+  const [bulkMoving, setBulkMoving] = useState(false);
   const initialSignature = useMemo(() => productSignature(initialProducts), [initialProducts]);
+
+  const selectedCount = selectedIds.size;
 
   const categoryOrder = useMemo(
     () => buildCategoryOrder(catalogCategories, products),
@@ -306,8 +326,50 @@ export function ProductsList({
     [catalogView, displayed, categoryOrder],
   );
 
+  const displayedIds = useMemo(() => displayed.map((product) => product.id), [displayed]);
+  const allDisplayedSelected =
+    displayedIds.length > 0 && displayedIds.every((id) => selectedIds.has(id));
+  const someDisplayedSelected = displayedIds.some((id) => selectedIds.has(id));
+
+  useEffect(() => {
+    if (!bulkCategory && categoryOptions.length > 0) {
+      setBulkCategory(categoryOptions[0]);
+    }
+  }, [bulkCategory, categoryOptions]);
+
+  function toggleSelect(productId: string) {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (next.has(productId)) next.delete(productId);
+      else next.add(productId);
+      return next;
+    });
+  }
+
+  function toggleSelectAllDisplayed() {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (allDisplayedSelected) {
+        for (const id of displayedIds) next.delete(id);
+      } else {
+        for (const id of displayedIds) next.add(id);
+      }
+      return next;
+    });
+  }
+
+  function clearSelection() {
+    setSelectedIds(new Set());
+  }
+
   function handleProductDeleted(productId: string) {
     setProducts((current) => current.filter((product) => product.id !== productId));
+    setSelectedIds((current) => {
+      if (!current.has(productId)) return current;
+      const next = new Set(current);
+      next.delete(productId);
+      return next;
+    });
   }
 
   function handleHeaderSort(field: ProductSortField) {
@@ -358,6 +420,55 @@ export function ProductsList({
     }
   }
 
+  async function handleBulkMove() {
+    const ids = [...selectedIds];
+    const category = normalizeCategoryName(bulkCategory);
+    if (ids.length === 0 || !category) return;
+
+    const previous = products;
+    setBulkMoving(true);
+    setProducts((current) =>
+      current.map((product) =>
+        selectedIds.has(product.id) ? { ...product, category } : product,
+      ),
+    );
+
+    try {
+      const res = await fetch("/api/products/catalog", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productIds: ids, category }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setProducts(previous);
+        toast.error(data.error || "Could not move products");
+        return;
+      }
+
+      if (Array.isArray(data.products)) {
+        setProducts(normalizeProductsForList(data.products) as ProductListRow[]);
+      } else {
+        await refetch();
+      }
+
+      clearSelection();
+      notifyProductsChanged();
+      notifyCatalogChanged();
+      toast.success(
+        data.moved > 0
+          ? `Moved ${data.moved} product${data.moved === 1 ? "" : "s"} to ${category}`
+          : `Already in ${category}`,
+      );
+    } catch {
+      setProducts(previous);
+      toast.error("Something went wrong");
+    } finally {
+      setBulkMoving(false);
+    }
+  }
+
   async function handleReorder(productId: string, direction: "up" | "down") {
     setReorderingId(productId);
     try {
@@ -394,6 +505,8 @@ export function ProductsList({
         canMoveUp={index > 0}
         canMoveDown={index < rows.length - 1}
         reordering={reorderingId === product.id}
+        selected={selectedIds.has(product.id)}
+        onToggleSelect={toggleSelect}
         onCategoryChange={handleCategoryChange}
         onReorder={handleReorder}
         onDeleted={handleProductDeleted}
@@ -404,6 +517,18 @@ export function ProductsList({
   const tableHead = (
     <thead>
       <tr>
+        <th scope="col" className="w-10">
+          <input
+            type="checkbox"
+            checked={allDisplayedSelected}
+            ref={(input) => {
+              if (input) input.indeterminate = someDisplayedSelected && !allDisplayedSelected;
+            }}
+            onChange={toggleSelectAllDisplayed}
+            aria-label="Select all products in view"
+            className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+          />
+        </th>
         {catalogView ? (
           <th scope="col" className="w-10 text-[#86868b]">
             <span className="sr-only">Reorder</span>
@@ -415,7 +540,6 @@ export function ProductsList({
           field="category"
           sort={sort}
           onSort={handleHeaderSort}
-          className="hidden sm:table-cell"
         />
         <SortableHeader label="Price" field="price" sort={sort} onSort={handleHeaderSort} />
         <SortableHeader label="Stock" field="stock" sort={sort} onSort={handleHeaderSort} />
@@ -505,6 +629,46 @@ export function ProductsList({
         </div>
       </fieldset>
 
+      {selectedCount > 0 ? (
+        <div className="mb-4 flex flex-col gap-3 rounded-xl border border-emerald-200/80 bg-emerald-50/60 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm font-medium text-emerald-900">
+            {selectedCount} product{selectedCount === 1 ? "" : "s"} selected
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <label htmlFor="bulk-category" className="sr-only">
+              Move selected to category
+            </label>
+            <select
+              id="bulk-category"
+              value={bulkCategory}
+              onChange={(e) => setBulkCategory(e.target.value)}
+              className="cf-input min-w-[10rem] py-2 text-[13px]"
+            >
+              {categoryOptions.map((category) => (
+                <option key={category} value={category}>
+                  {category}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              disabled={bulkMoving || !bulkCategory}
+              onClick={() => void handleBulkMove()}
+              className="btn-primary px-4 py-2 text-[13px] disabled:opacity-60"
+            >
+              {bulkMoving ? "Moving…" : "Move to category"}
+            </button>
+            <button
+              type="button"
+              onClick={clearSelection}
+              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-[13px] font-medium text-slate-700 hover:bg-slate-50"
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+      ) : null}
+
       {catalogView ? (
         <div className="space-y-6">
           {grouped.map((group) => (
@@ -540,12 +704,11 @@ export function ProductsList({
         </p>
       ) : null}
 
-      {catalogView ? (
-        <p className="mt-4 text-[12px] text-[#86868b]">
-          Use the arrows to rearrange products within each catalog category. Change the category
-          dropdown to move a product to another catalog.
-        </p>
-      ) : null}
+      <p className="mt-4 text-[12px] text-[#86868b]">
+        {catalogView
+          ? "Select products to move in bulk, use category dropdowns for one-offs, or drag order with arrows."
+          : "Select products and use Move to category for fast bulk updates, or change category per row."}
+      </p>
     </section>
   );
 }

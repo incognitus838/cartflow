@@ -253,6 +253,55 @@ export async function moveProductToCategory(
   });
 }
 
+export async function moveProductsToCategory(
+  businessId: string,
+  productIds: string[],
+  category: string,
+) {
+  const normalized = normalizeCategoryName(category);
+  const uniqueIds = [...new Set(productIds)];
+  if (uniqueIds.length === 0) {
+    return { moved: 0, skipped: 0 };
+  }
+
+  return prisma.$transaction(async (tx) => {
+    const products = await tx.product.findMany({
+      where: { businessId, id: { in: uniqueIds } },
+      select: { id: true, category: true, metadata: true },
+    });
+
+    if (products.length === 0) {
+      throw new Error("No products found.");
+    }
+
+    let sortOrder = await nextSortOrderInCategory(tx, businessId, normalized);
+    let moved = 0;
+    let skipped = 0;
+
+    for (const product of products) {
+      if (normalizeCategoryName(product.category) === normalized) {
+        skipped += 1;
+        continue;
+      }
+
+      await tx.product.update({
+        where: { id: product.id },
+        data: { category: normalized, sortOrder },
+      });
+      sortOrder += 1;
+      moved += 1;
+
+      await syncCatalogFromProduct(
+        businessId,
+        { category: normalized, metadata: product.metadata },
+        tx,
+      );
+    }
+
+    return { moved, skipped };
+  });
+}
+
 export async function reorderProductInCategory(
   businessId: string,
   productId: string,
