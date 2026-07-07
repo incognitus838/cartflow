@@ -3,11 +3,11 @@ import { Megaphone, Plus } from "lucide-react";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { PromotionsList } from "@/components/dashboard/promotions-list";
 import { PageHeader } from "@/components/shared/page-header";
-import { requireBusiness } from "@/lib/auth-server";
+import { requirePermission } from "@/lib/auth-server";
 import { listBusinessPromotions } from "@/lib/queries/dashboard";
 
 export default async function PromotionsPage() {
-  const { business, storeAccessRole } = await requireBusiness();
+  const { business, permissions } = await requirePermission("promotions");
   const promotions = await listBusinessPromotions(business.id);
 
   return (
@@ -64,7 +64,7 @@ export default async function PromotionsPage() {
       ) : (
         <PromotionsList
           currency={business.currency}
-          canDelete={storeAccessRole === "owner"}
+          canDelete={permissions.promotionsDelete}
           promotions={promotions.map((promotion) => ({
             ...promotion,
             startsAt: promotion.startsAt?.toISOString() ?? null,

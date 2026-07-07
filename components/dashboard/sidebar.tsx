@@ -20,8 +20,13 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
-import { navItemsForStoreRole } from "@/lib/dashboard/nav";
+import {
+  StoreSwitcher,
+  type StoreSwitcherOption,
+} from "@/components/dashboard/store-switcher";
+import { navItemsForPermissions, navItemsForStoreRole, presetLabel } from "@/lib/dashboard/nav";
 import type { StoreAccessRole } from "@/lib/store-access-types";
+import type { MemberPermissions } from "@/lib/team/permissions-shared";
 
 const NAV_ICONS = {
   "/dashboard": LayoutDashboard,
@@ -39,9 +44,13 @@ type SidebarProps = {
   id?: string;
   businessName: string;
   businessSlug: string;
+  businessId: string;
   userName: string;
   userRole?: string;
   storeAccessRole?: StoreAccessRole;
+  accessPreset?: string | null;
+  permissions?: MemberPermissions;
+  accessibleStores?: StoreSwitcherOption[];
   mobileOpen?: boolean;
   onNavigate?: () => void;
   onClose?: () => void;
@@ -51,9 +60,13 @@ export function DashboardSidebar({
   id,
   businessName,
   businessSlug,
+  businessId,
   userName,
   userRole,
   storeAccessRole = "owner",
+  accessPreset = null,
+  permissions,
+  accessibleStores = [],
   mobileOpen = false,
   onNavigate,
   onClose,
@@ -61,7 +74,11 @@ export function DashboardSidebar({
   const pathname = usePathname();
   const router = useRouter();
   const [isMobileNav, setIsMobileNav] = useState(false);
-  const navItems = navItemsForStoreRole(storeAccessRole);
+  const navItems =
+    permissions && storeAccessRole === "staff"
+      ? navItemsForPermissions(storeAccessRole, permissions)
+      : navItemsForStoreRole(storeAccessRole);
+  const roleBadge = storeAccessRole === "staff" ? presetLabel(accessPreset) : null;
 
   useEffect(() => {
     const query = window.matchMedia("(max-width: 1023px)");
@@ -96,7 +113,7 @@ export function DashboardSidebar({
             </p>
             <p className="truncate text-[12px] text-[#86868b]">
               /{businessSlug}
-              {storeAccessRole === "staff" ? " · Staff" : ""}
+              {roleBadge ? ` · ${roleBadge}` : ""}
             </p>
           </div>
           <p className="flex-1 text-[14px] font-semibold tracking-tight text-[#1d1d1f] lg:hidden">
@@ -112,6 +129,16 @@ export function DashboardSidebar({
           </button>
         </div>
       </div>
+
+      {accessibleStores.length > 1 ? (
+        <div className="px-4 pb-3 lg:px-5">
+          <StoreSwitcher
+            stores={accessibleStores}
+            activeStoreId={businessId}
+            compact
+          />
+        </div>
+      ) : null}
 
       <nav className="cf-dash-sidebar__nav" aria-label="Seller dashboard">
         <ul className="space-y-0.5" role="list">

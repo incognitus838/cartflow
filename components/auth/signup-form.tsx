@@ -6,10 +6,20 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { AuthCard } from "@/components/auth/auth-card";
 
-export function SignupForm() {
+type SignupFormProps = {
+  inviteToken?: string;
+  initialEmail?: string;
+  initialName?: string;
+};
+
+export function SignupForm({
+  inviteToken,
+  initialEmail = "",
+  initialName = "",
+}: SignupFormProps) {
   const router = useRouter();
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [name, setName] = useState(initialName);
+  const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -21,7 +31,7 @@ export function SignupForm() {
       const res = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ name, email, password, inviteToken }),
       });
       const data = await res.json();
 
@@ -42,8 +52,12 @@ export function SignupForm() {
 
   return (
     <AuthCard
-      title="Create your account"
-      subtitle="Start selling in minutes — free to begin"
+      title={inviteToken ? "Create your staff account" : "Create your account"}
+      subtitle={
+        inviteToken
+          ? "Set a password to accept your team invite"
+          : "Start selling in minutes — free to begin"
+      }
       footer={
         <>
           Already have an account?{" "}
@@ -78,6 +92,7 @@ export function SignupForm() {
             type="email"
             autoComplete="email"
             required
+            readOnly={Boolean(inviteToken)}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"

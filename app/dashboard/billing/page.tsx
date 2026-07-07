@@ -1,10 +1,10 @@
 import { PlanSelector } from "@/components/dashboard/plan-selector";
 import { PageHeader } from "@/components/shared/page-header";
-import { requireStoreOwner } from "@/lib/auth-server";
+import { requirePermission } from "@/lib/auth-server";
 import { PLANS } from "@/lib/plans";
 
 export default async function BillingPage() {
-  const { business } = await requireStoreOwner();
+  const { business } = await requirePermission("billing");
 
   return (
     <>

@@ -3,12 +3,15 @@ import { deductStockForOrder } from "@/lib/inventory";
 import { notifyOrderStatusChange, notifyPaymentRejected } from "@/lib/notifications/orders";
 import { clearReceiptFields, logOrderPaymentEvent } from "@/lib/orders/payment-events";
 import { orderHasReceipt } from "@/lib/orders/receipt-storage";
+import { logStoreActivity } from "@/lib/team/activity";
 import { scopedOrderWhere } from "@/lib/tenant";
 
 export type PaymentReviewInput = {
   action: "approve" | "reject";
   reason?: string;
   actorName?: string;
+  actorUserId?: string;
+  actorRole?: "owner" | "staff";
 };
 
 export function parsePaymentReview(body: unknown): PaymentReviewInput | string {
@@ -88,6 +91,14 @@ export async function reviewOrderPayment(
     }
 
     await notifyOrderStatusChange(order.id, "PAID");
+    await logStoreActivity({
+      businessId,
+      action: "PAYMENT_APPROVED",
+      actorUserId: input.actorUserId,
+      actorName: input.actorName,
+      detail: `Payment approved for order ${existing.orderNumber}${input.actorRole === "staff" ? " · staff" : ""}`,
+      metadata: { orderId: existing.id, orderNumber: existing.orderNumber },
+    });
     return order;
   }
 
@@ -124,5 +135,13 @@ export async function reviewOrderPayment(
   });
 
   await notifyPaymentRejected(order.id, reason);
+  await logStoreActivity({
+    businessId,
+    action: "PAYMENT_REJECTED",
+    actorUserId: input.actorUserId,
+    actorName: input.actorName,
+    detail: `Payment rejected for order ${existing.orderNumber}${input.actorRole === "staff" ? " · staff" : ""}`,
+    metadata: { orderId: existing.id, orderNumber: existing.orderNumber, reason },
+  });
   return order;
 }

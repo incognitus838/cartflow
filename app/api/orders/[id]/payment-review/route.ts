@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireApiStoreOwner } from "@/lib/api/require-business";
+import { requireApiPermission } from "@/lib/api/require-business";
 import { parsePaymentReview, reviewOrderPayment } from "@/lib/orders/payment-review";
 
 export const runtime = "nodejs";
@@ -7,7 +7,7 @@ export const runtime = "nodejs";
 type RouteContext = { params: Promise<{ id: string }> };
 
 export async function POST(request: Request, context: RouteContext) {
-  const auth = await requireApiStoreOwner();
+  const auth = await requireApiPermission("paymentsReview");
   if (auth.error) return auth.error;
 
   const { id } = await context.params;
@@ -22,6 +22,8 @@ export async function POST(request: Request, context: RouteContext) {
     const order = await reviewOrderPayment(auth.business.id, id, {
       ...parsed,
       actorName: parsed.actorName ?? auth.session.name,
+      actorUserId: auth.session.userId,
+      actorRole: auth.storeAccessRole,
     });
     return NextResponse.json({ order });
   } catch (error) {

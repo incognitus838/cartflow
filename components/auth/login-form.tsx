@@ -6,7 +6,11 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { AuthCard } from "@/components/auth/auth-card";
 
-export function LoginForm() {
+type LoginFormProps = {
+  nextPath?: string;
+};
+
+export function LoginForm({ nextPath }: LoginFormProps) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -30,7 +34,7 @@ export function LoginForm() {
       }
 
       toast.success("Welcome back!");
-      router.push(data.redirectTo || "/dashboard");
+      router.push(nextPath || data.redirectTo || "/dashboard");
       router.refresh();
     } catch {
       toast.error("Something went wrong. Try again.");

@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { ProductForm } from "@/components/dashboard/product-form";
 import { catalogCategoryNames, resolveCatalogSettings } from "@/lib/catalog/settings";
 import { toProductFormInitial } from "@/lib/products/form-initial";
-import { requireBusiness } from "@/lib/auth-server";
+import { requirePermission } from "@/lib/auth-server";
 import { getBusinessProduct } from "@/lib/queries/dashboard";
 
 type EditProductPageProps = {
@@ -10,7 +10,7 @@ type EditProductPageProps = {
 };
 
 export default async function EditProductPage({ params }: EditProductPageProps) {
-  const { business } = await requireBusiness();
+  const { business } = await requirePermission("products");
   const { id } = await params;
   const [product, catalog] = await Promise.all([
     getBusinessProduct(business.id, id),

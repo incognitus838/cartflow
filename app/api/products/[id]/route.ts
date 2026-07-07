@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireApiBusiness, requireApiStoreOwner } from "@/lib/api/require-business";
+import { requireApiBusiness, requireApiPermission } from "@/lib/api/require-business";
 import { deleteProduct, updateProduct } from "@/lib/products/mutations";
 import { parseProductInput } from "@/lib/products/validation";
 import { getBusinessProduct } from "@/lib/queries/dashboard";
@@ -54,7 +54,7 @@ export async function PATCH(request: Request, context: RouteContext) {
 }
 
 export async function DELETE(_request: Request, context: RouteContext) {
-  const auth = await requireApiStoreOwner();
+  const auth = await requireApiPermission("productsDelete");
   if (auth.error) return auth.error;
 
   const { id } = await context.params;

@@ -132,6 +132,40 @@ enum ApprovalPriority {
   @@schema("cartflow")
 }
 
+enum MemberAccessPreset {
+  STAFF
+  MANAGER
+  FULFILLMENT
+  CATALOG
+  CUSTOM
+
+  @@schema("cartflow")
+}
+
+enum StaffInviteStatus {
+  PENDING
+  ACCEPTED
+  REVOKED
+  EXPIRED
+
+  @@schema("cartflow")
+}
+
+enum StoreActivityAction {
+  MEMBER_INVITED
+  MEMBER_JOINED
+  MEMBER_REMOVED
+  MEMBER_SUSPENDED
+  MEMBER_RESTORED
+  MEMBER_ACCESS_UPDATED
+  INVITE_REVOKED
+  PAYMENT_APPROVED
+  PAYMENT_REJECTED
+  ORDER_UPDATED
+
+  @@schema("cartflow")
+}
+
 model User {
   id             String    @id @default(cuid())
   email          String    @unique
@@ -144,8 +178,9 @@ model User {
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
-  ownedBusinesses Business[]       @relation("BusinessOwner")
-  memberships     BusinessMember[]
+  ownedBusinesses  Business[]       @relation("BusinessOwner")
+  memberships      BusinessMember[]
+  staffInvitesSent StaffInvite[]    @relation("StaffInvitesSent")
 
   @@schema("cartflow")
 }
@@ -202,6 +237,8 @@ model Business {
   customers        Customer[]
   inventoryLogs    InventoryLog[]
   notifications    NotificationLog[]
+  staffInvites     StaffInvite[]
+  activityLogs     StoreActivityLog[]
 
   @@index([ownerId])
   @@index([slug])
@@ -209,17 +246,61 @@ model Business {
 }
 
 model BusinessMember {
-  id         String   @id @default(cuid())
-  businessId String
-  userId     String
-  role       UserRole @default(STAFF)
-  createdAt  DateTime @default(now())
+  id           String             @id @default(cuid())
+  businessId   String
+  userId       String
+  role         UserRole           @default(STAFF)
+  accessPreset MemberAccessPreset @default(STAFF)
+  permissions  Json?
+  isSuspended  Boolean            @default(false)
+  suspendedAt  DateTime?
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
 
   business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([businessId, userId])
   @@index([userId])
+  @@schema("cartflow")
+}
+
+model StaffInvite {
+  id           String             @id @default(cuid())
+  businessId   String
+  email        String
+  name         String?
+  accessPreset MemberAccessPreset @default(STAFF)
+  permissions  Json?
+  token        String             @unique
+  invitedById  String
+  status       StaffInviteStatus  @default(PENDING)
+  expiresAt    DateTime
+  acceptedAt   DateTime?
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  business  Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  invitedBy User     @relation("StaffInvitesSent", fields: [invitedById], references: [id], onDelete: Cascade)
+
+  @@index([businessId, email])
+  @@index([businessId, status])
+  @@schema("cartflow")
+}
+
+model StoreActivityLog {
+  id          String              @id @default(cuid())
+  businessId  String
+  actorUserId String?
+  actorName   String?
+  action      StoreActivityAction
+  detail      String?
+  metadata    Json?
+  createdAt   DateTime            @default(now())
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, createdAt])
   @@schema("cartflow")
 }
 

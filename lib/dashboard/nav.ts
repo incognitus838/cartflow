@@ -1,4 +1,5 @@
 import type { StoreAccessRole } from "@/lib/store-access-types";
+import { canAccessNavPath, type MemberPermissions } from "@/lib/team/permissions-shared";
 
 export type DashboardNavItem = {
   href: string;
@@ -33,4 +34,26 @@ export function isOwnerOnlyDashboardPath(pathname: string) {
 export function navItemsForStoreRole(role: "owner" | "staff") {
   if (role === "owner") return DASHBOARD_NAV;
   return DASHBOARD_NAV.filter((item) => item.staffAllowed);
+}
+
+export function navItemsForPermissions(
+  role: StoreAccessRole,
+  permissions: MemberPermissions,
+) {
+  if (role === "owner") return DASHBOARD_NAV;
+  return DASHBOARD_NAV.filter(
+    (item) => item.staffAllowed && canAccessNavPath(permissions, item.href),
+  );
+}
+
+export function presetLabel(preset: string | null | undefined) {
+  if (!preset) return "Owner";
+  const labels: Record<string, string> = {
+    STAFF: "Staff",
+    MANAGER: "Manager",
+    FULFILLMENT: "Fulfillment",
+    CATALOG: "Catalog",
+    CUSTOM: "Custom",
+  };
+  return labels[preset] ?? preset;
 }

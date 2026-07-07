@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { CatalogManager } from "@/components/dashboard/catalog-manager";
 import { PageHeader } from "@/components/shared/page-header";
-import { requireBusiness } from "@/lib/auth-server";
+import { requirePermission } from "@/lib/auth-server";
 import { resolveCatalogSettings } from "@/lib/catalog/settings";
 
 export default async function CatalogPage() {
-  const { business } = await requireBusiness();
+  const { business } = await requirePermission("catalog");
   const settings = await resolveCatalogSettings(business.id);
 
   return (

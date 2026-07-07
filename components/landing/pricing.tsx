@@ -39,8 +39,8 @@ const tiers = [
     features: [
       "Everything in Starter",
       "Extended analytics",
+      "Up to 5 team seats",
       "Email support",
-      // "Staff accounts", // implement later
       // "Custom domain", // implement later
     ],
     cta: "Get Pro",

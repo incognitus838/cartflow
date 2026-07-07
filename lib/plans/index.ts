@@ -40,9 +40,9 @@ export const PLANS: Record<BusinessPlan, PlanDefinition> = {
     priceLabel: "₦12,999/mo",
     productLimit: null,
     analytics: true,
-    staffAccounts: false, // staff invites — implement later
+    staffAccounts: true,
     onlinePayments: false,
-    description: "Unlimited products, analytics, priority support (coming soon).",
+    description: "Unlimited products, analytics, up to 5 team seats, priority support.",
   },
   ENTERPRISE: {
     id: "ENTERPRISE",
@@ -50,7 +50,7 @@ export const PLANS: Record<BusinessPlan, PlanDefinition> = {
     priceLabel: "Custom",
     productLimit: null,
     analytics: true,
-    staffAccounts: false,
+    staffAccounts: true,
     onlinePayments: false,
     description: "Custom limits, dedicated support, SLA.",
   },

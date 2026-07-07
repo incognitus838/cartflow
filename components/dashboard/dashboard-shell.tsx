@@ -3,27 +3,40 @@
 import type { ReactNode } from "react";
 import { Menu, ShoppingBag } from "lucide-react";
 import { DashboardSidebar } from "@/components/dashboard/sidebar";
+import type { StoreSwitcherOption } from "@/components/dashboard/store-switcher";
 import { useMobileNav } from "@/components/dashboard/use-mobile-nav";
+import { presetLabel } from "@/lib/dashboard/nav";
 import type { StoreAccessRole } from "@/lib/store-access-types";
+import type { MemberPermissions } from "@/lib/team/permissions-shared";
 
 type DashboardShellProps = {
   businessName: string;
   businessSlug: string;
+  businessId: string;
   userName: string;
   userRole?: string;
   storeAccessRole?: StoreAccessRole;
+  accessPreset?: string | null;
+  permissions?: MemberPermissions;
+  accessibleStores?: StoreSwitcherOption[];
   children: ReactNode;
 };
 
 export function DashboardShell({
   businessName,
   businessSlug,
+  businessId,
   userName,
   userRole,
   storeAccessRole = "owner",
+  accessPreset = null,
+  permissions,
+  accessibleStores = [],
   children,
 }: DashboardShellProps) {
   const { navOpen, setNavOpen } = useMobileNav();
+  const roleBadge =
+    storeAccessRole === "staff" ? presetLabel(accessPreset) : null;
 
   return (
     <div className="cf-dash-shell">
@@ -49,7 +62,7 @@ export function DashboardShell({
               </p>
               <p className="truncate text-[11px] text-[#86868b]">
                 /{businessSlug}
-                {storeAccessRole === "staff" ? " · Staff" : ""}
+                {roleBadge ? ` · ${roleBadge}` : ""}
               </p>
             </div>
           </div>
@@ -69,9 +82,13 @@ export function DashboardShell({
         id="seller-dashboard-nav"
         businessName={businessName}
         businessSlug={businessSlug}
+        businessId={businessId}
         userName={userName}
         userRole={userRole}
         storeAccessRole={storeAccessRole}
+        accessPreset={accessPreset}
+        permissions={permissions}
+        accessibleStores={accessibleStores}
         mobileOpen={navOpen}
         onNavigate={() => setNavOpen(false)}
         onClose={() => setNavOpen(false)}

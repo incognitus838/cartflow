@@ -13,7 +13,10 @@ export async function getBusinessForUser(userId: string, businessId: string) {
   return prisma.business.findFirst({
     where: {
       id: businessId,
-      OR: [{ ownerId: userId }, { members: { some: { userId } } }],
+      OR: [
+        { ownerId: userId },
+        { members: { some: { userId, isSuspended: false } } },
+      ],
     },
   });
 }
@@ -35,7 +38,7 @@ export async function resolveBusinessForSession(session: SessionPayload) {
   if (owned) return owned;
 
   const membership = await prisma.businessMember.findFirst({
-    where: { userId: session.userId },
+    where: { userId: session.userId, isSuspended: false },
     include: { business: true },
     orderBy: { createdAt: "asc" },
   });
@@ -79,7 +82,7 @@ export async function resolveActiveBusinessId(session: SessionPayload) {
   if (owned) return owned.id;
 
   const membership = await prisma.businessMember.findFirst({
-    where: { userId: session.userId },
+    where: { userId: session.userId, isSuspended: false },
     select: { businessId: true },
     orderBy: { createdAt: "asc" },
   });

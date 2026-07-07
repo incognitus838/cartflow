@@ -1,14 +1,22 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { isDatabaseConfigured, prisma } from "@/lib/db";
-import { resolveStoreAccessRole } from "@/lib/store-access";
+import { resolveStoreAccessContext } from "@/lib/store-access";
 import type { StoreAccessRole } from "@/lib/store-access-types";
+import type { MemberPermissions } from "@/lib/team/permissions-shared";
 import { resolveBusinessForSession } from "@/lib/tenant";
 
 export async function getAuthContext() {
   const session = await getSession();
   if (!session || !isDatabaseConfigured()) {
-    return { session: null, user: null, business: null, storeAccessRole: null };
+    return {
+      session: null,
+      user: null,
+      business: null,
+      storeAccessRole: null,
+      permissions: null,
+      accessPreset: null,
+    };
   }
 
   const user = await prisma.user.findUnique({
@@ -24,7 +32,14 @@ export async function getAuthContext() {
   });
 
   if (!user) {
-    return { session: null, user: null, business: null, storeAccessRole: null };
+    return {
+      session: null,
+      user: null,
+      business: null,
+      storeAccessRole: null,
+      permissions: null,
+      accessPreset: null,
+    };
   }
 
   let business = await resolveBusinessForSession(session);
@@ -33,11 +48,18 @@ export async function getAuthContext() {
       user.ownedBusinesses[0] ?? user.memberships[0]?.business ?? null;
   }
 
-  const storeAccessRole = business
-    ? await resolveStoreAccessRole(session, user.id, business.id)
+  const access = business
+    ? await resolveStoreAccessContext(session, user.id, business.id)
     : null;
 
-  return { session, user, business, storeAccessRole };
+  return {
+    session,
+    user,
+    business,
+    storeAccessRole: access?.role ?? null,
+    permissions: access?.permissions ?? null,
+    accessPreset: access?.accessPreset ?? null,
+  };
 }
 
 export async function requireAuth(redirectTo = "/login") {
@@ -50,18 +72,30 @@ export async function requireAuth(redirectTo = "/login") {
 
 export async function requireBusiness() {
   const ctx = await requireAuth();
-  if (!ctx.business || !ctx.storeAccessRole) {
+  if (!ctx.business || !ctx.storeAccessRole || !ctx.permissions) {
     redirect("/onboarding");
   }
   return ctx as typeof ctx & {
     business: NonNullable<typeof ctx.business>;
     storeAccessRole: StoreAccessRole;
+    permissions: MemberPermissions;
   };
 }
 
 export async function requireStoreOwner(redirectTo = "/dashboard") {
   const ctx = await requireBusiness();
   if (ctx.storeAccessRole !== "owner") {
+    redirect(redirectTo);
+  }
+  return ctx;
+}
+
+export async function requirePermission(
+  permission: keyof MemberPermissions,
+  redirectTo = "/dashboard",
+) {
+  const ctx = await requireBusiness();
+  if (!ctx.permissions[permission]) {
     redirect(redirectTo);
   }
   return ctx;

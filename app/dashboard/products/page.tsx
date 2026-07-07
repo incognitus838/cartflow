@@ -5,13 +5,13 @@ import { ProductActions } from "@/components/dashboard/product-actions";
 import { StatusBadge } from "@/components/dashboard/status-badge";
 import { StockBadge } from "@/components/dashboard/stock-badge";
 import { PageHeader } from "@/components/shared/page-header";
-import { requireBusiness } from "@/lib/auth-server";
+import { requirePermission } from "@/lib/auth-server";
 import { toNumber } from "@/lib/decimal";
 import { listBusinessProducts } from "@/lib/queries/dashboard";
 import { formatCurrency } from "@/lib/utils";
 
 export default async function ProductsPage() {
-  const { business, storeAccessRole } = await requireBusiness();
+  const { business, permissions } = await requirePermission("products");
   const products = await listBusinessProducts(business.id);
 
   return (
@@ -110,7 +110,7 @@ export default async function ProductsPage() {
                         <ProductActions
                           productId={product.id}
                           productTitle={product.title}
-                          canDelete={storeAccessRole === "owner"}
+                          canDelete={permissions.productsDelete}
                         />
                       </td>
                     </tr>

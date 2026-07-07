@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { OrderDetailPanel } from "@/components/dashboard/order-detail-panel";
-import { requireBusiness } from "@/lib/auth-server";
+import { requirePermission } from "@/lib/auth-server";
 import { orderHasReceipt } from "@/lib/orders/receipt-storage";
 import { getBusinessOrder } from "@/lib/queries/dashboard";
 
@@ -9,7 +9,7 @@ type OrderDetailPageProps = {
 };
 
 export default async function OrderDetailPage({ params }: OrderDetailPageProps) {
-  const { business, storeAccessRole } = await requireBusiness();
+  const { business, permissions } = await requirePermission("orders");
   const { id } = await params;
   const order = await getBusinessOrder(business.id, id);
 
@@ -20,7 +20,7 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
   return (
     <OrderDetailPanel
       currency={business.currency}
-      canApprovePayments={storeAccessRole === "owner"}
+      canApprovePayments={permissions.paymentsReview}
       order={{
         id: order.id,
         orderNumber: order.orderNumber,
