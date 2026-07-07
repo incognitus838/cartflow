@@ -124,7 +124,7 @@ export function StoreApprovalsPanel({ pending, recent, pendingCount }: StoreAppr
         <h2 id="approval-kpis" className="sr-only">
           Approval metrics
         </h2>
-        <ul className="grid list-none gap-4 sm:grid-cols-2" role="list">
+        <ul className="grid list-none grid-cols-2 gap-2 sm:gap-4 sm:grid-cols-2" role="list">
           <li>
             <AdminKpiCard
               label="Pending store reviews"

@@ -161,7 +161,7 @@ export function UserDetailPanel({ user: initial }: UserDetailPanelProps) {
         <h2 id="user-analytics" className="sr-only">
           User analytics
         </h2>
-        <ul className="grid list-none gap-4 sm:grid-cols-2 lg:grid-cols-4" role="list">
+        <ul className="grid list-none grid-cols-2 gap-2 sm:gap-4 sm:grid-cols-2 lg:grid-cols-4" role="list">
           {[
             {
               label: "Days on platform",

@@ -83,7 +83,7 @@ export function CustomerInsightsPanel({ data }: CustomerInsightsPanelProps) {
         <h2 id="customer-kpis" className="sr-only">
           Customer metrics
         </h2>
-        <ul className="grid list-none gap-4 sm:grid-cols-2 lg:grid-cols-4" role="list">
+        <ul className="grid list-none grid-cols-2 gap-2 sm:gap-4 sm:grid-cols-2 lg:grid-cols-4" role="list">
           {[
             {
               label: "Repeat rate (sample)",

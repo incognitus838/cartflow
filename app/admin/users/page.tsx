@@ -30,7 +30,7 @@ export default async function AdminUsersPage() {
         <h2 id="user-kpis" className="sr-only">
           User metrics
         </h2>
-        <ul className="grid list-none gap-4 sm:grid-cols-2 lg:grid-cols-5" role="list">
+        <ul className="grid list-none grid-cols-2 gap-2 sm:gap-4 sm:grid-cols-2 lg:grid-cols-5" role="list">
           {[
             { label: "Store-connected", value: stats.total },
             { label: "Admins", value: roleCount("ADMIN") },

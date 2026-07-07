@@ -631,11 +631,17 @@ body:has(.cf-dash-shell) {
 }
 
 .cf-page-title {
-  font-size: 1.75rem;
+  font-size: 1.375rem;
   font-weight: 600;
   letter-spacing: -0.03em;
   color: var(--cf-black);
   line-height: 1.15;
+}
+
+@media (min-width: 640px) {
+  .cf-page-title {
+    font-size: 1.75rem;
+  }
 }
 
 .cf-page-lead {
@@ -650,21 +656,41 @@ body:has(.cf-dash-shell) {
   border: 1px solid var(--cf-border);
   border-radius: var(--cf-radius-lg);
   box-shadow: var(--cf-shadow-sm);
-  padding: 1.25rem;
+  padding: 0.75rem 0.875rem;
+}
+
+@media (min-width: 640px) {
+  .cf-stat-card {
+    padding: 1.25rem;
+  }
 }
 
 .cf-stat-label {
-  font-size: 0.8125rem;
+  font-size: 0.6875rem;
+  line-height: 1.3;
   color: var(--cf-gray-600);
 }
 
+@media (min-width: 640px) {
+  .cf-stat-label {
+    font-size: 0.8125rem;
+  }
+}
+
 .cf-stat-value {
-  margin-top: 0.5rem;
-  font-size: 1.75rem;
+  margin-top: 0.25rem;
+  font-size: 1.25rem;
   font-weight: 600;
   letter-spacing: -0.03em;
   color: var(--cf-black);
   font-variant-numeric: tabular-nums;
+}
+
+@media (min-width: 640px) {
+  .cf-stat-value {
+    margin-top: 0.5rem;
+    font-size: 1.75rem;
+  }
 }
 
 .cf-table-shell {

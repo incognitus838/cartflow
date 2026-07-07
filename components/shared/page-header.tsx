@@ -9,7 +9,7 @@ type PageHeaderProps = {
 
 export function PageHeader({ title, description, alert, actions }: PageHeaderProps) {
   return (
-    <header className="mb-8">
+    <header className="mb-5 sm:mb-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="cf-page-title">{title}</h1>

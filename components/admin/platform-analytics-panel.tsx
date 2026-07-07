@@ -107,7 +107,7 @@ export function PlatformAnalyticsPanel({ data }: PlatformAnalyticsPanelProps) {
         <h2 id="platform-pulse" className="sr-only">
           Platform pulse
         </h2>
-        <ul className="grid list-none gap-4 sm:grid-cols-2 xl:grid-cols-4" role="list">
+        <ul className="grid list-none grid-cols-2 gap-2 sm:gap-4 sm:grid-cols-2 xl:grid-cols-4" role="list">
           <li>
             <AdminKpiCard
               label={`GMV (${data.periodDays}d)`}

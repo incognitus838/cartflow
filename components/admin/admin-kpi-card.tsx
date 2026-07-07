@@ -60,32 +60,47 @@ export function AdminKpiCard({
 
   const content = (
     <article
-      className={`cf-admin-kpi relative overflow-hidden rounded-[var(--cf-radius-lg)] border p-4 transition-all ${styles.border} ${styles.bg} ${
+      className={`cf-admin-kpi relative overflow-hidden rounded-[var(--cf-radius-lg)] border p-3 transition-all sm:p-4 ${styles.border} ${styles.bg} ${
         href ? "hover:-translate-y-0.5 hover:shadow-md" : ""
       }`}
     >
-      <div className="flex items-start justify-between gap-3">
+      {highlight ? (
         <span
-          className={`flex h-9 w-9 items-center justify-center rounded-[11px] border ${styles.icon}`}
-        >
-          <Icon className="h-4 w-4" strokeWidth={1.75} aria-hidden />
-        </span>
-        {highlight ? (
-          <span className="cf-badge cf-badge-pending">Needs attention</span>
-        ) : null}
+          className="absolute top-2 right-2 h-2 w-2 rounded-full bg-[#e8a317] sm:hidden"
+          aria-label="Needs attention"
+        />
+      ) : null}
+      <div className="flex items-center gap-2.5 sm:block">
+        <div className="flex shrink-0 items-start justify-between sm:mb-0">
+          <span
+            className={`flex h-8 w-8 items-center justify-center rounded-[10px] border sm:h-9 sm:w-9 sm:rounded-[11px] ${styles.icon}`}
+          >
+            <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" strokeWidth={1.75} aria-hidden />
+          </span>
+          {highlight ? (
+            <span className="cf-badge cf-badge-pending ml-2 hidden sm:inline-flex">Needs attention</span>
+          ) : null}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[10px] font-medium uppercase tracking-wide text-[#86868b] sm:text-[11px]">
+            {label}
+          </p>
+          <p
+            className={`mt-0.5 truncate text-lg font-semibold tabular-nums tracking-tight sm:mt-1 sm:text-[1.65rem] ${styles.value}`}
+          >
+            {value}
+          </p>
+        </div>
       </div>
-      <p className="mt-4 text-[11px] font-medium uppercase tracking-wide text-[#86868b]">
-        {label}
-      </p>
-      <p className={`mt-1 text-[1.65rem] font-semibold tabular-nums tracking-tight ${styles.value}`}>
-        {value}
-      </p>
     </article>
   );
 
   if (href) {
     return (
-      <Link href={href} className="block rounded-[var(--cf-radius-lg)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#b8956a]">
+      <Link
+        href={href}
+        className="block rounded-[var(--cf-radius-lg)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#b8956a]"
+      >
         {content}
       </Link>
     );

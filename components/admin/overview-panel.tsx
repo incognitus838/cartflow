@@ -35,12 +35,12 @@ type OverviewPanelProps = {
 
 export function OverviewPanel({ stats }: OverviewPanelProps) {
   return (
-    <div className="space-y-10">
+    <div className="space-y-6 sm:space-y-10">
       <section aria-labelledby="platform-kpis">
         <h2 id="platform-kpis" className="sr-only">
           Platform key metrics
         </h2>
-        <ul className="grid list-none gap-4 sm:grid-cols-2 xl:grid-cols-6" role="list">
+        <ul className="grid list-none grid-cols-2 gap-2 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6" role="list">
           <li>
             <AdminKpiCard
               label="Stores"
