@@ -1,4 +1,5 @@
 import type { Order, OrderItem, OrderStatus } from "@prisma/client";
+import { toNumber, type NumericInput } from "@/lib/decimal";
 import { orderHasReceipt } from "@/lib/orders/receipt-storage";
 
 export type TrackingStepState = "complete" | "current" | "upcoming" | "cancelled";
@@ -26,13 +27,70 @@ function rank(status: OrderStatus): number {
 
 type OrderTrackingInput = Pick<
   Order,
-  "status" | "paymentReceiptSubmittedAt" | "createdAt" | "updatedAt" | "paymentRejectionReason"
+  | "status"
+  | "paymentReceiptSubmittedAt"
+  | "createdAt"
+  | "updatedAt"
+  | "paymentRejectionReason"
+  | "customerAddress"
+  | "deliveryFee"
 > & {
   paymentReceiptData?: Uint8Array | Buffer | null;
   paymentReceiptMimeType?: string | null;
 };
 
-export function getOrderTrackingSteps(order: OrderTrackingInput): TrackingStep[] {
+export function orderNeedsDelivery(order: {
+  customerAddress?: string | null;
+  deliveryFee?: NumericInput;
+}): boolean {
+  const hasAddress = Boolean(order.customerAddress?.trim());
+  const hasDeliveryFee = toNumber(order.deliveryFee) > 0;
+  return hasAddress || hasDeliveryFee;
+}
+
+export function getDeliveryStatusLabel(
+  status: OrderStatus,
+  needsDelivery: boolean,
+): string | null {
+  if (!needsDelivery) return null;
+
+  switch (status) {
+    case "PENDING":
+    case "PAID":
+      return "Awaiting dispatch";
+    case "PROCESSING":
+      return "Preparing for delivery";
+    case "SHIPPED":
+      return "Out for delivery";
+    case "DELIVERED":
+      return "Delivered";
+    case "CANCELLED":
+      return "Delivery cancelled";
+    case "REFUNDED":
+      return "Order refunded";
+    default:
+      return "Delivery pending";
+  }
+}
+
+export function getPaymentStatusLabel(
+  status: OrderStatus,
+  hasReceipt: boolean,
+  paymentRejectionReason?: string | null,
+): string {
+  if (status === "CANCELLED") return "Cancelled";
+  if (status === "REFUNDED") return "Refunded";
+  if (rank(status) >= rank("PAID")) return "Payment confirmed";
+  if (paymentRejectionReason && !hasReceipt) return "Payment not approved";
+  if (hasReceipt) return "Awaiting seller confirmation";
+  return "Awaiting payment proof";
+}
+
+export function getOrderTrackingSteps(
+  order: OrderTrackingInput,
+  options?: { needsDelivery?: boolean },
+): TrackingStep[] {
+  const needsDelivery = options?.needsDelivery ?? orderNeedsDelivery(order);
   const hasReceipt = orderHasReceipt({
     paymentReceiptData: order.paymentReceiptData ?? null,
     paymentReceiptMimeType: order.paymentReceiptMimeType,
@@ -117,8 +175,8 @@ export function getOrderTrackingSteps(order: OrderTrackingInput): TrackingStep[]
 
   const processing: TrackingStep = {
     key: "processing",
-    label: "Preparing your order",
-    description: "Your items are being packed",
+    label: needsDelivery ? "Preparing your order" : "Processing your order",
+    description: needsDelivery ? "Your items are being packed" : "Your order is being prepared",
     state:
       status === "PROCESSING"
         ? "current"
@@ -127,25 +185,47 @@ export function getOrderTrackingSteps(order: OrderTrackingInput): TrackingStep[]
           : "upcoming",
   };
 
-  const shipped: TrackingStep = {
-    key: "shipped",
-    label: "Shipped",
-    description: "Your order is on its way",
-    state:
-      status === "SHIPPED" ? "current" : status === "DELIVERED" ? "complete" : "upcoming",
-  };
+  const steps: TrackingStep[] = [placed, receiptStep, paid, processing];
 
-  const delivered: TrackingStep = {
-    key: "delivered",
-    label: "Delivered",
-    description:
-      status === "DELIVERED"
-        ? order.updatedAt.toLocaleString()
-        : "We'll update you when it arrives",
-    state: status === "DELIVERED" ? "complete" : "upcoming",
-  };
+  if (needsDelivery) {
+    const shipped: TrackingStep = {
+      key: "shipped",
+      label: "Shipped",
+      description: "Your order is on its way",
+      state:
+        status === "SHIPPED" ? "current" : status === "DELIVERED" ? "complete" : "upcoming",
+    };
 
-  return [placed, receiptStep, paid, processing, shipped, delivered];
+    const delivered: TrackingStep = {
+      key: "delivered",
+      label: "Delivered",
+      description:
+        status === "DELIVERED"
+          ? order.updatedAt.toLocaleString()
+          : "We'll update you when it arrives",
+      state: status === "DELIVERED" ? "complete" : "upcoming",
+    };
+
+    steps.push(shipped, delivered);
+  } else {
+    const ready: TrackingStep = {
+      key: "ready",
+      label: "Ready",
+      description:
+        status === "DELIVERED"
+          ? order.updatedAt.toLocaleString()
+          : "We'll notify you when your order is ready",
+      state:
+        status === "DELIVERED" || status === "SHIPPED"
+          ? "complete"
+          : rank(status) >= rank("PROCESSING")
+            ? "current"
+            : "upcoming",
+    };
+    steps.push(ready);
+  }
+
+  return steps;
 }
 
 export function getTrackingHeadline(
@@ -174,46 +254,92 @@ export function getTrackingHeadline(
   }
 }
 
-export type PublicOrderItem = {
+export type PublicOrderLineItem = {
   title: string;
   variantName: string | null;
   quantity: number;
+  unitPrice: number;
+  lineTotal: number;
 };
 
-export type PublicOrderSnapshot = {
+export type PublicOrderTracking = {
+  trackingId: string;
   orderNumber: string;
   status: OrderStatus;
+  headline: string;
+  subtotal: number;
+  discountAmount: number;
+  deliveryFee: number;
   total: number;
+  currency: string;
+  storeName: string;
+  storeSlug: string;
+  customerName: string;
+  customerAddress: string | null;
+  needsDelivery: boolean;
+  deliveryStatus: string | null;
+  paymentStatus: string;
   createdAt: string;
   updatedAt: string;
   hasReceipt: boolean;
   receiptSubmittedAt: string | null;
   paymentRejectionReason: string | null;
-  items: PublicOrderItem[];
+  promotionCode: string | null;
+  items: PublicOrderLineItem[];
 };
 
-export function toPublicOrderSnapshot(
+export type PublicOrderSnapshot = PublicOrderTracking;
+
+function maskPhone(phone: string) {
+  const digits = phone.replace(/\D/g, "");
+  if (digits.length < 4) return "****";
+  return `•••• ${digits.slice(-4)}`;
+}
+
+export function toPublicOrderTracking(
   order: Order & { items: OrderItem[] },
-): PublicOrderSnapshot {
+  store: { name: string; slug: string; currency: string },
+): PublicOrderTracking {
   const hasReceipt = orderHasReceipt(order);
+  const needsDelivery = orderNeedsDelivery(order);
 
   return {
+    trackingId: order.orderNumber,
     orderNumber: order.orderNumber,
     status: order.status,
-    total: Number(order.total),
+    headline: getTrackingHeadline(order.status, hasReceipt, order.paymentRejectionReason),
+    subtotal: toNumber(order.subtotal),
+    discountAmount: toNumber(order.discountAmount),
+    deliveryFee: toNumber(order.deliveryFee),
+    total: toNumber(order.total),
+    currency: store.currency,
+    storeName: store.name,
+    storeSlug: store.slug,
+    customerName: order.customerName,
+    customerAddress: order.customerAddress,
+    needsDelivery,
+    deliveryStatus: getDeliveryStatusLabel(order.status, needsDelivery),
+    paymentStatus: getPaymentStatusLabel(order.status, hasReceipt, order.paymentRejectionReason),
     createdAt: order.createdAt.toISOString(),
     updatedAt: order.updatedAt.toISOString(),
     hasReceipt,
     receiptSubmittedAt: order.paymentReceiptSubmittedAt?.toISOString() ?? null,
     paymentRejectionReason: order.paymentRejectionReason,
+    promotionCode: order.promotionCode,
     items: order.items.map((item) => ({
       title: item.title,
       variantName: item.variantName,
       quantity: item.quantity,
+      unitPrice: toNumber(item.unitPrice),
+      lineTotal: toNumber(item.total),
     })),
   };
 }
 
+export const toPublicOrderSnapshot = toPublicOrderTracking;
+
 export function isTerminalOrderStatus(status: OrderStatus): boolean {
   return status === "DELIVERED" || status === "CANCELLED" || status === "REFUNDED";
 }
+
+export { maskPhone };

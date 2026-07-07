@@ -107,6 +107,8 @@ export default async function OrderConfirmationPage({ params }: OrderConfirmatio
           hasReceipt={hasReceipt}
           receiptSubmittedAt={order.paymentReceiptSubmittedAt}
           paymentRejectionReason={order.paymentRejectionReason}
+          customerAddress={order.customerAddress}
+          deliveryFee={order.deliveryFee}
         />
       </div>
 

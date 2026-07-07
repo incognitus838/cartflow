@@ -13,6 +13,8 @@ type OrderStatusTimelineProps = {
   hasReceipt: boolean;
   receiptSubmittedAt: Date | null;
   paymentRejectionReason?: string | null;
+  customerAddress?: string | null;
+  deliveryFee?: number | string | { toString(): string } | null;
 };
 
 function StepIcon({ state }: { state: TrackingStepState }) {
@@ -63,6 +65,8 @@ export function OrderStatusTimeline({
   hasReceipt,
   receiptSubmittedAt,
   paymentRejectionReason,
+  customerAddress,
+  deliveryFee,
 }: OrderStatusTimelineProps) {
   const steps = getOrderTrackingSteps({
     status,
@@ -71,6 +75,8 @@ export function OrderStatusTimeline({
     paymentReceiptSubmittedAt: receiptSubmittedAt,
     paymentRejectionReason: paymentRejectionReason ?? null,
     paymentReceiptData: hasReceipt ? new Uint8Array([1]) : null,
+    customerAddress: customerAddress ?? null,
+    deliveryFee: deliveryFee ?? 0,
   });
 
   return (
