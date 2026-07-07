@@ -2,9 +2,9 @@ import { getProductStock, isLowStock, isOutOfStock } from "@/lib/inventory-stock
 import { cn } from "@/lib/utils";
 
 type StockBadgeProps = {
-  stock: number;
-  lowStockThreshold: number;
-  variants: Array<{ stock: number }>;
+  stock: unknown;
+  lowStockThreshold: unknown;
+  variants?: Array<{ stock: unknown }> | null;
 };
 
 export function StockBadge({ stock, lowStockThreshold, variants }: StockBadgeProps) {

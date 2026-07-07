@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireApiBusiness, requireApprovedStore } from "@/lib/api/require-business";
 import { createProduct } from "@/lib/products/mutations";
 import { parseProductInput } from "@/lib/products/validation";
+import { normalizeProductsForList } from "@/lib/products/list-stock";
 import { listBusinessProducts } from "@/lib/queries/dashboard";
 
 export const runtime = "nodejs";
@@ -19,7 +20,7 @@ export async function GET(request: Request) {
     status: status as "DRAFT" | "ACTIVE" | "ARCHIVED" | undefined,
   });
 
-  return NextResponse.json({ products });
+  return NextResponse.json({ products: normalizeProductsForList(products) });
 }
 
 export async function POST(request: Request) {

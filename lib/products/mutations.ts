@@ -5,6 +5,13 @@ import { canAddProduct } from "@/lib/plans";
 import type { ProductInput } from "@/lib/products/types";
 import { scopedProductWhere } from "@/lib/tenant";
 
+function resolvedProductStock(input: ProductInput) {
+  if (input.variants.length > 0) {
+    return input.variants.reduce((sum, variant) => sum + variant.stock, 0);
+  }
+  return input.stock;
+}
+
 export async function createProduct(businessId: string, input: ProductInput) {
   const business = await prisma.business.findUnique({
     where: { id: businessId },
@@ -26,7 +33,7 @@ export async function createProduct(businessId: string, input: ProductInput) {
         price: input.price,
         compareAtPrice: input.compareAtPrice,
         status: input.status,
-        stock: input.stock,
+        stock: resolvedProductStock(input),
         lowStockThreshold: input.lowStockThreshold,
         images: {
           create: input.media.map((item, index) => ({
@@ -96,10 +103,7 @@ export async function updateProduct(
       ? existing.variants.reduce((sum, v) => sum + v.stock, 0)
       : existing.stock;
 
-  const newTotalStock =
-    input.variants.length > 0
-      ? input.variants.reduce((sum, v) => sum + v.stock, 0)
-      : input.stock;
+  const newTotalStock = resolvedProductStock(input);
 
   return prisma.$transaction(async (tx) => {
     await tx.productImage.deleteMany({ where: { productId } });
@@ -149,7 +153,7 @@ export async function updateProduct(
         price: input.price,
         compareAtPrice: input.compareAtPrice,
         status: input.status,
-        stock: input.stock,
+        stock: newTotalStock,
         lowStockThreshold: input.lowStockThreshold,
         images: {
           create: input.media.map((item, index) => ({
