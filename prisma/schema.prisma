@@ -255,7 +255,7 @@ model BusinessMember {
   isSuspended  Boolean            @default(false)
   suspendedAt  DateTime?
   createdAt    DateTime           @default(now())
-  updatedAt    DateTime           @updatedAt
+  updatedAt    DateTime           @default(now()) @updatedAt
 
   business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)

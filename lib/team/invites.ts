@@ -191,6 +191,7 @@ export async function acceptStaffInvite(input: {
     invite.permissions as Partial<MemberPermissions> | null,
   );
 
+  const now = new Date();
   await prisma.$transaction(async (tx) => {
     await tx.businessMember.create({
       data: {
@@ -202,6 +203,7 @@ export async function acceptStaffInvite(input: {
           invite.accessPreset === "CUSTOM"
             ? (permissions as Prisma.InputJsonValue)
             : undefined,
+        updatedAt: now,
       },
     });
 

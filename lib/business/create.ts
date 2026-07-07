@@ -55,6 +55,7 @@ export async function createBusinessForOwner(input: CreateBusinessInput) {
         businessId: business.id,
         userId: input.ownerId,
         role: "OWNER",
+        updatedAt: now,
       },
     });
 

@@ -32,6 +32,7 @@ const statements = [
   `ALTER TABLE "${S}"."BusinessMember" ADD COLUMN IF NOT EXISTS "suspendedAt" TIMESTAMP(3)`,
   `ALTER TABLE "${S}"."BusinessMember" ADD COLUMN IF NOT EXISTS "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP`,
   `UPDATE "${S}"."BusinessMember" SET "updatedAt" = "createdAt" WHERE "updatedAt" IS NULL`,
+  `ALTER TABLE "${S}"."BusinessMember" ALTER COLUMN "updatedAt" SET DEFAULT CURRENT_TIMESTAMP`,
 
   `CREATE TABLE IF NOT EXISTS "${S}"."StaffInvite" (
     "id" TEXT NOT NULL,
