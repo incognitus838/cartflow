@@ -19,7 +19,6 @@ export type UpdateOrderInput = {
   customerName?: string;
   customerPhone?: string;
   customerAddress?: string;
-  notes?: string;
   deliveryFee?: number;
   items?: OrderItemUpdate[];
 };
@@ -37,7 +36,6 @@ export function parseOrderUpdate(body: unknown): UpdateOrderInput | string {
     typeof data.customerPhone === "string" ? data.customerPhone.trim() : undefined;
   const customerAddress =
     typeof data.customerAddress === "string" ? data.customerAddress.trim() : undefined;
-  const notes = typeof data.notes === "string" ? data.notes.trim() : undefined;
   const deliveryFee =
     data.deliveryFee === undefined || data.deliveryFee === null
       ? undefined
@@ -95,7 +93,6 @@ export function parseOrderUpdate(body: unknown): UpdateOrderInput | string {
     customerName,
     customerPhone,
     customerAddress,
-    notes,
     deliveryFee,
     items,
   };
@@ -178,7 +175,6 @@ export async function updateBusinessOrder(
         customerName: input.customerName,
         customerPhone: input.customerPhone,
         customerAddress: input.customerAddress,
-        notes: input.notes,
         deliveryFee,
         subtotal,
         total,

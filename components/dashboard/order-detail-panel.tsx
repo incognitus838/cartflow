@@ -95,7 +95,6 @@ export function OrderDetailPanel({
   const [customerName, setCustomerName] = useState(order.customerName);
   const [customerPhone, setCustomerPhone] = useState(order.customerPhone);
   const [customerAddress, setCustomerAddress] = useState(order.customerAddress ?? "");
-  const [notes, setNotes] = useState(order.notes ?? "");
   const [deliveryFee, setDeliveryFee] = useState(String(toNumber(order.deliveryFee)));
   const [items, setItems] = useState(
     order.items.map((item) => ({
@@ -165,7 +164,6 @@ export function OrderDetailPanel({
           customerName,
           customerPhone,
           customerAddress,
-          notes,
           deliveryFee: previewDelivery,
           items: itemsLocked ? undefined : itemPatches.length ? itemPatches : undefined,
         }),
@@ -321,17 +319,18 @@ export function OrderDetailPanel({
               />
             </div>
             <div>
-              <label className="mb-1.5 flex items-center gap-1.5 text-slate-500">
+              <p className="mb-1.5 flex items-center gap-1.5 text-slate-500">
                 <StickyNote className="h-3.5 w-3.5" />
                 Customer note
-              </label>
-              <textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                rows={2}
-                placeholder="Notes from the customer at checkout"
-                className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-emerald-500"
-              />
+              </p>
+              {order.notes ? (
+                <p className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2.5 text-sm text-slate-800">
+                  {order.notes}
+                </p>
+              ) : (
+                <p className="text-sm text-slate-400">No note from customer at checkout.</p>
+              )}
+              <p className="mt-1 text-xs text-slate-400">Set by the customer at checkout — cannot be edited.</p>
             </div>
             <div>
               <p className="text-slate-500">Payment</p>
@@ -361,13 +360,13 @@ export function OrderDetailPanel({
             </div>
             <div>
               <label className="mb-1.5 block text-sm font-medium text-slate-700">
-                Internal notes
+                Team notes
               </label>
               <textarea
                 value={internalNotes}
                 onChange={(e) => setInternalNotes(e.target.value)}
                 rows={4}
-                placeholder="Private notes for your team — not visible to customer"
+                placeholder="Notes for your team — not visible to the customer"
                 className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-emerald-500"
               />
             </div>
@@ -375,7 +374,7 @@ export function OrderDetailPanel({
               {saving ? "Saving…" : "Save order"}
             </button>
             <p className="text-xs text-slate-500">
-              Saves customer details, fulfillment status, items, and delivery fee together.
+              Saves customer details, team notes, fulfillment status, items, and delivery fee together.
             </p>
           </div>
         </section>
