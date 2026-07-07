@@ -1,12 +1,47 @@
 import { spawn, execSync } from "node:child_process";
-import { existsSync, rmSync, writeFileSync } from "node:fs";
+import { config as loadEnv } from "dotenv";
+import { existsSync, rmSync, writeFileSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import http from "node:http";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const logPath = join(root, "run-all-result.json");
+const lockPath = join(root, ".run-all.lock");
 const PORT = 3001;
+
+// Always load .env.local — works when invoked as `node scripts/run-all.mjs`
+loadEnv({ path: join(root, ".env.local") });
+loadEnv({ path: join(root, ".env") });
+
+function acquireLock() {
+  if (existsSync(lockPath)) {
+    try {
+      const raw = readFileSync(lockPath, "utf8").trim();
+      const pid = Number(raw);
+      if (pid > 0) {
+        try {
+          process.kill(pid, 0);
+          console.error(`run-all already in progress (pid ${pid}). Wait or delete .run-all.lock`);
+          process.exit(0);
+        } catch {
+          /* stale lock */
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+  writeFileSync(lockPath, String(process.pid));
+}
+
+function releaseLock() {
+  try {
+    if (existsSync(lockPath)) rmSync(lockPath, { force: true });
+  } catch {
+    /* ignore */
+  }
+}
 
 function run(cmd, args, label) {
   return new Promise((resolve) => {
@@ -97,6 +132,7 @@ function killPort(port) {
 }
 
 async function main() {
+  acquireLock();
   const results = [];
 
   results.push({ step: "kill-port-3001", status: killPort(PORT) });
@@ -194,10 +230,12 @@ async function main() {
   console.log(`Commit: ${summary.commit}`);
   console.log(`Written: ${logPath}`);
 
+  releaseLock();
   process.exit(summary.allPass ? 0 : 1);
 }
 
 main().catch((err) => {
   console.error(err);
+  releaseLock();
   process.exit(1);
 });
