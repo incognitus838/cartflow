@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Minus, Plus, ShoppingBag } from "lucide-react";
 import { toast } from "sonner";
 import { useCart } from "@/components/storefront/cart-provider";
+import { cartLineKey } from "@/lib/cart/types";
+import { quantityInCart, remainingStock } from "@/lib/cart/remaining-stock";
 import {
   ProductMediaGallery,
   type GalleryMedia,
@@ -47,14 +49,15 @@ export function ProductDetail({
   deliveryFee,
   product,
 }: ProductDetailProps) {
-  const { addItem } = useCart();
+  const { lines, addItem, updateQuantity, removeItem } = useCart();
   const hasVariants = product.variants.length > 0;
   const [selectedVariantId, setSelectedVariantId] = useState(
     product.variants.find((v) => v.stock > 0)?.id ?? product.variants[0]?.id ?? null,
   );
-  const [quantity, setQuantity] = useState(1);
+  const [addQuantity, setAddQuantity] = useState(1);
 
   const selectedVariant = product.variants.find((v) => v.id === selectedVariantId) ?? null;
+  const lineKey = cartLineKey(product.id, selectedVariant?.id);
 
   const unitPrice = useMemo(() => {
     if (selectedVariant?.price != null) return toNumber(selectedVariant.price);
@@ -64,12 +67,19 @@ export function ProductDetail({
   const compareAt = product.compareAtPrice ? toNumber(product.compareAtPrice) : null;
 
   const availableStock = hasVariants ? (selectedVariant?.stock ?? 0) : product.stock;
+  const inCartQty = quantityInCart(lines, product.id, selectedVariant?.id);
+  const stockLeft = remainingStock(availableStock, inCartQty);
+  const syncedToCart = inCartQty > 0;
+
+  useEffect(() => {
+    setAddQuantity(1);
+  }, [selectedVariantId]);
 
   const soldOut = hasVariants
     ? product.variants.every((v) => v.stock <= 0)
     : isOutOfStock(product);
 
-  const canAdd = !soldOut && availableStock > 0;
+  const canAdd = !soldOut && stockLeft > 0;
 
   const galleryMedia: GalleryMedia[] = product.images.map((image) => ({
     url: image.url,
@@ -94,12 +104,39 @@ export function ProductDetail({
       imageUrl: product.images[0]?.url,
       productType: product.productType,
       unitPrice,
-      quantity,
+      quantity: addQuantity,
       maxStock: availableStock,
     });
 
     toast.success("Added to bag");
+    setAddQuantity(1);
   }
+
+  function handleQuantityDecrement() {
+    if (syncedToCart) {
+      if (inCartQty <= 1) {
+        removeItem(lineKey);
+      } else {
+        updateQuantity(lineKey, inCartQty - 1);
+      }
+      return;
+    }
+    setAddQuantity((q) => Math.max(1, q - 1));
+  }
+
+  function handleQuantityIncrement() {
+    if (syncedToCart) {
+      if (inCartQty >= availableStock) {
+        toast.error("Max stock reached");
+        return;
+      }
+      updateQuantity(lineKey, inCartQty + 1);
+      return;
+    }
+    setAddQuantity((q) => Math.min(stockLeft, q + 1));
+  }
+
+  const displayQuantity = syncedToCart ? inCartQty : addQuantity;
 
   return (
     <div className="pb-28 sm:pb-10">
@@ -153,7 +190,7 @@ export function ProductDetail({
                       disabled={variantSoldOut}
                       onClick={() => {
                         setSelectedVariantId(variant.id);
-                        setQuantity(1);
+                        setAddQuantity(1);
                       }}
                       className={`cf-pill px-4 py-2.5 text-[13px] ${
                         selected
@@ -173,31 +210,34 @@ export function ProductDetail({
 
           <div className="mt-8">
             <p className="text-[13px] font-medium uppercase tracking-wider text-[#86868b]">
-              Quantity
+              {syncedToCart ? "In your bag" : "Quantity"}
             </p>
             <div className="mt-3 inline-flex items-center rounded-full border border-black/[0.08] bg-white p-1">
               <button
                 type="button"
-                disabled={quantity <= 1}
-                onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                disabled={!syncedToCart && addQuantity <= 1}
+                onClick={handleQuantityDecrement}
                 className="flex h-10 w-10 items-center justify-center rounded-full text-[#1d1d1f] transition-colors hover:bg-[#f5f5f7] disabled:opacity-35"
               >
                 <Minus className="h-4 w-4" strokeWidth={2} />
               </button>
               <span className="min-w-10 text-center text-[15px] font-semibold tabular-nums">
-                {quantity}
+                {displayQuantity}
               </span>
               <button
                 type="button"
-                disabled={quantity >= availableStock}
-                onClick={() => setQuantity((q) => Math.min(availableStock, q + 1))}
+                disabled={syncedToCart ? inCartQty >= availableStock : addQuantity >= stockLeft}
+                onClick={handleQuantityIncrement}
                 className="flex h-10 w-10 items-center justify-center rounded-full text-[#1d1d1f] transition-colors hover:bg-[#f5f5f7] disabled:opacity-35"
               >
                 <Plus className="h-4 w-4" strokeWidth={2} />
               </button>
             </div>
             {!soldOut ? (
-              <p className="mt-2 text-[13px] text-[#86868b]">{availableStock} in stock</p>
+              <p className="mt-2 text-[13px] text-[#86868b]">
+                {stockLeft} in stock
+                {syncedToCart ? ` · ${inCartQty} in bag` : null}
+              </p>
             ) : (
               <p className="mt-2 text-[13px] font-medium text-[#dc2626]">Out of stock</p>
             )}
@@ -210,7 +250,11 @@ export function ProductDetail({
           ) : null}
 
           <div className="mt-8 hidden sm:block">
-            {canAdd ? (
+            {syncedToCart ? (
+              <p className="rounded-[14px] border border-[#1d1d1f]/10 bg-[#f5f5f7] px-4 py-3 text-center text-[14px] font-medium text-[#1d1d1f]">
+                In your bag — use +/- above to adjust
+              </p>
+            ) : canAdd ? (
               <button
                 type="button"
                 onClick={handleAddToCart}
@@ -233,10 +277,14 @@ export function ProductDetail({
           <div className="min-w-0 flex-1">
             <p className="truncate text-[13px] font-medium text-[#1d1d1f]">{product.title}</p>
             <p className="text-[17px] font-semibold tabular-nums text-[#1d1d1f]">
-              {formatCurrency(unitPrice * quantity, currency)}
+              {formatCurrency(unitPrice * displayQuantity, currency)}
             </p>
           </div>
-          {canAdd ? (
+          {syncedToCart ? (
+            <span className="shrink-0 rounded-full bg-[#1d1d1f] px-4 py-3 text-[13px] font-semibold text-white">
+              {inCartQty} in bag
+            </span>
+          ) : canAdd ? (
             <button
               type="button"
               onClick={handleAddToCart}
