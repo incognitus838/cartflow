@@ -1,4 +1,4 @@
-import { PlanSelector } from "@/components/dashboard/plan-selector";
+import { PlanOverview } from "@/components/dashboard/plan-overview";
 import { PageHeader } from "@/components/shared/page-header";
 import { requireLivePermission } from "@/lib/auth-server";
 import { formatPaymentsFeature, formatStoreLimit, formatTeamLimit, PLANS } from "@/lib/plans";
@@ -32,7 +32,7 @@ export default async function BillingPage() {
     <>
       <PageHeader
         title="Subscription"
-        description="Pro adds team seats and automated transfers soon. Enterprise unlocks multiple stores."
+        description={`You're on the ${plan.name} plan. Contact CartFlow to upgrade — plan changes are handled by our team.`}
       />
 
       <section className="mb-8 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
@@ -66,14 +66,14 @@ export default async function BillingPage() {
           </p>
         ) : (
           <p className="mt-4 text-xs text-slate-500">
-            Upgrade to <span className="font-medium text-slate-700">Pro</span> for 5 team members and
-            automated transfers soon, or <span className="font-medium text-slate-700">Enterprise</span> for
-            2+ stores.
+            <span className="font-medium text-slate-700">Pro</span> adds 5 team members and automated
+            transfers soon. <span className="font-medium text-slate-700">Enterprise</span> unlocks 2+
+            stores. Contact CartFlow support to upgrade.
           </p>
         )}
       </section>
 
-      <PlanSelector currentPlan={business.plan} plans={Object.values(PLANS)} />
+      <PlanOverview currentPlan={business.plan} plans={Object.values(PLANS)} />
     </>
   );
 }

@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import type { BusinessPlan } from "@prisma/client";
 import { requireApiStoreOwner } from "@/lib/api/require-business";
-import { prisma } from "@/lib/db";
 import { PLANS } from "@/lib/plans";
 
 export const runtime = "nodejs";
@@ -18,21 +17,12 @@ export async function GET() {
   });
 }
 
-export async function PATCH(request: Request) {
-  const auth = await requireApiStoreOwner();
-  if (auth.error) return auth.error;
-
-  const body = await request.json().catch(() => null);
-  const plan = typeof body?.plan === "string" ? body.plan : "";
-
-  if (!VALID_PLANS.includes(plan as BusinessPlan)) {
-    return NextResponse.json({ error: "Invalid plan." }, { status: 400 });
-  }
-
-  const business = await prisma.business.update({
-    where: { id: auth.business.id },
-    data: { plan: plan as BusinessPlan },
-  });
-
-  return NextResponse.json({ plan: business.plan });
+export async function PATCH() {
+  return NextResponse.json(
+    {
+      error:
+        "Plan changes are managed by CartFlow. Contact support or ask your platform admin to update your subscription.",
+    },
+    { status: 403 },
+  );
 }
