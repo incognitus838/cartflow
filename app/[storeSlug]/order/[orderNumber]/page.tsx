@@ -64,8 +64,7 @@ export default async function OrderConfirmationPage({ params, searchParams }: Or
           storeName={store.name}
           orderNumber={order.orderNumber}
         />
-      ) : null}
-
+      ) : (
       <div
         className={`rounded-2xl border p-6 text-center sm:p-8 ${
           isPaid
