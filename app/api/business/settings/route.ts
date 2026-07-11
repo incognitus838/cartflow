@@ -5,6 +5,7 @@ import {
   parseBusinessSettingsInput,
   updateBusinessSettings,
 } from "@/lib/business/settings";
+import { revalidateStorefrontCache } from "@/lib/storefront/revalidate-store";
 
 export const runtime = "nodejs";
 
@@ -57,7 +58,9 @@ export async function PATCH(request: Request) {
   }
 
   try {
+    const previousSlug = auth.business.slug;
     const business = await updateBusinessSettings(auth.business.id, parsed);
+    revalidateStorefrontCache(previousSlug, business.slug);
     return NextResponse.json({
       business: serializeBusinessSettings(business, true),
     });

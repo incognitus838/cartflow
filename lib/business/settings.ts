@@ -17,9 +17,11 @@ export type BusinessSettingsInput = {
   notifyOnNewOrder: boolean;
   notifyCustomerOnStatus: boolean;
   ownerNotifyEmail?: string;
-  bankName?: string;
-  bankAccountName?: string;
-  bankAccountNumber?: string;
+  /** When false, bank columns are left unchanged (partial PATCH). */
+  includesBankFields: boolean;
+  bankName?: string | null;
+  bankAccountName?: string | null;
+  bankAccountNumber?: string | null;
 };
 
 export function parseBusinessSettingsInput(body: unknown): BusinessSettingsInput | string {
@@ -39,7 +41,9 @@ export function parseBusinessSettingsInput(body: unknown): BusinessSettingsInput
   const notifyCustomerOnStatus = data.notifyCustomerOnStatus !== false;
   const ownerNotifyEmail =
     typeof data.ownerNotifyEmail === "string" ? data.ownerNotifyEmail.trim() : "";
-  const bankParsed = parseBankDetails(data, false);
+  const includesBankFields =
+    "bankName" in data || "bankAccountName" in data || "bankAccountNumber" in data;
+  const bankParsed = includesBankFields ? parseBankDetails(data, false) : undefined;
   if (typeof bankParsed === "string") return bankParsed;
 
   if (!name || name.length < 2) return "Store name is required.";
@@ -65,9 +69,18 @@ export function parseBusinessSettingsInput(body: unknown): BusinessSettingsInput
     notifyOnNewOrder,
     notifyCustomerOnStatus,
     ownerNotifyEmail: ownerNotifyEmail || undefined,
-    bankName: bankParsed?.bankName,
-    bankAccountName: bankParsed?.bankAccountName,
-    bankAccountNumber: bankParsed?.bankAccountNumber,
+    includesBankFields,
+    bankName: includesBankFields ? (bankParsed ? bankParsed.bankName : null) : undefined,
+    bankAccountName: includesBankFields
+      ? bankParsed
+        ? bankParsed.bankAccountName
+        : null
+      : undefined,
+    bankAccountNumber: includesBankFields
+      ? bankParsed
+        ? bankParsed.bankAccountNumber
+        : null
+      : undefined,
   };
 }
 
@@ -79,24 +92,29 @@ export async function updateBusinessSettings(businessId: string, input: Business
     throw new Error("This store URL is already taken. Try another.");
   }
 
+  const data: Parameters<typeof prisma.business.update>[0]["data"] = {
+    name: input.name,
+    slug: input.slug,
+    description: input.description ?? null,
+    currency: input.currency,
+    deliveryFee: input.deliveryFee,
+    logoUrl: input.logoUrl ?? null,
+    phone: input.phone ?? null,
+    whatsapp: input.whatsapp ?? null,
+    autoDeductInventory: input.autoDeductInventory,
+    notifyOnNewOrder: input.notifyOnNewOrder,
+    notifyCustomerOnStatus: input.notifyCustomerOnStatus,
+    ownerNotifyEmail: input.ownerNotifyEmail ?? null,
+  };
+
+  if (input.includesBankFields) {
+    data.bankName = input.bankName ?? null;
+    data.bankAccountName = input.bankAccountName ?? null;
+    data.bankAccountNumber = input.bankAccountNumber ?? null;
+  }
+
   return prisma.business.update({
     where: { id: businessId },
-    data: {
-      name: input.name,
-      slug: input.slug,
-      description: input.description ?? null,
-      currency: input.currency,
-      deliveryFee: input.deliveryFee,
-      logoUrl: input.logoUrl ?? null,
-      phone: input.phone ?? null,
-      whatsapp: input.whatsapp ?? null,
-      autoDeductInventory: input.autoDeductInventory,
-      notifyOnNewOrder: input.notifyOnNewOrder,
-      notifyCustomerOnStatus: input.notifyCustomerOnStatus,
-      ownerNotifyEmail: input.ownerNotifyEmail ?? null,
-      bankName: input.bankName ?? null,
-      bankAccountName: input.bankAccountName ?? null,
-      bankAccountNumber: input.bankAccountNumber ?? null,
-    },
+    data,
   });
 }

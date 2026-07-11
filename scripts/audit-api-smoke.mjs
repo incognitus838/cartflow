@@ -54,6 +54,7 @@ async function page(path) {
   const text = await res.text();
   return {
     status: res.status,
+    text,
     hasPrismaError: /PrismaClientValidationError|Unknown argument/.test(text),
     hasErrorBoundary: /Application error|Internal Server Error/i.test(text),
     title: text.match(/<title[^>]*>([^<]*)<\/title>/i)?.[1] ?? null,
@@ -138,6 +139,99 @@ try {
     sellerZones.status === 200 && Array.isArray(sellerZones.json?.zones),
     { zoneCount: sellerZones.json?.zones?.length },
   );
+
+  const dbBusiness = await prisma.business.findFirst({
+    where: { owner: { email: "demo@cartflow.app" } },
+    orderBy: { createdAt: "asc" },
+  });
+  if (!dbBusiness) throw new Error("demo seller business missing");
+
+  const settingsGet = await api("/api/business/settings");
+  const settingsBiz = settingsGet.json?.business;
+  const bankMatchesDb =
+    settingsBiz?.bankName === dbBusiness.bankName &&
+    settingsBiz?.bankAccountName === dbBusiness.bankAccountName &&
+    settingsBiz?.bankAccountNumber === dbBusiness.bankAccountNumber;
+  step(
+    "business_settings_get_bank_sync",
+    settingsGet.status,
+    settingsGet.status === 200 && bankMatchesDb,
+    {
+      slug: dbBusiness.slug,
+      hasBank: Boolean(dbBusiness.bankAccountNumber),
+    },
+  );
+
+  const originalDescription = dbBusiness.description ?? "";
+  const partialPatch = await api("/api/business/settings", {
+    method: "PATCH",
+    body: JSON.stringify({
+      name: dbBusiness.name,
+      slug: dbBusiness.slug,
+      description: originalDescription,
+      currency: dbBusiness.currency,
+      deliveryFee: Number(dbBusiness.deliveryFee),
+      phone: dbBusiness.phone ?? undefined,
+      whatsapp: dbBusiness.whatsapp ?? undefined,
+      autoDeductInventory: dbBusiness.autoDeductInventory,
+      notifyOnNewOrder: dbBusiness.notifyOnNewOrder,
+      notifyCustomerOnStatus: dbBusiness.notifyCustomerOnStatus,
+    }),
+  });
+  const afterPartial = await prisma.business.findUnique({ where: { id: dbBusiness.id } });
+  const bankPreserved =
+    afterPartial?.bankName === dbBusiness.bankName &&
+    afterPartial?.bankAccountName === dbBusiness.bankAccountName &&
+    afterPartial?.bankAccountNumber === dbBusiness.bankAccountNumber;
+  step(
+    "business_settings_partial_patch_preserves_bank",
+    partialPatch.status,
+    partialPatch.status === 200 && bankPreserved,
+  );
+
+  const storefrontPage = await page(`/${dbBusiness.slug}`);
+  const contact = dbBusiness.whatsapp || dbBusiness.phone;
+  const contactDigits = contact ? contact.replace(/\D/g, "") : "";
+  const expectsChatLink =
+    Boolean(contactDigits) && dbBusiness.showContactButton !== false;
+  const storefrontSynced =
+    storefrontPage.text?.includes(dbBusiness.name) &&
+    (!expectsChatLink || storefrontPage.text?.includes(`wa.me/${contactDigits}`));
+  step(
+    "storefront_seller_details_from_db",
+    storefrontPage.status,
+    storefrontPage.status === 200 && storefrontSynced,
+    {
+      slug: dbBusiness.slug,
+      name: dbBusiness.name,
+      expectsChatLink,
+    },
+  );
+
+  const demoBankHardcoded =
+    storefrontPage.text?.includes("0123456789") &&
+    dbBusiness.bankAccountNumber !== "0123456789";
+  step(
+    "storefront_no_stale_demo_bank",
+    storefrontPage.status,
+    !demoBankHardcoded,
+    { note: "Public HTML must not show seed demo account when DB differs" },
+  );
+
+  const planGet = await api("/api/business/plan");
+  step("business_plan_get", planGet.status, planGet.status === 200);
+
+  const planPatch = await api("/api/business/plan", {
+    method: "PATCH",
+    body: JSON.stringify({ plan: "PRO" }),
+  });
+  step("business_plan_patch_forbidden", planPatch.status, planPatch.status === 403);
+
+  const analytics = await api("/api/analytics");
+  step("business_analytics", analytics.status, analytics.status === 200);
+
+  const catalog = await api("/api/catalog");
+  step("business_catalog", catalog.status, catalog.status === 200);
 
   await api("/api/auth/logout", { method: "POST" });
 

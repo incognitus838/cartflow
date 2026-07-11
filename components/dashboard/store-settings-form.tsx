@@ -344,9 +344,9 @@ export function StoreSettingsForm({ initial, appUrl }: StoreSettingsFormProps) {
           notifyOnNewOrder,
           notifyCustomerOnStatus,
           ownerNotifyEmail: ownerNotifyEmail || undefined,
-          bankName: bankName || undefined,
-          bankAccountName: bankAccountName || undefined,
-          bankAccountNumber: bankAccountNumber || undefined,
+          bankName,
+          bankAccountName,
+          bankAccountNumber,
         }),
       });
       const data = await res.json();
