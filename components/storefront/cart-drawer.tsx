@@ -104,6 +104,7 @@ export function CartDrawer({ storeSlug, currency, fallbackDeliveryFee }: CartDra
                     selectedZoneId={selectedDeliveryZoneId}
                     onSelect={setSelectedDeliveryZoneId}
                     required
+                    compact
                   />
                 </div>
               ) : null}
