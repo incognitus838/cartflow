@@ -122,7 +122,9 @@ function OrderDetailsBody({ order, currency }: { order: OrderInboxData; currency
             </div>
           ) : null}
           <div className="flex justify-between text-[#6e6e73]">
-            <span>Delivery</span>
+            <span>
+              {order.deliveryZoneName ? `Delivery · ${order.deliveryZoneName}` : "Delivery"}
+            </span>
             <span className="currency">
               {order.deliveryFee > 0 ? formatCurrency(order.deliveryFee, currency) : "Free"}
             </span>

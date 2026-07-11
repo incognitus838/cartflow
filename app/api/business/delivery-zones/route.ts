@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireApiPermission } from "@/lib/api/require-business";
 import { prisma } from "@/lib/db";
+import { revalidateStoreDelivery } from "@/lib/delivery/revalidate";
 import { listBusinessDeliveryZones, serializeDeliveryZone } from "@/lib/delivery/zones";
 import { parseDeliveryZoneInput } from "@/lib/delivery/validation";
 
@@ -40,5 +41,6 @@ export async function POST(request: Request) {
     },
   });
 
+  revalidateStoreDelivery(auth.business.slug);
   return NextResponse.json({ zone: serializeDeliveryZone(zone) }, { status: 201 });
 }

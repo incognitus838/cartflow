@@ -13,6 +13,7 @@ export type OrderInboxData = {
   discountAmount?: number;
   subtotal: number;
   deliveryFee: number;
+  deliveryZoneName?: string | null;
   total: number;
   hasPaymentReceipt: boolean;
   createdAt: string;

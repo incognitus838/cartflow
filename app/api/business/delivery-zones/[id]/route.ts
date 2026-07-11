@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireApiPermission } from "@/lib/api/require-business";
 import { prisma } from "@/lib/db";
+import { revalidateStoreDelivery } from "@/lib/delivery/revalidate";
 import { serializeDeliveryZone } from "@/lib/delivery/zones";
 import { parseDeliveryZonePatch } from "@/lib/delivery/validation";
 
@@ -33,6 +34,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     data: parsed,
   });
 
+  revalidateStoreDelivery(auth.business.slug);
   return NextResponse.json({ zone: serializeDeliveryZone(zone) });
 }
 
@@ -51,5 +53,6 @@ export async function DELETE(_request: Request, context: RouteContext) {
   }
 
   await prisma.deliveryZone.delete({ where: { id } });
+  revalidateStoreDelivery(auth.business.slug);
   return NextResponse.json({ ok: true });
 }

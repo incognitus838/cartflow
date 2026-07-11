@@ -10,11 +10,13 @@ type UseDeliveryFeeArgs = {
   lines: CartLine[];
   fallbackDeliveryFee: number;
   selectedZoneId: string | null;
+  onSelectZone?: (zoneId: string) => void;
 };
 
 export function useDeliveryZones(storeSlug: string) {
   const [zones, setZones] = useState<DeliveryZonePublic[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -23,11 +25,19 @@ export function useDeliveryZones(storeSlug: string) {
       try {
         const res = await fetch(`/api/storefront/${storeSlug}/delivery-zones`);
         const data = await res.json();
-        if (!cancelled && res.ok && Array.isArray(data.zones)) {
+        if (cancelled) return;
+        if (res.ok && Array.isArray(data.zones)) {
           setZones(data.zones);
+          setError(null);
+        } else {
+          setZones([]);
+          setError(data.error ?? "Could not load delivery locations.");
         }
       } catch {
-        if (!cancelled) setZones([]);
+        if (!cancelled) {
+          setZones([]);
+          setError("Could not load delivery locations.");
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -40,7 +50,7 @@ export function useDeliveryZones(storeSlug: string) {
     };
   }, [storeSlug]);
 
-  return { zones, loading };
+  return { zones, loading, error };
 }
 
 export function useDeliveryFee({
@@ -48,9 +58,15 @@ export function useDeliveryFee({
   lines,
   fallbackDeliveryFee,
   selectedZoneId,
+  onSelectZone,
 }: UseDeliveryFeeArgs) {
-  const { zones, loading } = useDeliveryZones(storeSlug);
+  const { zones, loading, error } = useDeliveryZones(storeSlug);
   const needsDelivery = cartNeedsDelivery(lines);
+
+  useEffect(() => {
+    if (!needsDelivery || zones.length !== 1 || selectedZoneId || !onSelectZone) return;
+    onSelectZone(zones[0].id);
+  }, [needsDelivery, onSelectZone, selectedZoneId, zones]);
 
   const effectiveFee = useMemo(() => {
     if (!needsDelivery) return 0;
@@ -71,6 +87,7 @@ export function useDeliveryFee({
   return {
     zones,
     loading,
+    error,
     needsDelivery,
     effectiveFee,
     selectedZoneName,

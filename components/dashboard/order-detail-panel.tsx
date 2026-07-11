@@ -35,6 +35,7 @@ export type OrderDetailData = {
   subtotal: { toString(): string } | number;
   discountAmount?: { toString(): string } | number;
   deliveryFee: { toString(): string } | number;
+  deliveryZoneName?: string | null;
   total: { toString(): string } | number;
   promotionCode?: string | null;
   customerName: string;
@@ -451,7 +452,7 @@ export function OrderDetailPanel({
             </div>
           ) : null}
           <div className="flex items-center justify-between gap-3 text-slate-600">
-            <span>Delivery</span>
+            <span>{order.deliveryZoneName ? `Delivery · ${order.deliveryZoneName}` : "Delivery"}</span>
             <input
               type="number"
               min={0}

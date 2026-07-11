@@ -28,6 +28,7 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
         subtotal: order.subtotal,
         discountAmount: order.discountAmount,
         deliveryFee: order.deliveryFee,
+        deliveryZoneName: order.deliveryZoneName,
         total: order.total,
         promotionCode: order.promotionCode,
         customerName: order.customerName,

@@ -29,7 +29,7 @@ export default async function SettingsPage({ searchParams }: PageProps) {
         description={
           tab === "team"
             ? "Invite staff, assign roles, and review team activity."
-            : "Store details, checkout defaults, and bank transfer info — what customers see at checkout."
+            : "Delivery locations, store details, and bank transfer info — what customers see at checkout."
         }
       />
 
@@ -41,6 +41,7 @@ export default async function SettingsPage({ searchParams }: PageProps) {
         <TeamPanel />
       ) : (
         <div className="space-y-6">
+        <DeliveryZonesPanel currency={business.currency} />
         <StoreSettingsForm
           appUrl={appUrl}
           initial={{
@@ -61,7 +62,6 @@ export default async function SettingsPage({ searchParams }: PageProps) {
             bankAccountNumber: business.bankAccountNumber ?? "",
           }}
         />
-        <DeliveryZonesPanel currency={business.currency} />
         </div>
       )}
     </>

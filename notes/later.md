@@ -2,6 +2,8 @@
 
 Items we are intentionally not doing right now. Pick up when ready.
 
+**Also see:** [delivery-zones-and-storage-roadmap.md](./delivery-zones-and-storage-roadmap.md) — location-based delivery fees + DB storage optimization (refined prompt + full spec).
+
 ---
 
 ## Transactional email (Resend)

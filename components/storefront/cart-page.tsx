@@ -31,6 +31,7 @@ export function CartPage({ storeSlug, currency, fallbackDeliveryFee }: CartPageP
     lines,
     fallbackDeliveryFee,
     selectedZoneId: selectedDeliveryZoneId,
+    onSelectZone: setSelectedDeliveryZoneId,
   });
 
   if (lines.length === 0) {

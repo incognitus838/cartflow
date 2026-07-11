@@ -31,20 +31,30 @@ export function serializePublicZone(zone: {
 }
 
 export async function listBusinessDeliveryZones(businessId: string) {
-  const zones = await prisma.deliveryZone.findMany({
-    where: { businessId },
-    orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
-  });
-  return zones.map(serializeDeliveryZone);
+  try {
+    const zones = await prisma.deliveryZone.findMany({
+      where: { businessId },
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+    });
+    return zones.map(serializeDeliveryZone);
+  } catch (error) {
+    console.error("[delivery-zones] listBusinessDeliveryZones failed:", error);
+    return [];
+  }
 }
 
 export async function listActiveDeliveryZones(businessId: string) {
-  const zones = await prisma.deliveryZone.findMany({
-    where: { businessId, isActive: true },
-    orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
-    select: { id: true, name: true, fee: true },
-  });
-  return zones.map(serializePublicZone);
+  try {
+    const zones = await prisma.deliveryZone.findMany({
+      where: { businessId, isActive: true },
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+      select: { id: true, name: true, fee: true },
+    });
+    return zones.map(serializePublicZone);
+  } catch (error) {
+    console.error("[delivery-zones] listActiveDeliveryZones failed:", error);
+    return [];
+  }
 }
 
 export function minZoneFee(zones: Array<{ fee: number }>, fallback: number) {

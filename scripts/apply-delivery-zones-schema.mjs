@@ -1,5 +1,5 @@
 /**
- * Idempotent delivery zones schema + seed one zone per store from flat deliveryFee.
+ * Idempotent delivery zones schema + seed zones per store from flat deliveryFee.
  */
 import { PrismaClient } from "@prisma/client";
 
@@ -30,25 +30,50 @@ const statements = [
   `ALTER TABLE "${S}"."Order" ADD COLUMN IF NOT EXISTS "deliveryZoneName" TEXT`,
 ];
 
+async function seedGlowBeautyDemoZones(businessId, baseFee) {
+  await prisma.deliveryZone.deleteMany({ where: { businessId } });
+  await prisma.deliveryZone.createMany({
+    data: [
+      { businessId, name: "Lekki", fee: Math.max(baseFee, 2000), sortOrder: 0 },
+      { businessId, name: "Victoria Island", fee: Math.max(baseFee, 2500), sortOrder: 1 },
+      { businessId, name: "Mainland", fee: Math.max(baseFee, 1500), sortOrder: 2 },
+      { businessId, name: "Pickup at store", fee: 0, sortOrder: 3 },
+    ],
+  });
+}
+
 async function seedDefaultZones() {
   const businesses = await prisma.business.findMany({
-    select: { id: true, deliveryFee: true },
+    select: { id: true, slug: true, deliveryFee: true },
   });
 
   for (const business of businesses) {
-    const existing = await prisma.deliveryZone.count({
+    const existingZones = await prisma.deliveryZone.findMany({
       where: { businessId: business.id },
+      select: { id: true, name: true },
     });
-    if (existing > 0) continue;
+
+    if (business.slug === "glow-beauty") {
+      const onlyDefault =
+        existingZones.length === 1 && existingZones[0].name === "Standard delivery";
+      if (existingZones.length === 0 || onlyDefault) {
+        const fee = Number(business.deliveryFee);
+        const baseFee = Number.isFinite(fee) && fee >= 0 ? fee : 0;
+        await seedGlowBeautyDemoZones(business.id, baseFee);
+      }
+      continue;
+    }
+
+    if (existingZones.length > 0) continue;
 
     const fee = Number(business.deliveryFee);
-    if (!Number.isFinite(fee) || fee < 0) continue;
+    const baseFee = Number.isFinite(fee) && fee >= 0 ? fee : 0;
 
     await prisma.deliveryZone.create({
       data: {
         businessId: business.id,
         name: "Standard delivery",
-        fee,
+        fee: baseFee,
         sortOrder: 0,
         isActive: true,
       },

@@ -42,6 +42,7 @@ export function CheckoutPage({
     lines,
     fallbackDeliveryFee,
     selectedZoneId: selectedDeliveryZoneId,
+    onSelectZone: setSelectedDeliveryZoneId,
   });
 
   useEffect(() => {

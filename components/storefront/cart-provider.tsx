@@ -51,6 +51,52 @@ export function CartProvider({ storeSlug, children }: CartProviderProps) {
     setHydrated(true);
   }, [storeSlug]);
 
+  const missingProductTypesKey = useMemo(
+    () =>
+      lines
+        .filter((line) => !line.productType)
+        .map((line) => line.productId)
+        .sort()
+        .join(","),
+    [lines],
+  );
+
+  useEffect(() => {
+    if (!hydrated || !missingProductTypesKey) return;
+
+    const missingIds = missingProductTypesKey.split(",");
+    let cancelled = false;
+
+    async function enrichProductTypes() {
+      try {
+        const res = await fetch(
+          `/api/storefront/${storeSlug}/product-types?ids=${missingIds.join(",")}`,
+        );
+        const data = await res.json();
+        if (cancelled || !res.ok || !data.types) return;
+
+        setLines((current) =>
+          current.map((line) => ({
+            ...line,
+            productType: line.productType ?? data.types[line.productId] ?? "PHYSICAL",
+          })),
+        );
+      } catch {
+        setLines((current) =>
+          current.map((line) => ({
+            ...line,
+            productType: line.productType ?? "PHYSICAL",
+          })),
+        );
+      }
+    }
+
+    enrichProductTypes();
+    return () => {
+      cancelled = true;
+    };
+  }, [hydrated, missingProductTypesKey, storeSlug]);
+
   useEffect(() => {
     if (!hydrated) return;
 

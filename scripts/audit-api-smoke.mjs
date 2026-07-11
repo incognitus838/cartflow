@@ -109,6 +109,14 @@ try {
   });
   step("seller_login", sellerLogin.status, sellerLogin.status === 200);
 
+  const deliveryZonesPublic = await api("/api/storefront/glow-beauty/delivery-zones");
+  step(
+    "storefront_delivery_zones",
+    deliveryZonesPublic.status,
+    deliveryZonesPublic.status === 200 && Array.isArray(deliveryZonesPublic.json?.zones),
+    { zoneCount: deliveryZonesPublic.json?.zones?.length },
+  );
+
   const sellerRoutes = [
     "/dashboard",
     "/dashboard/storefront",
@@ -122,6 +130,14 @@ try {
     const ok = (r.status === 200 || r.status === 307) && !r.hasPrismaError && !r.hasErrorBoundary;
     results.routes.push({ route, role: "seller", ...r, ok });
   }
+
+  const sellerZones = await api("/api/business/delivery-zones");
+  step(
+    "business_delivery_zones",
+    sellerZones.status,
+    sellerZones.status === 200 && Array.isArray(sellerZones.json?.zones),
+    { zoneCount: sellerZones.json?.zones?.length },
+  );
 
   await api("/api/auth/logout", { method: "POST" });
 

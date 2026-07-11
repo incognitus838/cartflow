@@ -5,6 +5,7 @@ import { ShoppingBag, X } from "lucide-react";
 import { CartLineItem } from "@/components/storefront/cart-line-item";
 import { useCart } from "@/components/storefront/cart-provider";
 import { useCartDrawer } from "@/components/storefront/cart-drawer-provider";
+import { DeliveryZonePicker } from "@/components/storefront/delivery-zone-picker";
 import { useDeliveryFee } from "@/lib/delivery/use-delivery-fee";
 import { cartPath, checkoutPath } from "@/lib/storefront/paths";
 import { formatCurrency } from "@/lib/utils";
@@ -24,13 +25,15 @@ export function CartDrawer({ storeSlug, currency, fallbackDeliveryFee }: CartDra
     updateQuantity,
     removeItem,
     selectedDeliveryZoneId,
+    setSelectedDeliveryZoneId,
   } = useCart();
 
-  const { needsDelivery, effectiveFee, requiresZoneSelection } = useDeliveryFee({
+  const { zones, needsDelivery, effectiveFee, requiresZoneSelection, hasZones } = useDeliveryFee({
     storeSlug,
     lines,
     fallbackDeliveryFee,
     selectedZoneId: selectedDeliveryZoneId,
+    onSelectZone: setSelectedDeliveryZoneId,
   });
 
   if (!open) return null;
@@ -92,6 +95,18 @@ export function CartDrawer({ storeSlug, currency, fallbackDeliveryFee }: CartDra
                   />
                 ))}
               </ul>
+
+              {needsDelivery && hasZones ? (
+                <div className="mt-4">
+                  <DeliveryZonePicker
+                    zones={zones}
+                    currency={currency}
+                    selectedZoneId={selectedDeliveryZoneId}
+                    onSelect={setSelectedDeliveryZoneId}
+                    required
+                  />
+                </div>
+              ) : null}
             </div>
 
             <div className="border-t border-black/[0.06] bg-[#fbfbfd] px-6 py-5">
@@ -116,13 +131,13 @@ export function CartDrawer({ storeSlug, currency, fallbackDeliveryFee }: CartDra
 
               <div className="mt-5 flex flex-col gap-2.5">
                 {requiresZoneSelection ? (
-                  <Link
-                    href={cartPath(storeSlug)}
-                    onClick={closeDrawer}
-                    className="btn-primary py-3 text-center text-[14px]"
+                  <button
+                    type="button"
+                    disabled
+                    className="btn-primary cursor-not-allowed py-3 text-center text-[14px] opacity-50"
                   >
                     Choose delivery location
-                  </Link>
+                  </button>
                 ) : (
                   <Link
                     href={checkoutPath(storeSlug)}

@@ -15,6 +15,7 @@ export function mapOrderToInbox(
     discountAmount: { toString(): string } | number;
     subtotal: { toString(): string } | number;
     deliveryFee: { toString(): string } | number;
+    deliveryZoneName?: string | null;
     total: { toString(): string } | number;
     createdAt: Date | string;
     items: Array<{
@@ -40,6 +41,7 @@ export function mapOrderToInbox(
     discountAmount: toNumber(order.discountAmount),
     subtotal: toNumber(order.subtotal),
     deliveryFee: toNumber(order.deliveryFee),
+    deliveryZoneName: order.deliveryZoneName ?? null,
     total: toNumber(order.total),
     hasPaymentReceipt,
     createdAt:
