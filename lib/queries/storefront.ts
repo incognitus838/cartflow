@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/db";
+import { normalizeOrderNumber } from "@/lib/order-number";
 import { serializeStoreProduct } from "@/lib/storefront/serialize-product";
 
 const STORE_REVALIDATE = 120;
@@ -138,7 +139,7 @@ export const getStoreProduct = cache((businessId: string, productId: string) =>
 
 export async function getStoreOrder(businessId: string, orderNumber: string) {
   return prisma.order.findFirst({
-    where: { businessId, orderNumber },
+    where: { businessId, orderNumber: normalizeOrderNumber(orderNumber) },
     include: { items: true },
   });
 }

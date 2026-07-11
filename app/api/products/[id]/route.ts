@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireApiBusiness, requireApiPermission, requireApprovedStore } from "@/lib/api/require-business";
 import { deleteProduct, updateProduct } from "@/lib/products/mutations";
 import { parseProductInput } from "@/lib/products/validation";
+import { revalidateStorefrontCatalog } from "@/lib/storefront/revalidate-catalog";
 import { getBusinessProduct } from "@/lib/queries/dashboard";
 
 export const runtime = "nodejs";
@@ -45,6 +46,7 @@ export async function PATCH(request: Request, context: RouteContext) {
 
   try {
     const product = await updateProduct(auth.business.id, id, parsed);
+    revalidateStorefrontCatalog(auth.business.id, auth.business.slug);
     return NextResponse.json({ product });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Could not update product.";
@@ -61,6 +63,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
 
   try {
     await deleteProduct(auth.business.id, id);
+    revalidateStorefrontCatalog(auth.business.id, auth.business.slug);
     return NextResponse.json({ ok: true });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Could not delete product.";

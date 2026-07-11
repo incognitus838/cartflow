@@ -39,8 +39,8 @@ type ProductFormProps = {
 };
 
 const STATUSES = [
-  { value: "DRAFT", label: "Draft" },
-  { value: "ACTIVE", label: "Active" },
+  { value: "ACTIVE", label: "Active — live on storefront" },
+  { value: "DRAFT", label: "Draft — hidden from customers" },
   { value: "ARCHIVED", label: "Archived" },
 ] as const;
 
@@ -114,7 +114,7 @@ export function ProductForm({
     }
 
     setLoading(true);
-    const resolvedStatus = nextStatus ?? status;
+    const resolvedStatus = nextStatus ?? (mode === "create" ? "ACTIVE" : status);
     const tags = selectedTags.map((tag) => tag.trim()).filter(Boolean);
 
     const resolvedCategory = (category || "General").trim() || "General";
@@ -223,7 +223,7 @@ export function ProductForm({
             Save draft
           </button>
           <button type="submit" disabled={loading} className="btn-primary px-5 py-2.5 text-[13px]">
-            {loading ? "Saving…" : mode === "create" ? "Create product" : "Save changes"}
+            {loading ? "Saving…" : mode === "create" ? "Publish to storefront" : "Save changes"}
           </button>
         </div>
       </header>
@@ -414,11 +414,15 @@ export function ProductForm({
         </div>
       </CollapsibleSection>
 
-      <CollapsibleSection title="Status" description="Draft, active, or scheduled publishing." defaultOpen>
+      <CollapsibleSection
+        title="Visibility"
+        description="Active products appear on your storefront right away. Choose Draft to hide while you finish editing."
+        defaultOpen={mode === "edit"}
+      >
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label htmlFor="product-status" className="cf-product-label">
-              Status
+              Storefront visibility
             </label>
             <select
               id="product-status"
@@ -432,6 +436,11 @@ export function ProductForm({
                 </option>
               ))}
             </select>
+            {mode === "create" ? (
+              <p className="mt-2 text-xs text-[#86868b]">
+                New products publish as Active unless you use Save draft.
+              </p>
+            ) : null}
           </div>
           <div>
             <label htmlFor="scheduled-at" className="cf-product-label">
@@ -453,7 +462,7 @@ export function ProductForm({
           Cancel
         </Link>
         <button type="submit" disabled={loading} className="cf-product-create-btn">
-          {loading ? "Saving…" : mode === "create" ? "Create product" : "Save changes"}
+          {loading ? "Saving…" : mode === "create" ? "Publish to storefront" : "Save changes"}
         </button>
       </footer>
     </form>

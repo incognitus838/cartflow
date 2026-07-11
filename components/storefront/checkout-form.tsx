@@ -10,6 +10,7 @@ import type { AppliedPromo } from "@/components/storefront/promo-code-input";
 import type { CartLine } from "@/lib/cart/types";
 import type { ManualPaymentAccount } from "@/lib/payments/manual";
 import { orderConfirmationPath } from "@/lib/storefront/paths";
+import { saveTrackSession } from "@/lib/storefront/track-session";
 
 type CheckoutFormProps = {
   storeSlug: string;
@@ -93,6 +94,7 @@ export function CheckoutForm({
       }
 
       clear();
+      saveTrackSession(storeSlug, data.order.orderNumber, customerPhone);
       router.push(
         orderConfirmationPath(storeSlug, data.order.orderNumber, { justPlaced: true }),
       );

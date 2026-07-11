@@ -3,6 +3,7 @@ import { requireApprovedStore } from "@/lib/api/require-business";
 import { normalizeCategoryName } from "@/lib/products/catalog-layout";
 import { moveProductToCategory, reorderProductInCategory } from "@/lib/products/mutations";
 import { normalizeProductForList } from "@/lib/products/list-stock";
+import { revalidateStorefrontCatalog } from "@/lib/storefront/revalidate-catalog";
 import { getBusinessProduct } from "@/lib/queries/dashboard";
 
 export const runtime = "nodejs";
@@ -45,6 +46,8 @@ export async function PATCH(request: Request, context: RouteContext) {
     } else {
       return NextResponse.json({ error: "Provide category or direction." }, { status: 400 });
     }
+
+    revalidateStorefrontCatalog(auth.business.id, auth.business.slug);
 
     const product = await loadListProduct(auth.business.id, id);
     if (!product) {

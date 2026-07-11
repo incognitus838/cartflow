@@ -3,6 +3,7 @@ import { requireApiBusiness, requireApprovedStore } from "@/lib/api/require-busi
 import { createProduct } from "@/lib/products/mutations";
 import { parseProductInput } from "@/lib/products/validation";
 import { normalizeProductsForList } from "@/lib/products/list-stock";
+import { revalidateStorefrontCatalog } from "@/lib/storefront/revalidate-catalog";
 import { listBusinessProducts } from "@/lib/queries/dashboard";
 
 export const runtime = "nodejs";
@@ -44,6 +45,7 @@ export async function POST(request: Request) {
 
   try {
     const product = await createProduct(auth.business.id, parsed);
+    revalidateStorefrontCatalog(auth.business.id, auth.business.slug);
     return NextResponse.json({ product }, { status: 201 });
   } catch (error) {
     return NextResponse.json(

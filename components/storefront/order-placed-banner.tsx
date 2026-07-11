@@ -1,21 +1,31 @@
 "use client";
 
+import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Check, CheckCircle2, Copy } from "lucide-react";
+import { Check, CheckCircle2, Copy, PackageSearch } from "lucide-react";
 import { toast } from "sonner";
+import { trackOrderLookupPath } from "@/lib/storefront/paths";
 
 type OrderPlacedBannerProps = {
+  storeSlug: string;
   orderNumber: string;
   storeName: string;
+  customerPhone: string;
 };
 
-export function OrderPlacedBanner({ orderNumber, storeName }: OrderPlacedBannerProps) {
+export function OrderPlacedBanner({
+  storeSlug,
+  orderNumber,
+  storeName,
+  customerPhone,
+}: OrderPlacedBannerProps) {
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const router = useRouter();
   const [visible, setVisible] = useState(false);
   const [copied, setCopied] = useState(false);
+  const trackHref = trackOrderLookupPath(storeSlug, orderNumber, customerPhone);
 
   useEffect(() => {
     if (searchParams.get("placed") !== "1") return;
@@ -44,7 +54,8 @@ export function OrderPlacedBanner({ orderNumber, storeName }: OrderPlacedBannerP
       </span>
       <h1 className="mt-4 text-2xl font-bold tracking-tight text-emerald-950">Order placed!</h1>
       <p className="mt-2 text-sm text-emerald-900">
-        {storeName} received your order. Save your order ID below to track progress later.
+        {storeName} received your order. Save your order ID below — you will need it with your phone
+        number to track progress.
       </p>
 
       <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
@@ -69,6 +80,15 @@ export function OrderPlacedBanner({ orderNumber, storeName }: OrderPlacedBannerP
           )}
         </button>
       </div>
+
+      <Link
+        href={trackHref}
+        className="btn-primary mt-5 inline-flex items-center gap-2 px-6 py-3 text-[15px]"
+        style={{ backgroundColor: "var(--store-accent)" }}
+      >
+        <PackageSearch className="h-4 w-4" />
+        Track order live
+      </Link>
     </section>
   );
 }

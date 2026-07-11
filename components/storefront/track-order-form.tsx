@@ -1,12 +1,13 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { PackageSearch } from "lucide-react";
 import { toast } from "sonner";
 import { OrderTrackingPanel } from "@/components/storefront/order-tracking-panel";
 import type { PublicOrderTracking } from "@/lib/orders/tracking";
 import { trackOrderLookupPath } from "@/lib/storefront/paths";
+import { clearTrackSession, readTrackSession } from "@/lib/storefront/track-session";
 
 type TrackOrderFormProps = {
   storeSlug: string;
@@ -28,6 +29,7 @@ export function TrackOrderForm({
   const [loading, setLoading] = useState(false);
   const [trackedOrder, setTrackedOrder] = useState<PublicOrderTracking | null>(null);
   const [verifiedPhone, setVerifiedPhone] = useState<string | null>(null);
+  const lookupKeyRef = useRef<string | null>(null);
 
   const lookupOrder = useCallback(
     async (trimmedId: string, trimmedPhone: string, updateUrl = true) => {
@@ -49,12 +51,14 @@ export function TrackOrderForm({
           toast.error(data.error || "Order not found. Check your ID and phone number.");
           setTrackedOrder(null);
           setVerifiedPhone(null);
+          lookupKeyRef.current = null;
           return false;
         }
 
         setTrackedOrder(data.order as PublicOrderTracking);
         setVerifiedPhone(trimmedPhone);
         setOrderNumber(trimmedId);
+        clearTrackSession(storeSlug);
 
         if (updateUrl) {
           const next = trackOrderLookupPath(storeSlug, trimmedId, trimmedPhone);
@@ -67,6 +71,7 @@ export function TrackOrderForm({
         return true;
       } catch {
         toast.error("Something went wrong. Try again.");
+        lookupKeyRef.current = null;
         return false;
       } finally {
         setLoading(false);
@@ -76,17 +81,29 @@ export function TrackOrderForm({
   );
 
   useEffect(() => {
-    const fromUrlOrder = searchParams.get("order")?.trim().toUpperCase() ?? "";
-    const fromUrlPhone = searchParams.get("phone")?.trim() ?? "";
+    let fromUrlOrder = searchParams.get("order")?.trim().toUpperCase() ?? "";
+    let fromUrlPhone = searchParams.get("phone")?.trim() ?? "";
+
+    if (!fromUrlOrder || !fromUrlPhone) {
+      const saved = readTrackSession(storeSlug);
+      if (saved) {
+        fromUrlOrder = saved.orderNumber;
+        fromUrlPhone = saved.customerPhone;
+      }
+    }
 
     if (fromUrlOrder) setOrderNumber(fromUrlOrder);
     if (fromUrlPhone) setCustomerPhone(fromUrlPhone);
 
-    if (fromUrlOrder && fromUrlPhone.length >= 7 && !trackedOrder && !loading) {
-      void lookupOrder(fromUrlOrder, fromUrlPhone, false);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- auto-lookup once on mount / URL change
-  }, [searchParams]);
+    if (!fromUrlOrder || fromUrlPhone.length < 7) return;
+
+    const key = `${fromUrlOrder}:${fromUrlPhone}`;
+    if (lookupKeyRef.current === key) return;
+    lookupKeyRef.current = key;
+
+    const hasUrlParams = Boolean(searchParams.get("order") && searchParams.get("phone"));
+    void lookupOrder(fromUrlOrder, fromUrlPhone, !hasUrlParams);
+  }, [lookupOrder, searchParams, storeSlug]);
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -104,6 +121,7 @@ export function TrackOrderForm({
       return;
     }
 
+    lookupKeyRef.current = null;
     await lookupOrder(trimmedId, trimmedPhone);
   }
 
@@ -122,6 +140,7 @@ export function TrackOrderForm({
           onClick={() => {
             setTrackedOrder(null);
             setVerifiedPhone(null);
+            lookupKeyRef.current = null;
           }}
           className="w-full rounded-xl border border-[var(--store-border)] bg-[var(--store-surface)] py-3 text-sm font-medium text-[var(--store-text)] transition-colors hover:bg-[var(--store-header-bg)]"
         >
@@ -169,7 +188,7 @@ export function TrackOrderForm({
             className="w-full rounded-xl border border-[var(--store-border)] bg-white px-4 py-3 font-mono text-sm text-[var(--store-text)] outline-none transition-shadow placeholder:font-sans placeholder:text-[var(--store-muted)] focus:ring-2 focus:ring-[var(--store-accent)]/30"
           />
           <p className="mt-1.5 text-xs text-[var(--store-muted)]">
-            Found on your confirmation page or checkout receipt.
+            Found on your confirmation page right after checkout.
           </p>
         </div>
 

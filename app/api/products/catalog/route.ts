@@ -3,6 +3,7 @@ import { requireApprovedStore } from "@/lib/api/require-business";
 import { normalizeCategoryName } from "@/lib/products/catalog-layout";
 import { moveProductsToCategory } from "@/lib/products/mutations";
 import { normalizeProductsForList } from "@/lib/products/list-stock";
+import { revalidateStorefrontCatalog } from "@/lib/storefront/revalidate-catalog";
 import { listBusinessProducts } from "@/lib/queries/dashboard";
 
 export const runtime = "nodejs";
@@ -38,6 +39,7 @@ export async function PATCH(request: Request) {
 
   try {
     const result = await moveProductsToCategory(auth.business.id, productIds, category);
+    revalidateStorefrontCatalog(auth.business.id, auth.business.slug);
     const products = normalizeProductsForList(await listBusinessProducts(auth.business.id));
 
     return NextResponse.json({

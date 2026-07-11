@@ -51,7 +51,12 @@ export default async function OrderConfirmationPage({ params }: OrderConfirmatio
       <OrderStatusRefresh enabled={!isTerminal} />
 
       <Suspense fallback={null}>
-        <OrderPlacedBanner orderNumber={order.orderNumber} storeName={store.name} />
+        <OrderPlacedBanner
+          storeSlug={store.slug}
+          orderNumber={order.orderNumber}
+          storeName={store.name}
+          customerPhone={order.customerPhone}
+        />
       </Suspense>
 
       <div

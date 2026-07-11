@@ -54,7 +54,7 @@ export function toProductFormInitial(product?: {
       metadata,
       price: "",
       compareAtPrice: "",
-      status: "DRAFT",
+      status: "ACTIVE",
       stock: "0",
       lowStockThreshold: "5",
       media: [],

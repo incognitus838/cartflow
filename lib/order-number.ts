@@ -5,3 +5,7 @@ export function formatOrderNumber(sequence: number, date = new Date()) {
   const seq = String(sequence).padStart(4, "0");
   return `CF-${y}${m}${d}-${seq}`;
 }
+
+export function normalizeOrderNumber(value: string) {
+  return value.trim().toUpperCase();
+}

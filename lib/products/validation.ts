@@ -56,7 +56,7 @@ export function parseProductInput(body: unknown): ProductInput | string {
     data.metadata && typeof data.metadata === "object"
       ? (data.metadata as Prisma.InputJsonValue)
       : undefined;
-  const status = typeof data.status === "string" ? data.status : "DRAFT";
+  const status = typeof data.status === "string" ? data.status : "ACTIVE";
   const price = Number(data.price);
   const compareAtPrice =
     data.compareAtPrice === null || data.compareAtPrice === undefined || data.compareAtPrice === ""

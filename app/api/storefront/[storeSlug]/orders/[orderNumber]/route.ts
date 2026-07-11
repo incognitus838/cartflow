@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { normalizeOrderNumber } from "@/lib/order-number";
 import { phonesMatch } from "@/lib/orders/phone";
 import { toPublicOrderSnapshot } from "@/lib/orders/tracking";
 import { getStoreOrder, getStorefrontBySlug } from "@/lib/queries/storefront";
@@ -8,10 +9,6 @@ export const runtime = "nodejs";
 type RouteContext = {
   params: Promise<{ storeSlug: string; orderNumber: string }>;
 };
-
-function normalizeOrderNumber(value: string) {
-  return value.trim().toUpperCase();
-}
 
 async function resolveOrder(storeSlug: string, orderNumber: string) {
   const store = await getStorefrontBySlug(storeSlug);
