@@ -16,6 +16,7 @@ export type OrderInboxData = {
   deliveryZoneName?: string | null;
   total: number;
   hasPaymentReceipt: boolean;
+  paymentRejectionReason?: string | null;
   createdAt: string;
   items: Array<{
     title: string;

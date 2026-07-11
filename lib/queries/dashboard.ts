@@ -1,22 +1,71 @@
 import { prisma } from "@/lib/db";
+import { toNumber } from "@/lib/decimal";
 import type { OrderStatus, ProductStatus } from "@prisma/client";
 
+const FULFILLED_ORDER_STATUSES: OrderStatus[] = [
+  "PAID",
+  "PROCESSING",
+  "SHIPPED",
+  "DELIVERED",
+];
+
+const OPEN_ORDER_STATUSES: OrderStatus[] = [
+  "PENDING",
+  "PAID",
+  "PROCESSING",
+  "SHIPPED",
+];
+
 export async function getBusinessStats(businessId: string) {
-  const [productCount, orderCount, pendingOrders, revenue] = await Promise.all([
+  const [
+    productCount,
+    orderCount,
+    pendingOrders,
+    ordersAwaitingApproval,
+    openOrders,
+    fulfilledOrders,
+    deliveredOrders,
+    customerCount,
+    revenue,
+  ] = await Promise.all([
     prisma.product.count({ where: { businessId, status: "ACTIVE" } }),
     prisma.order.count({ where: { businessId } }),
     prisma.order.count({ where: { businessId, status: "PENDING" } }),
+    prisma.order.count({
+      where: {
+        businessId,
+        status: "PENDING",
+        paymentReceiptSubmittedAt: { not: null },
+      },
+    }),
+    prisma.order.count({
+      where: { businessId, status: { in: OPEN_ORDER_STATUSES } },
+    }),
+    prisma.order.count({
+      where: { businessId, status: { in: FULFILLED_ORDER_STATUSES } },
+    }),
+    prisma.order.count({ where: { businessId, status: "DELIVERED" } }),
+    prisma.customer.count({ where: { businessId } }),
     prisma.order.aggregate({
-      where: { businessId, status: { in: ["PAID", "PROCESSING", "SHIPPED", "DELIVERED"] } },
+      where: { businessId, status: { in: FULFILLED_ORDER_STATUSES } },
       _sum: { total: true },
     }),
   ]);
+
+  const revenueTotal = toNumber(revenue._sum.total);
+  const averageOrderValue = fulfilledOrders > 0 ? revenueTotal / fulfilledOrders : 0;
 
   return {
     productCount,
     orderCount,
     pendingOrders,
+    ordersAwaitingApproval,
+    openOrders,
+    fulfilledOrders,
+    deliveredOrders,
+    customerCount,
     revenue: revenue._sum.total,
+    averageOrderValue,
   };
 }
 

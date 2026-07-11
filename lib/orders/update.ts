@@ -1,6 +1,6 @@
 import type { OrderStatus } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import { deductStockForOrder } from "@/lib/inventory";
+import { deductStockForOrder, restoreStockForOrder } from "@/lib/inventory";
 import { notifyOrderStatusChange } from "@/lib/notifications/orders";
 import { scopedOrderWhere } from "@/lib/tenant";
 
@@ -216,6 +216,15 @@ export async function updateBusinessOrder(
     if (stockItems.length > 0) {
       await deductStockForOrder(businessId, stockItems, order.id, true);
     }
+  }
+
+  if (
+    input.status === "REFUNDED" &&
+    existing.status !== "REFUNDED" &&
+    FULFILLED_STATUSES.includes(existing.status) &&
+    existing.business.autoDeductInventory
+  ) {
+    await restoreStockForOrder(businessId, order.id, true);
   }
 
   if (input.status && input.status !== existing.status) {

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { PaymentReceiptViewer } from "@/components/payment-receipt-viewer";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { OrderStatus } from "@prisma/client";
 import { Mail, MapPin, MessageCircle, Pencil, Phone, StickyNote, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -13,6 +13,9 @@ import {
 } from "@/components/dashboard/payment-review-history";
 import { PaymentReviewActions } from "@/components/dashboard/payment-review-actions";
 import { OrderStatusBadge } from "@/components/dashboard/order-status-badge";
+import { PaymentStatusBadge } from "@/components/dashboard/payment-status-badge";
+import type { PaymentReviewStatus } from "@/lib/orders/payment-status";
+import { getPaymentReviewStatus } from "@/lib/orders/payment-status";
 import { toNumber } from "@/lib/decimal";
 import { dashboardOrderReceiptUrl } from "@/lib/storefront/receipt-url";
 import { buildWhatsAppOrderUrl } from "@/lib/storefront/whatsapp";
@@ -72,6 +75,7 @@ export type OrderDetailData = {
 type OrderDetailPanelProps = {
   order: OrderDetailData;
   currency: string;
+  storeSlug?: string;
   backHref?: string;
   backLabel?: string;
   receiptSrc?: string;
@@ -83,6 +87,7 @@ type OrderDetailPanelProps = {
 export function OrderDetailPanel({
   order,
   currency,
+  storeSlug,
   backHref = "/dashboard/orders",
   backLabel = "Back to orders",
   receiptSrc: receiptSrcProp,
@@ -108,10 +113,54 @@ export function OrderDetailPanel({
     })),
   );
   const [saving, setSaving] = useState(false);
+  const [hasPaymentReceipt, setHasPaymentReceipt] = useState(order.hasPaymentReceipt);
+  const [paymentRejectionReason, setPaymentRejectionReason] = useState(
+    order.paymentRejectionReason ?? null,
+  );
+  const [paymentStatusOverride, setPaymentStatusOverride] = useState<PaymentReviewStatus | null>(
+    null,
+  );
+
+  useEffect(() => {
+    setStatus(order.status);
+    setInternalNotes(order.internalNotes ?? "");
+    setCustomerName(order.customerName);
+    setCustomerPhone(order.customerPhone);
+    setCustomerAddress(order.customerAddress ?? "");
+    setDeliveryFee(String(toNumber(order.deliveryFee)));
+    setItems(
+      order.items.map((item) => ({
+        id: item.id,
+        title: item.title,
+        variantName: item.variantName,
+        quantity: item.quantity,
+        unitPrice: toNumber(item.unitPrice),
+        total: toNumber(item.total),
+      })),
+    );
+    setHasPaymentReceipt(order.hasPaymentReceipt);
+    setPaymentRejectionReason(order.paymentRejectionReason ?? null);
+    setPaymentStatusOverride(null);
+  }, [order]);
 
   const orderApi = patchUrl ?? `/api/orders/${order.id}`;
+  const paymentStatus =
+    paymentStatusOverride ??
+    getPaymentReviewStatus({
+      status,
+      hasPaymentReceipt,
+      paymentRejectionReason,
+      paymentEvents: order.paymentEvents,
+    });
   const canReviewPayment =
-    canApprovePayments && status === "PENDING" && order.hasPaymentReceipt;
+    canApprovePayments && status === "PENDING" && hasPaymentReceipt && paymentStatus === "needs_review";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "";
+  const trackingUrl =
+    storeSlug && appUrl
+      ? `${appUrl}/${storeSlug}/track?order=${encodeURIComponent(order.orderNumber)}`
+      : storeSlug
+        ? `/${storeSlug}/track?order=${encodeURIComponent(order.orderNumber)}`
+        : null;
   const itemsLocked = ["SHIPPED", "DELIVERED", "CANCELLED", "REFUNDED"].includes(order.status);
   const receiptSrc = receiptSrcProp ?? dashboardOrderReceiptUrl(order.id);
 
@@ -176,6 +225,10 @@ export function OrderDetailPanel({
         return;
       }
 
+      if (status === "REFUNDED") {
+        setPaymentStatusOverride("refunded");
+      }
+
       toast.success("Order updated");
       router.refresh();
     } catch {
@@ -193,14 +246,62 @@ export function OrderDetailPanel({
         </Link>
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <h1 className="text-2xl font-bold text-slate-900">{order.orderNumber}</h1>
-          <OrderStatusBadge status={order.status} />
+          <PaymentStatusBadge
+            status={status}
+            hasPaymentReceipt={hasPaymentReceipt}
+            paymentRejectionReason={paymentRejectionReason}
+            paymentEvents={order.paymentEvents}
+            override={paymentStatusOverride ?? undefined}
+          />
+          <OrderStatusBadge status={status} />
         </div>
         <p className="mt-1 text-sm text-slate-500">
           Placed {new Date(order.createdAt).toLocaleString()}
         </p>
+        {trackingUrl ? (
+          <p className="mt-2 text-sm">
+            <a
+              href={trackingUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-emerald-700 underline-offset-2 hover:underline"
+            >
+              Customer tracking page
+            </a>
+          </p>
+        ) : null}
       </div>
 
-      {order.hasPaymentReceipt ? (
+      {paymentStatus === "approved" ? (
+        <section className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-5 sm:p-6">
+          <h2 className="text-sm font-semibold text-emerald-900">Payment approved</h2>
+          <p className="mt-1 text-xs text-emerald-800">
+            This payment was verified and the order is marked as paid. Inventory was updated if
+            auto-deduct is enabled.
+          </p>
+        </section>
+      ) : paymentStatus === "declined" ? (
+        <section className="rounded-2xl border border-red-200 bg-red-50/50 p-5 sm:p-6">
+          <h2 className="text-sm font-semibold text-red-900">Payment declined</h2>
+          <p className="mt-1 text-xs text-red-800">
+            The customer was notified and can upload a new payment receipt.
+          </p>
+          {paymentRejectionReason ? (
+            <p className="mt-3 rounded-lg bg-white px-3 py-2 text-sm text-red-900 ring-1 ring-red-200">
+              {paymentRejectionReason}
+            </p>
+          ) : null}
+        </section>
+      ) : paymentStatus === "refunded" ? (
+        <section className="rounded-2xl border border-violet-200 bg-violet-50/50 p-5 sm:p-6">
+          <h2 className="text-sm font-semibold text-violet-900">Payment refunded</h2>
+          <p className="mt-1 text-xs text-violet-800">
+            This order was refunded. Stock has been restored if it was previously deducted.
+          </p>
+        </section>
+      ) : null}
+
+      {hasPaymentReceipt ? (
         <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
@@ -227,21 +328,30 @@ export function OrderDetailPanel({
               <PaymentReviewActions
                 orderId={order.id}
                 reviewUrl={paymentReviewUrl}
+                onComplete={(action) => {
+                  if (action === "approve") {
+                    setStatus("PAID");
+                    setPaymentStatusOverride("approved");
+                  } else {
+                    setHasPaymentReceipt(false);
+                    setPaymentStatusOverride("declined");
+                  }
+                }}
               />
             </div>
           ) : null}
         </section>
-      ) : order.status === "PENDING" ? (
+      ) : status === "PENDING" ? (
         <section className="rounded-2xl border border-dashed border-amber-200 bg-amber-50/50 p-5 sm:p-6">
           <h2 className="text-sm font-semibold text-amber-900">Awaiting payment receipt</h2>
           <p className="mt-1 text-xs text-amber-800">
-            {order.paymentRejectionReason
+            {paymentRejectionReason
               ? "The previous payment was rejected — waiting for a new receipt from the customer."
               : "The customer has not uploaded a payment screenshot yet."}
           </p>
-          {order.paymentRejectionReason ? (
+          {paymentRejectionReason ? (
             <p className="mt-3 rounded-lg bg-white px-3 py-2 text-sm text-amber-900 ring-1 ring-amber-200">
-              Last rejection: {order.paymentRejectionReason}
+              Last rejection: {paymentRejectionReason}
             </p>
           ) : null}
         </section>

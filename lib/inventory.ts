@@ -104,3 +104,73 @@ export async function deductStock(input: DeductStockInput) {
     await syncProductStockFromVariants(productId, tx);
   });
 }
+
+export async function restoreStockForOrder(
+  businessId: string,
+  orderId: string,
+  autoDeductInventory: boolean,
+) {
+  if (!autoDeductInventory) return;
+
+  const fulfilledLogs = await prisma.inventoryLog.findMany({
+    where: {
+      businessId,
+      reference: orderId,
+      reason: "order_fulfilled",
+    },
+  });
+
+  if (fulfilledLogs.length === 0) return;
+
+  const alreadyRestored = await prisma.inventoryLog.count({
+    where: {
+      businessId,
+      reference: orderId,
+      reason: "order_refunded",
+    },
+  });
+
+  if (alreadyRestored > 0) return;
+
+  for (const log of fulfilledLogs) {
+    const quantity = Math.abs(log.change);
+    if (quantity <= 0) continue;
+
+    await prisma.$transaction(async (tx) => {
+      if (log.variantId) {
+        await tx.productVariant.update({
+          where: { id: log.variantId },
+          data: { stock: { increment: quantity } },
+        });
+      } else {
+        await tx.product.update({
+          where: { id: log.productId },
+          data: { stock: { increment: quantity } },
+        });
+      }
+
+      await tx.inventoryLog.create({
+        data: {
+          businessId,
+          productId: log.productId,
+          variantId: log.variantId,
+          change: quantity,
+          reason: "order_refunded",
+          reference: orderId,
+        },
+      });
+
+      await syncProductStockFromVariants(log.productId, tx);
+    });
+  }
+
+  const business = await prisma.business.findUnique({
+    where: { id: businessId },
+    select: { slug: true },
+  });
+
+  if (business?.slug) {
+    const { revalidateStorefrontCatalog } = await import("@/lib/storefront/revalidate-catalog");
+    revalidateStorefrontCatalog(businessId, business.slug);
+  }
+}

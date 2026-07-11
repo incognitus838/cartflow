@@ -15,6 +15,7 @@ import {
   Tag,
 } from "lucide-react";
 import { OrderStatusBadge } from "@/components/dashboard/order-status-badge";
+import { PaymentStatusBadge } from "@/components/dashboard/payment-status-badge";
 import { buildWhatsAppOrderUrl } from "@/lib/storefront/whatsapp";
 import type { OrderInboxData } from "@/lib/orders/inbox-types";
 import { formatCurrency } from "@/lib/utils";
@@ -165,26 +166,22 @@ export function OrderInboxCard({ order, currency, expandable = true }: OrderInbo
     );
   }
 
+  const detailHref = `/dashboard/orders/${order.id}`;
+
   return (
     <article
       className={`border-b border-black/[0.06] last:border-b-0 ${
         needsReview ? "bg-[#fffdf9]" : expanded ? "bg-[#fbfbfd]" : "bg-white"
       }`}
     >
-      <button
-        type="button"
-        onClick={() => setExpanded((open) => !open)}
-        aria-expanded={expanded}
-        className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-[#f5f5f7] sm:gap-4 sm:px-5"
-      >
-        <ChevronDown
-          className={`h-4 w-4 shrink-0 text-[#86868b] transition-transform ${expanded ? "rotate-180" : ""}`}
-          aria-hidden
-        />
-
-        <div className="min-w-0 flex-1">
+      <div className="flex w-full items-stretch">
+        <Link
+          href={detailHref}
+          className="flex min-w-0 flex-1 items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-[#f5f5f7] sm:gap-4 sm:pl-5 sm:pr-3"
+        >
+          <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="font-mono text-[13px] font-semibold text-[#1d1d1f]">
+            <span className="font-mono text-[13px] font-semibold text-[#1d1d1f] underline-offset-2 hover:underline">
               {order.orderNumber}
             </span>
             {isNew ? <span className="cf-badge cf-badge-paid">New</span> : null}
@@ -205,18 +202,41 @@ export function OrderInboxCard({ order, currency, expandable = true }: OrderInbo
         </div>
 
         <div className="flex shrink-0 flex-col items-end gap-1.5">
-          <OrderStatusBadge status={order.status} />
+          <div className="flex flex-wrap items-center justify-end gap-1.5">
+            <PaymentStatusBadge
+              status={order.status}
+              hasPaymentReceipt={order.hasPaymentReceipt}
+              paymentRejectionReason={order.paymentRejectionReason}
+            />
+            {!["PENDING", "PAID"].includes(order.status) ? (
+              <OrderStatusBadge status={order.status} />
+            ) : null}
+          </div>
           <span className="currency text-[13px] font-semibold text-[#1a7f5a]">
             {formatCurrency(order.total, currency)}
           </span>
         </div>
-      </button>
+        </Link>
+
+        <button
+          type="button"
+          onClick={() => setExpanded((open) => !open)}
+          aria-expanded={expanded}
+          aria-label={expanded ? "Collapse order details" : "Expand order details"}
+          className="flex shrink-0 items-center px-3 text-[#86868b] transition-colors hover:bg-[#f5f5f7] sm:px-4"
+        >
+          <ChevronDown
+            className={`h-4 w-4 transition-transform ${expanded ? "rotate-180" : ""}`}
+            aria-hidden
+          />
+        </button>
+      </div>
 
       {expanded ? (
         <div className="border-t border-black/[0.06] px-4 pb-4 pt-4 sm:px-5">
           <OrderDetailsBody order={order} currency={currency} />
           <div className="mt-4 flex flex-wrap gap-2">
-            <Link href={`/dashboard/orders/${order.id}`} className="btn-primary text-sm">
+            <Link href={detailHref} className="btn-primary text-sm">
               {needsReview ? "Review & approve" : "View order"}
             </Link>
           </div>

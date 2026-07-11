@@ -20,6 +20,7 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
   return (
     <OrderDetailPanel
       currency={business.currency}
+      storeSlug={business.slug}
       canApprovePayments={permissions.paymentsReview}
       order={{
         id: order.id,

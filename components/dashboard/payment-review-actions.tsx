@@ -8,9 +8,10 @@ import { toast } from "sonner";
 type PaymentReviewActionsProps = {
   orderId: string;
   reviewUrl?: string;
+  onComplete?: (action: "approve" | "reject") => void;
 };
 
-export function PaymentReviewActions({ orderId, reviewUrl }: PaymentReviewActionsProps) {
+export function PaymentReviewActions({ orderId, reviewUrl, onComplete }: PaymentReviewActionsProps) {
   const router = useRouter();
   const [approving, setApproving] = useState(false);
   const [rejecting, setRejecting] = useState(false);
@@ -35,6 +36,7 @@ export function PaymentReviewActions({ orderId, reviewUrl }: PaymentReviewAction
       }
 
       toast.success("Payment approved — order marked as paid.");
+      onComplete?.("approve");
       router.refresh();
     } catch {
       toast.error("Something went wrong");
@@ -67,6 +69,7 @@ export function PaymentReviewActions({ orderId, reviewUrl }: PaymentReviewAction
       toast.success("Payment rejected — customer can upload a new receipt.");
       setShowRejectForm(false);
       setRejectReason("");
+      onComplete?.("reject");
       router.refresh();
     } catch {
       toast.error("Something went wrong");

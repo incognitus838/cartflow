@@ -1,5 +1,14 @@
 import Link from "next/link";
-import { Package, ShoppingCart, TrendingUp } from "lucide-react";
+import {
+  CheckCircle2,
+  ClipboardList,
+  Clock,
+  Package,
+  ShoppingCart,
+  TrendingUp,
+  Truck,
+  Users,
+} from "lucide-react";
 import { PendingApprovalOverview } from "@/components/dashboard/pending-approval-overview";
 import { PageHeader } from "@/components/shared/page-header";
 import { buildPendingSetupChecklist, isPendingApproval } from "@/lib/business/approval";
@@ -45,23 +54,54 @@ export default async function DashboardPage() {
 
   const cards = [
     {
-      label: "Active products",
-      value: String(stats.productCount),
-      icon: Package,
-      href: "/dashboard/products",
+      label: "Total orders",
+      value: String(stats.orderCount),
+      icon: ClipboardList,
+      href: "/dashboard/orders",
     },
     {
-      label: "Pending orders",
-      value: String(stats.pendingOrders),
-      icon: ShoppingCart,
+      label: "Awaiting approval",
+      value: String(stats.ordersAwaitingApproval),
+      icon: Clock,
       href: "/dashboard/orders?status=PENDING",
-      highlight: stats.pendingOrders > 0,
+      highlight: stats.ordersAwaitingApproval > 0,
+    },
+    {
+      label: "Open orders",
+      value: String(stats.openOrders),
+      icon: Truck,
+      href: "/dashboard/orders",
+      highlight: stats.openOrders > 0 && stats.ordersAwaitingApproval === 0,
     },
     {
       label: "Revenue",
       value: formatCurrency(toNumber(stats.revenue), business.currency),
       icon: TrendingUp,
       href: "/dashboard/orders",
+    },
+    {
+      label: "Delivered",
+      value: String(stats.deliveredOrders),
+      icon: CheckCircle2,
+      href: "/dashboard/orders?status=DELIVERED",
+    },
+    {
+      label: "Avg order value",
+      value: formatCurrency(stats.averageOrderValue, business.currency),
+      icon: ShoppingCart,
+      href: "/dashboard/orders",
+    },
+    {
+      label: "Customers",
+      value: String(stats.customerCount),
+      icon: Users,
+      href: "/dashboard/orders",
+    },
+    {
+      label: "Active products",
+      value: String(stats.productCount),
+      icon: Package,
+      href: "/dashboard/products",
     },
   ];
 
@@ -76,7 +116,10 @@ export default async function DashboardPage() {
         <h2 id="seller-kpis" className="sr-only">
           Store key metrics
         </h2>
-        <ul className="grid list-none gap-4 sm:grid-cols-3" role="list">
+        <ul
+          className="grid list-none grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4"
+          role="list"
+        >
           {cards.map((card) => {
             const Icon = card.icon;
             return (

@@ -18,6 +18,7 @@ export function mapOrderToInbox(
     deliveryZoneName?: string | null;
     total: { toString(): string } | number;
     createdAt: Date | string;
+    paymentRejectionReason?: string | null;
     items: Array<{
       title: string;
       variantName: string | null;
@@ -44,6 +45,7 @@ export function mapOrderToInbox(
     deliveryZoneName: order.deliveryZoneName ?? null,
     total: toNumber(order.total),
     hasPaymentReceipt,
+    paymentRejectionReason: order.paymentRejectionReason ?? null,
     createdAt:
       typeof order.createdAt === "string" ? order.createdAt : order.createdAt.toISOString(),
     items: order.items.map((item) => ({
