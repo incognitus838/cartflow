@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { isLowStock } from "@/lib/inventory-stock";
+import { syncProductStockFromVariants } from "@/lib/products/sync-stock";
 
 export { getProductStock, isLowStock, isOutOfStock } from "@/lib/inventory-stock";
 
@@ -42,6 +43,16 @@ export async function deductStockForOrder(
       reason: "order_fulfilled",
       reference,
     });
+  }
+
+  const business = await prisma.business.findUnique({
+    where: { id: businessId },
+    select: { slug: true },
+  });
+
+  if (business?.slug) {
+    const { revalidateStorefrontCatalog } = await import("@/lib/storefront/revalidate-catalog");
+    revalidateStorefrontCatalog(businessId, business.slug);
   }
 }
 
@@ -89,5 +100,7 @@ export async function deductStock(input: DeductStockInput) {
         reference,
       },
     });
+
+    await syncProductStockFromVariants(productId, tx);
   });
 }

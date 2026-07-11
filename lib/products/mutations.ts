@@ -3,6 +3,7 @@ import { syncCatalogFromProduct } from "@/lib/catalog/sync-from-product";
 import { prisma } from "@/lib/db";
 import { canAddProduct } from "@/lib/plans";
 import { normalizeCategoryName } from "@/lib/products/catalog-layout";
+import { syncProductStockFromVariants } from "@/lib/products/sync-stock";
 import type { ProductInput } from "@/lib/products/types";
 import { scopedProductWhere } from "@/lib/tenant";
 
@@ -93,6 +94,10 @@ export async function createProduct(businessId: string, input: ProductInput) {
           reference: product.id,
         },
       });
+    }
+
+    if (product.variants.length > 0) {
+      await syncProductStockFromVariants(product.id, tx);
     }
 
     await syncCatalogFromProduct(businessId, {
@@ -202,6 +207,10 @@ export async function updateProduct(
           reference: productId,
         },
       });
+    }
+
+    if (product.variants.length > 0) {
+      await syncProductStockFromVariants(product.id, tx);
     }
 
     await syncCatalogFromProduct(businessId, {

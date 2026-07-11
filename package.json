@@ -14,6 +14,7 @@
     "db:approval": "npx dotenv-cli -e .env.local -- node scripts/apply-approval-schema.mjs",
     "db:product-media": "npx dotenv-cli -e .env.local -- node scripts/apply-product-media-schema.mjs",
     "db:delivery-zones": "npx dotenv-cli -e .env.local -- node scripts/apply-delivery-zones-schema.mjs",
+    "db:sync-stock": "npx dotenv-cli -e .env.local -- node scripts/sync-product-stock-from-variants.mjs",
     "db:backfill-media": "npx dotenv-cli -e .env.local -- node scripts/backfill-product-media-blob.mjs",
     "run:all": "npx dotenv-cli -e .env.local -- node scripts/run-all.mjs",
     "db:migrate": "npx dotenv-cli -e .env.local -- prisma migrate dev",
