@@ -68,19 +68,6 @@ export function LoginForm({ nextPath, reason }: LoginFormProps) {
           <Link href="/signup" className="font-medium text-emerald-700 hover:underline">
             Create your store
           </Link>
-          <p className="mt-4 rounded-lg bg-slate-100 px-3 py-2.5 text-xs text-slate-600">
-            <span className="font-medium text-slate-800">Platform admin?</span> Log in at{" "}
-            <span className="font-mono text-slate-800">/login</span> with your admin email — you
-            will be sent to <span className="font-mono text-slate-800">/admin</span> automatically.
-            Demo admin: <span className="font-mono">admin@cartflow.app</span> /{" "}
-            <span className="font-mono">demo12345</span>
-            <br />
-            Demo seller: <span className="font-mono">demo@cartflow.app</span> /{" "}
-            <span className="font-mono">demo12345</span>
-            <br />
-            If those fail, run <span className="font-mono">npm run db:ensure-users</span> in the
-            project folder.
-          </p>
         </>
       }
     >
