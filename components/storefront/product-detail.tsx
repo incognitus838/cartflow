@@ -16,7 +16,8 @@ import { isOutOfStock } from "@/lib/inventory-stock";
 import type { ProductMediaType } from "@/lib/media";
 import type { ProductType } from "@/lib/products/product-types";
 import { cartPath, storePath } from "@/lib/storefront/paths";
-import { formatCurrency } from "@/lib/utils";
+import { useHideStickyNearFooter } from "@/lib/storefront/use-hide-sticky-near-footer";
+import { cn, formatCurrency } from "@/lib/utils";
 
 export type StorefrontProductDetail = {
   id: string;
@@ -50,6 +51,7 @@ export function ProductDetail({
   product,
 }: ProductDetailProps) {
   const { lines, addItem, updateQuantity, removeItem } = useCart();
+  const hideSticky = useHideStickyNearFooter();
   const hasVariants = product.variants.length > 0;
   const [selectedVariantId, setSelectedVariantId] = useState(
     product.variants.find((v) => v.stock > 0)?.id ?? product.variants[0]?.id ?? null,
@@ -139,7 +141,7 @@ export function ProductDetail({
   const displayQuantity = syncedToCart ? inCartQty : addQuantity;
 
   return (
-    <div className="pb-28 sm:pb-10">
+    <div className="pb-24 sm:pb-10">
       <div className="mb-6">
         <Link
           href={storePath(storeSlug)}
@@ -244,12 +246,6 @@ export function ProductDetail({
             )}
           </div>
 
-          {deliveryFee > 0 ? (
-            <p className="mt-5 text-[14px] text-[#86868b]">
-              Delivery from {formatCurrency(deliveryFee, currency)}
-            </p>
-          ) : null}
-
           <div className="mt-8 hidden sm:block">
             {syncedToCart ? (
               <Link
@@ -277,7 +273,12 @@ export function ProductDetail({
         </div>
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-black/[0.06] bg-white/90 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur-xl sm:hidden">
+      <div
+        className={cn(
+          "fixed inset-x-0 bottom-0 z-30 border-t border-black/[0.06] bg-white/90 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur-xl transition-transform duration-300 sm:hidden",
+          hideSticky && "translate-y-full pointer-events-none",
+        )}
+      >
         <div className="flex items-center gap-3">
           <div className="min-w-0 flex-1">
             <p className="truncate text-[13px] font-medium text-[#1d1d1f]">{product.title}</p>

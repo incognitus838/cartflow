@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useHideStickyNearFooter } from "@/lib/storefront/use-hide-sticky-near-footer";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { ManualPaymentInstructions } from "@/components/storefront/manual-payment-instructions";
 import { PaymentReceiptField } from "@/components/storefront/payment-receipt-field";
@@ -40,6 +42,7 @@ export function CheckoutForm({
   const [email, setEmail] = useState("");
   const [notes, setNotes] = useState("");
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const hideSticky = useHideStickyNearFooter();
 
   const subtotal = useMemo(
     () => lines.reduce((sum, line) => sum + line.unitPrice * line.quantity, 0),
@@ -139,7 +142,7 @@ export function CheckoutForm({
       <form
         id="checkout-form"
         onSubmit={handleSubmit}
-        className="rounded-2xl border border-[var(--cf-border-strong)] bg-white p-5 pb-28 sm:pb-6 sm:p-6"
+        className="rounded-2xl border border-[var(--cf-border-strong)] bg-white p-5 sm:p-6"
       >
         <h2 className="text-sm font-semibold text-[var(--cf-black)]">Your details</h2>
         <p className="mt-1 text-xs text-[var(--cf-gray-600)]">
@@ -227,7 +230,12 @@ export function CheckoutForm({
         </div>
       </form>
 
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-black/[0.06] bg-white/95 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur-xl sm:hidden">
+      <div
+        className={cn(
+          "fixed inset-x-0 bottom-0 z-30 border-t border-black/[0.06] bg-white/95 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur-xl transition-transform duration-300 sm:hidden",
+          hideSticky && "translate-y-full pointer-events-none",
+        )}
+      >
         <button
           type="submit"
           form="checkout-form"
