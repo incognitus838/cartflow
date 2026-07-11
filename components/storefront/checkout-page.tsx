@@ -5,23 +5,44 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CheckoutForm } from "@/components/storefront/checkout-form";
 import { useCart } from "@/components/storefront/cart-provider";
+import { DeliveryZonePicker } from "@/components/storefront/delivery-zone-picker";
 import { OrderSummary } from "@/components/storefront/order-summary";
 import { PromoCodeInput, type AppliedPromo } from "@/components/storefront/promo-code-input";
+import { useDeliveryFee } from "@/lib/delivery/use-delivery-fee";
 import type { ManualPaymentAccount } from "@/lib/payments/manual";
 import { cartPath, storePath } from "@/lib/storefront/paths";
 
 type CheckoutPageProps = {
   storeSlug: string;
   currency: string;
-  deliveryFee: number;
+  fallbackDeliveryFee: number;
   paymentAccount: ManualPaymentAccount | null;
 };
 
-export function CheckoutPage({ storeSlug, currency, deliveryFee, paymentAccount }: CheckoutPageProps) {
+export function CheckoutPage({
+  storeSlug,
+  currency,
+  fallbackDeliveryFee,
+  paymentAccount,
+}: CheckoutPageProps) {
   const router = useRouter();
-  const { lines } = useCart();
+  const { lines, selectedDeliveryZoneId, setSelectedDeliveryZoneId } = useCart();
   const [appliedPromo, setAppliedPromo] = useState<AppliedPromo | null>(null);
   const [placingOrder, setPlacingOrder] = useState(false);
+
+  const {
+    zones,
+    needsDelivery,
+    effectiveFee,
+    selectedZoneName,
+    requiresZoneSelection,
+    hasZones,
+  } = useDeliveryFee({
+    storeSlug,
+    lines,
+    fallbackDeliveryFee,
+    selectedZoneId: selectedDeliveryZoneId,
+  });
 
   useEffect(() => {
     if (placingOrder) return;
@@ -43,6 +64,16 @@ export function CheckoutPage({ storeSlug, currency, deliveryFee, paymentAccount 
 
       <div className="grid gap-6 lg:grid-cols-[1fr_360px] lg:gap-8">
         <div className="space-y-6">
+          {needsDelivery && hasZones ? (
+            <DeliveryZonePicker
+              zones={zones}
+              currency={currency}
+              selectedZoneId={selectedDeliveryZoneId}
+              onSelect={setSelectedDeliveryZoneId}
+              required
+            />
+          ) : null}
+
           <PromoCodeInput
             storeSlug={storeSlug}
             lines={lines}
@@ -54,7 +85,9 @@ export function CheckoutPage({ storeSlug, currency, deliveryFee, paymentAccount 
             storeSlug={storeSlug}
             lines={lines}
             currency={currency}
-            deliveryFee={deliveryFee}
+            deliveryFee={effectiveFee}
+            deliveryZoneId={selectedDeliveryZoneId}
+            requiresZoneSelection={requiresZoneSelection}
             paymentAccount={paymentAccount}
             appliedPromo={appliedPromo}
             onPlacingChange={setPlacingOrder}
@@ -65,7 +98,9 @@ export function CheckoutPage({ storeSlug, currency, deliveryFee, paymentAccount 
           <OrderSummary
             lines={lines}
             currency={currency}
-            deliveryFee={deliveryFee}
+            deliveryFee={effectiveFee}
+            deliveryZoneName={selectedZoneName}
+            showDelivery={needsDelivery}
             discountAmount={appliedPromo?.discountAmount ?? 0}
             giftTitle={appliedPromo?.giftLine?.title}
             compact

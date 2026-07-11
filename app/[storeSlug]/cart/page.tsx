@@ -14,7 +14,7 @@ export default async function CartRoute({ params }: CartRouteProps) {
     <CartPage
       storeSlug={store.slug}
       currency={store.currency}
-      deliveryFee={toNumber(store.deliveryFee)}
+      fallbackDeliveryFee={toNumber(store.deliveryFee)}
     />
   );
 }

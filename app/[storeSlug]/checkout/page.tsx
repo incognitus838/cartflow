@@ -14,7 +14,7 @@ export default async function CheckoutRoute({ params }: CheckoutRouteProps) {
     <CheckoutPage
       storeSlug={store.slug}
       currency={store.currency}
-      deliveryFee={toNumber(store.deliveryFee)}
+      fallbackDeliveryFee={toNumber(store.deliveryFee)}
       paymentAccount={resolveManualPaymentAccount(store)}
     />
   );

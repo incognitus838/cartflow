@@ -15,6 +15,8 @@ type CheckoutFormProps = {
   lines: CartLine[];
   currency: string;
   deliveryFee: number;
+  deliveryZoneId?: string | null;
+  requiresZoneSelection?: boolean;
   paymentAccount: ManualPaymentAccount | null;
   appliedPromo?: AppliedPromo | null;
   onPlacingChange?: (placing: boolean) => void;
@@ -25,6 +27,8 @@ export function CheckoutForm({
   lines,
   currency,
   deliveryFee,
+  deliveryZoneId,
+  requiresZoneSelection = false,
   paymentAccount,
   appliedPromo,
   onPlacingChange,
@@ -57,6 +61,11 @@ export function CheckoutForm({
       return;
     }
 
+    if (requiresZoneSelection) {
+      toast.error("Choose a delivery location before placing your order.");
+      return;
+    }
+
     setLoading(true);
     onPlacingChange?.(true);
 
@@ -68,6 +77,7 @@ export function CheckoutForm({
       formData.append("email", email);
       formData.append("notes", notes);
       if (appliedPromo?.code) formData.append("promotionCode", appliedPromo.code);
+      if (deliveryZoneId) formData.append("deliveryZoneId", deliveryZoneId);
       formData.append(
         "items",
         JSON.stringify(
@@ -204,7 +214,7 @@ export function CheckoutForm({
 
         <button
           type="submit"
-          disabled={loading || !paymentAccount || !receiptFile}
+          disabled={loading || !paymentAccount || !receiptFile || requiresZoneSelection}
           className="btn-primary mt-6 w-full py-3"
         >
           {loading ? "Placing order…" : "Place order"}

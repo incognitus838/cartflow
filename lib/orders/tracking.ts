@@ -270,6 +270,7 @@ export type PublicOrderTracking = {
   subtotal: number;
   discountAmount: number;
   deliveryFee: number;
+  deliveryZoneName: string | null;
   total: number;
   currency: string;
   storeName: string;
@@ -311,6 +312,7 @@ export function toPublicOrderTracking(
     subtotal: toNumber(order.subtotal),
     discountAmount: toNumber(order.discountAmount),
     deliveryFee: toNumber(order.deliveryFee),
+    deliveryZoneName: order.deliveryZoneName ?? null,
     total: toNumber(order.total),
     currency: store.currency,
     storeName: store.name,

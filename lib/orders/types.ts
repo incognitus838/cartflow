@@ -11,5 +11,6 @@ export type CheckoutInput = {
   email?: string;
   notes?: string;
   promotionCode?: string;
+  deliveryZoneId?: string;
   items: CheckoutItemInput[];
 };

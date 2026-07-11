@@ -4,17 +4,34 @@ import Link from "next/link";
 import { ShoppingBag } from "lucide-react";
 import { CartLineItem } from "@/components/storefront/cart-line-item";
 import { useCart } from "@/components/storefront/cart-provider";
+import { DeliveryZonePicker } from "@/components/storefront/delivery-zone-picker";
 import { OrderSummary } from "@/components/storefront/order-summary";
+import { useDeliveryFee } from "@/lib/delivery/use-delivery-fee";
 import { checkoutPath, storePath } from "@/lib/storefront/paths";
 
 type CartPageProps = {
   storeSlug: string;
   currency: string;
-  deliveryFee: number;
+  fallbackDeliveryFee: number;
 };
 
-export function CartPage({ storeSlug, currency, deliveryFee }: CartPageProps) {
-  const { lines, updateQuantity, removeItem } = useCart();
+export function CartPage({ storeSlug, currency, fallbackDeliveryFee }: CartPageProps) {
+  const { lines, updateQuantity, removeItem, selectedDeliveryZoneId, setSelectedDeliveryZoneId } =
+    useCart();
+
+  const {
+    zones,
+    needsDelivery,
+    effectiveFee,
+    selectedZoneName,
+    requiresZoneSelection,
+    hasZones,
+  } = useDeliveryFee({
+    storeSlug,
+    lines,
+    fallbackDeliveryFee,
+    selectedZoneId: selectedDeliveryZoneId,
+  });
 
   if (lines.length === 0) {
     return (
@@ -33,6 +50,8 @@ export function CartPage({ storeSlug, currency, deliveryFee }: CartPageProps) {
     );
   }
 
+  const canCheckout = !requiresZoneSelection;
+
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_360px] lg:gap-8">
       <div>
@@ -50,13 +69,41 @@ export function CartPage({ storeSlug, currency, deliveryFee }: CartPageProps) {
             />
           ))}
         </div>
+
+        {needsDelivery && hasZones ? (
+          <div className="mt-5">
+            <DeliveryZonePicker
+              zones={zones}
+              currency={currency}
+              selectedZoneId={selectedDeliveryZoneId}
+              onSelect={setSelectedDeliveryZoneId}
+              required
+            />
+          </div>
+        ) : null}
       </div>
 
       <div className="lg:sticky lg:top-24 lg:self-start">
-        <OrderSummary lines={lines} currency={currency} deliveryFee={deliveryFee} />
-        <Link href={checkoutPath(storeSlug)} className="btn-primary mt-4 block w-full py-3 text-center">
-          Proceed to checkout
-        </Link>
+        <OrderSummary
+          lines={lines}
+          currency={currency}
+          deliveryFee={effectiveFee}
+          deliveryZoneName={selectedZoneName}
+          showDelivery={needsDelivery}
+        />
+        {canCheckout ? (
+          <Link href={checkoutPath(storeSlug)} className="btn-primary mt-4 block w-full py-3 text-center">
+            Proceed to checkout
+          </Link>
+        ) : (
+          <button
+            type="button"
+            disabled
+            className="btn-primary mt-4 block w-full cursor-not-allowed py-3 text-center opacity-50"
+          >
+            Choose delivery location
+          </button>
+        )}
         <Link
           href={storePath(storeSlug)}
           className="mt-3 block text-center text-sm font-medium text-slate-600 hover:text-slate-900"

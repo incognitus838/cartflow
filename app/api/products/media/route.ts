@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       url: asset.url,
       mediaType: asset.mediaType,
-      assetId: asset.id,
+      assetId: asset.id ?? undefined,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Upload failed.";

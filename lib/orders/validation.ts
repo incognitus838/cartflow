@@ -9,6 +9,10 @@ function parseCheckoutFields(data: Record<string, unknown>): CheckoutInput | str
   const notes = typeof data.notes === "string" ? data.notes.trim() : "";
   const promotionCode =
     typeof data.promotionCode === "string" ? data.promotionCode.trim().toUpperCase() : "";
+  const deliveryZoneId =
+    typeof data.deliveryZoneId === "string" && data.deliveryZoneId.trim()
+      ? data.deliveryZoneId.trim()
+      : undefined;
 
   if (!customerName || customerName.length < 2) return "Your name is required.";
   if (!customerPhone || customerPhone.length < 7) return "A valid phone number is required.";
@@ -38,6 +42,7 @@ function parseCheckoutFields(data: Record<string, unknown>): CheckoutInput | str
     email: email || undefined,
     notes: notes || undefined,
     promotionCode: promotionCode || undefined,
+    deliveryZoneId,
     items,
   };
 }
@@ -67,6 +72,7 @@ export function parseCheckoutFormData(formData: FormData): CheckoutInput | strin
     email: formData.get("email"),
     notes: formData.get("notes"),
     promotionCode: formData.get("promotionCode"),
+    deliveryZoneId: formData.get("deliveryZoneId"),
     items,
   });
 }

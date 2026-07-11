@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { SettingsTabs } from "@/components/dashboard/settings-tabs";
+import { DeliveryZonesPanel } from "@/components/dashboard/delivery-zones-panel";
 import { StoreSettingsForm } from "@/components/dashboard/store-settings-form";
 import { TeamPanel } from "@/components/dashboard/team-panel";
 import { PageHeader } from "@/components/shared/page-header";
@@ -39,6 +40,7 @@ export default async function SettingsPage({ searchParams }: PageProps) {
       {tab === "team" ? (
         <TeamPanel />
       ) : (
+        <div className="space-y-6">
         <StoreSettingsForm
           appUrl={appUrl}
           initial={{
@@ -59,6 +61,8 @@ export default async function SettingsPage({ searchParams }: PageProps) {
             bankAccountNumber: business.bankAccountNumber ?? "",
           }}
         />
+        <DeliveryZonesPanel currency={business.currency} />
+        </div>
       )}
     </>
   );

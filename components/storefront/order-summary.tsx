@@ -5,6 +5,8 @@ type OrderSummaryProps = {
   lines: CartLine[];
   currency: string;
   deliveryFee: number;
+  deliveryZoneName?: string | null;
+  showDelivery?: boolean;
   subtotal?: number;
   discountAmount?: number;
   giftTitle?: string;
@@ -15,6 +17,8 @@ export function OrderSummary({
   lines,
   currency,
   deliveryFee,
+  deliveryZoneName,
+  showDelivery = true,
   subtotal: subtotalOverride,
   discountAmount = 0,
   giftTitle,
@@ -64,10 +68,12 @@ export function OrderSummary({
             <span>{giftTitle}</span>
           </div>
         ) : null}
-        <div className="flex justify-between text-slate-600">
-          <span>Delivery</span>
-          <span>{deliveryFee > 0 ? formatCurrency(deliveryFee, currency) : "Free"}</span>
-        </div>
+        {showDelivery ? (
+          <div className="flex justify-between text-slate-600">
+            <span>{deliveryZoneName ? `Delivery · ${deliveryZoneName}` : "Delivery"}</span>
+            <span>{deliveryFee > 0 ? formatCurrency(deliveryFee, currency) : "Free"}</span>
+          </div>
+        ) : null}
         <div className="flex justify-between border-t border-slate-100 pt-3 text-base font-bold text-slate-900">
           <span>Total</span>
           <span className="text-emerald-700">{formatCurrency(total, currency)}</span>

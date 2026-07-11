@@ -12,12 +12,14 @@ import {
 import { toNumber } from "@/lib/decimal";
 import { isOutOfStock } from "@/lib/inventory-stock";
 import type { ProductMediaType } from "@/lib/media";
+import type { ProductType } from "@/lib/products/product-types";
 import { storePath } from "@/lib/storefront/paths";
 import { formatCurrency } from "@/lib/utils";
 
 export type StorefrontProductDetail = {
   id: string;
   title: string;
+  productType?: ProductType;
   description: string | null;
   price: { toString(): string } | number;
   compareAtPrice: { toString(): string } | number | null;
@@ -90,6 +92,7 @@ export function ProductDetail({
       variantName: selectedVariant?.name,
       sku: selectedVariant?.sku ?? undefined,
       imageUrl: product.images[0]?.url,
+      productType: product.productType,
       unitPrice,
       quantity,
       maxStock: availableStock,

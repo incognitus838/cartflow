@@ -304,7 +304,9 @@ export function OrderTrackingPanel({
           ) : null}
           {order.deliveryFee > 0 ? (
             <div className="flex justify-between text-[var(--store-muted)]">
-              <span>Delivery</span>
+              <span>
+                {order.deliveryZoneName ? `Delivery · ${order.deliveryZoneName}` : "Delivery"}
+              </span>
               <span>{formatCurrency(order.deliveryFee, order.currency)}</span>
             </div>
           ) : null}

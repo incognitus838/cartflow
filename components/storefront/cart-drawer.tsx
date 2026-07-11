@@ -5,22 +5,37 @@ import { ShoppingBag, X } from "lucide-react";
 import { CartLineItem } from "@/components/storefront/cart-line-item";
 import { useCart } from "@/components/storefront/cart-provider";
 import { useCartDrawer } from "@/components/storefront/cart-drawer-provider";
+import { useDeliveryFee } from "@/lib/delivery/use-delivery-fee";
 import { cartPath, checkoutPath } from "@/lib/storefront/paths";
 import { formatCurrency } from "@/lib/utils";
 
 type CartDrawerProps = {
   storeSlug: string;
   currency: string;
-  deliveryFee: number;
+  fallbackDeliveryFee: number;
 };
 
-export function CartDrawer({ storeSlug, currency, deliveryFee }: CartDrawerProps) {
+export function CartDrawer({ storeSlug, currency, fallbackDeliveryFee }: CartDrawerProps) {
   const { open, closeDrawer } = useCartDrawer();
-  const { lines, itemCount, subtotal, updateQuantity, removeItem } = useCart();
+  const {
+    lines,
+    itemCount,
+    subtotal,
+    updateQuantity,
+    removeItem,
+    selectedDeliveryZoneId,
+  } = useCart();
+
+  const { needsDelivery, effectiveFee, requiresZoneSelection } = useDeliveryFee({
+    storeSlug,
+    lines,
+    fallbackDeliveryFee,
+    selectedZoneId: selectedDeliveryZoneId,
+  });
 
   if (!open) return null;
 
-  const total = subtotal + (lines.length > 0 ? deliveryFee : 0);
+  const total = subtotal + (needsDelivery ? effectiveFee : 0);
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
@@ -85,10 +100,12 @@ export function CartDrawer({ storeSlug, currency, deliveryFee }: CartDrawerProps
                   <span>Subtotal</span>
                   <span className="tabular-nums">{formatCurrency(subtotal, currency)}</span>
                 </div>
-                {deliveryFee > 0 ? (
+                {needsDelivery ? (
                   <div className="flex justify-between text-[#6e6e73]">
                     <span>Delivery</span>
-                    <span className="tabular-nums">{formatCurrency(deliveryFee, currency)}</span>
+                    <span className="tabular-nums">
+                      {effectiveFee > 0 ? formatCurrency(effectiveFee, currency) : "Free"}
+                    </span>
                   </div>
                 ) : null}
                 <div className="flex justify-between border-t border-black/[0.06] pt-3 text-[15px] font-semibold text-[#1d1d1f]">
@@ -98,13 +115,23 @@ export function CartDrawer({ storeSlug, currency, deliveryFee }: CartDrawerProps
               </div>
 
               <div className="mt-5 flex flex-col gap-2.5">
-                <Link
-                  href={checkoutPath(storeSlug)}
-                  onClick={closeDrawer}
-                  className="btn-primary py-3 text-center text-[14px]"
-                >
-                  Checkout
-                </Link>
+                {requiresZoneSelection ? (
+                  <Link
+                    href={cartPath(storeSlug)}
+                    onClick={closeDrawer}
+                    className="btn-primary py-3 text-center text-[14px]"
+                  >
+                    Choose delivery location
+                  </Link>
+                ) : (
+                  <Link
+                    href={checkoutPath(storeSlug)}
+                    onClick={closeDrawer}
+                    className="btn-primary py-3 text-center text-[14px]"
+                  >
+                    Checkout
+                  </Link>
+                )}
                 <Link
                   href={cartPath(storeSlug)}
                   onClick={closeDrawer}

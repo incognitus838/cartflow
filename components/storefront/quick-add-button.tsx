@@ -7,11 +7,13 @@ import { useCart } from "@/components/storefront/cart-provider";
 import { cartLineKey } from "@/lib/cart/types";
 import { toNumber } from "@/lib/decimal";
 import { isOutOfStock } from "@/lib/inventory-stock";
+import type { ProductType } from "@/lib/products/product-types";
 import { cn } from "@/lib/utils";
 
 export type QuickAddProduct = {
   id: string;
   title: string;
+  productType?: ProductType;
   price: { toString(): string } | number;
   stock: number;
   images: Array<{ url: string; alt: string | null }>;
@@ -76,6 +78,7 @@ export function QuickAddButton({
       variantName: variant?.name,
       sku: variant?.sku ?? undefined,
       imageUrl,
+      productType: product.productType,
       unitPrice,
       quantity: 1,
       maxStock,

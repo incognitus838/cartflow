@@ -1,3 +1,4 @@
+import { put } from "@vercel/blob";
 import { prisma } from "@/lib/db";
 import { toPrismaBytes } from "@/lib/orders/receipt-storage";
 import type { ParsedProductMedia } from "@/lib/uploads/product-media";
@@ -10,7 +11,30 @@ export function isStoredProductMediaUrl(url: string) {
   return url.startsWith("/api/products/media/");
 }
 
+function blobStorageEnabled() {
+  return Boolean(process.env.BLOB_READ_WRITE_TOKEN?.trim());
+}
+
+async function uploadToBlob(businessId: string, media: ParsedProductMedia) {
+  const pathname = `products/${businessId}/${Date.now()}-${media.filename}`;
+  const blob = await put(pathname, media.data, {
+    access: "public",
+    contentType: media.mimeType,
+    addRandomSuffix: true,
+  });
+
+  return {
+    id: null as string | null,
+    url: blob.url,
+    mediaType: media.mediaType,
+  };
+}
+
 export async function createProductMediaAsset(businessId: string, media: ParsedProductMedia) {
+  if (blobStorageEnabled()) {
+    return uploadToBlob(businessId, media);
+  }
+
   const asset = await prisma.productMediaAsset.create({
     data: {
       businessId,

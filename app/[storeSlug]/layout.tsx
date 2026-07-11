@@ -7,6 +7,7 @@ import { StoreHeader } from "@/components/storefront/store-header";
 import { StorefrontThemeShell } from "@/components/storefront/storefront-theme-shell";
 import { toStorefrontProfile } from "@/lib/business/storefront-profile";
 import { toNumber } from "@/lib/decimal";
+import { listActiveDeliveryZones, minZoneFee } from "@/lib/delivery/zones";
 import { resolveStorefront } from "@/lib/storefront/resolve-store";
 
 type StoreLayoutProps = {
@@ -21,6 +22,8 @@ export default async function StoreLayout({ children, params }: StoreLayoutProps
   const store = await resolveStorefront(storeSlug);
   const profile = toStorefrontProfile(store);
   const headerSubtitle = profile.heroTagline ?? store.description;
+  const deliveryZones = await listActiveDeliveryZones(store.id);
+  const footerDeliveryFee = minZoneFee(deliveryZones, toNumber(store.deliveryFee));
 
   return (
     <CartProvider storeSlug={store.slug}>
@@ -42,13 +45,13 @@ export default async function StoreLayout({ children, params }: StoreLayoutProps
             storeName={store.name}
             storeSlug={store.slug}
             currency={store.currency}
-            deliveryFee={toNumber(store.deliveryFee)}
+            deliveryFee={footerDeliveryFee}
           />
           <CartFloatingBar currency={store.currency} />
           <CartDrawer
             storeSlug={store.slug}
             currency={store.currency}
-            deliveryFee={toNumber(store.deliveryFee)}
+            fallbackDeliveryFee={toNumber(store.deliveryFee)}
           />
         </StorefrontThemeShell>
       </CartDrawerProvider>

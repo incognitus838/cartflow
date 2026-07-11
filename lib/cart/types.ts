@@ -1,3 +1,5 @@
+import type { ProductType } from "@/lib/products/product-types";
+
 export type CartLine = {
   key: string;
   productId: string;
@@ -6,6 +8,7 @@ export type CartLine = {
   variantName?: string;
   sku?: string;
   imageUrl?: string;
+  productType?: ProductType;
   unitPrice: number;
   quantity: number;
   maxStock: number;
@@ -14,6 +17,7 @@ export type CartLine = {
 export type CartState = {
   storeSlug: string;
   lines: CartLine[];
+  selectedDeliveryZoneId?: string | null;
   updatedAt: number;
 };
 
@@ -24,6 +28,7 @@ export type AddToCartInput = {
   variantName?: string;
   sku?: string;
   imageUrl?: string;
+  productType?: ProductType;
   unitPrice: number;
   quantity: number;
   maxStock: number;

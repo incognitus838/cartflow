@@ -1,5 +1,8 @@
+import { cartNeedsDelivery } from "@/lib/delivery/deliverable";
+import { resolveOrderDelivery } from "@/lib/delivery/zones";
 import { prisma } from "@/lib/db";
 import { toNumber } from "@/lib/decimal";
+import { parseProductMetadata } from "@/lib/products/metadata";
 import type { CheckoutInput } from "@/lib/orders/types";
 import { formatOrderNumber } from "@/lib/order-number";
 import { logOrderPaymentEvent } from "@/lib/orders/payment-events";
@@ -14,7 +17,7 @@ export async function createGuestOrder(
 ) {
   const business = await prisma.business.findFirst({
     where: { id: businessId, isActive: true },
-    select: { id: true, deliveryFee: true },
+    select: { id: true },
   });
 
   if (!business) throw new Error("Store not found.");
@@ -112,7 +115,21 @@ export async function createGuestOrder(
   }
 
   const subtotal = lineItems.reduce((sum, line) => sum + line.total, 0);
-  const deliveryFee = toNumber(business.deliveryFee);
+
+  const needsDelivery = cartNeedsDelivery(
+    lineItems.map((line) => {
+      const product = productMap.get(line.productId);
+      const metadata = parseProductMetadata(product?.metadata);
+      return { productType: metadata.productType };
+    }),
+  );
+
+  const delivery = await resolveOrderDelivery(
+    businessId,
+    needsDelivery,
+    input.deliveryZoneId,
+  );
+  const deliveryFee = delivery.fee;
   const total = Math.max(0, subtotal - discountAmount + deliveryFee);
 
   const todayStart = new Date();
@@ -152,6 +169,8 @@ export async function createGuestOrder(
         subtotal,
         discountAmount,
         deliveryFee,
+        deliveryZoneId: delivery.zoneId,
+        deliveryZoneName: delivery.zoneName,
         total,
         paymentProvider: "MANUAL",
         promotionId,

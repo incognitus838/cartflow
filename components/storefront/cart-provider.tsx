@@ -17,6 +17,8 @@ type CartContextValue = {
   lines: CartLine[];
   itemCount: number;
   subtotal: number;
+  selectedDeliveryZoneId: string | null;
+  setSelectedDeliveryZoneId: (zoneId: string | null) => void;
   addItem: (input: AddToCartInput) => void;
   updateQuantity: (key: string, quantity: number) => void;
   removeItem: (key: string) => void;
@@ -32,6 +34,7 @@ type CartProviderProps = {
 
 export function CartProvider({ storeSlug, children }: CartProviderProps) {
   const [lines, setLines] = useState<CartLine[]>([]);
+  const [selectedDeliveryZoneId, setSelectedDeliveryZoneId] = useState<string | null>(null);
   const [hydrated, setHydrated] = useState(false);
   const linesRef = useRef<CartLine[]>([]);
 
@@ -44,6 +47,7 @@ export function CartProvider({ storeSlug, children }: CartProviderProps) {
     const next = saved?.lines ?? [];
     linesRef.current = next;
     setLines(next);
+    setSelectedDeliveryZoneId(saved?.selectedDeliveryZoneId ?? null);
     setHydrated(true);
   }, [storeSlug]);
 
@@ -55,8 +59,13 @@ export function CartProvider({ storeSlug, children }: CartProviderProps) {
       return;
     }
 
-    writeCart({ storeSlug, lines, updatedAt: Date.now() });
-  }, [hydrated, lines, storeSlug]);
+    writeCart({
+      storeSlug,
+      lines,
+      selectedDeliveryZoneId,
+      updatedAt: Date.now(),
+    });
+  }, [hydrated, lines, selectedDeliveryZoneId, storeSlug]);
 
   useEffect(() => {
     function resyncFromStorage() {
@@ -64,6 +73,7 @@ export function CartProvider({ storeSlug, children }: CartProviderProps) {
       const next = saved?.lines ?? [];
       linesRef.current = next;
       setLines(next);
+      setSelectedDeliveryZoneId(saved?.selectedDeliveryZoneId ?? null);
     }
 
     function onPageShow(event: PageTransitionEvent) {
@@ -97,6 +107,7 @@ export function CartProvider({ storeSlug, children }: CartProviderProps) {
           variantName: input.variantName,
           sku: input.sku,
           imageUrl: input.imageUrl,
+          productType: input.productType,
           unitPrice: input.unitPrice,
           quantity: Math.min(input.quantity, input.maxStock),
           maxStock: input.maxStock,
@@ -125,6 +136,7 @@ export function CartProvider({ storeSlug, children }: CartProviderProps) {
     persistEmptyCart(storeSlug);
     linesRef.current = [];
     setLines([]);
+    setSelectedDeliveryZoneId(null);
   }, [storeSlug]);
 
   const value = useMemo<CartContextValue>(() => {
@@ -135,12 +147,21 @@ export function CartProvider({ storeSlug, children }: CartProviderProps) {
       lines,
       itemCount,
       subtotal,
+      selectedDeliveryZoneId,
+      setSelectedDeliveryZoneId,
       addItem,
       updateQuantity,
       removeItem,
       clear,
     };
-  }, [addItem, clear, lines, removeItem, updateQuantity]);
+  }, [
+    addItem,
+    clear,
+    lines,
+    removeItem,
+    selectedDeliveryZoneId,
+    updateQuantity,
+  ]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }
