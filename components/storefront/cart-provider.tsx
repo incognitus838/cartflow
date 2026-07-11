@@ -6,11 +6,12 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import type { AddToCartInput, CartLine } from "@/lib/cart/types";
 import { cartLineKey } from "@/lib/cart/types";
-import { clearCart, readCart, writeCart } from "@/lib/cart/storage";
+import { clearCart, persistEmptyCart, readCart, writeCart } from "@/lib/cart/storage";
 
 type CartContextValue = {
   lines: CartLine[];
@@ -32,17 +33,46 @@ type CartProviderProps = {
 export function CartProvider({ storeSlug, children }: CartProviderProps) {
   const [lines, setLines] = useState<CartLine[]>([]);
   const [hydrated, setHydrated] = useState(false);
+  const linesRef = useRef<CartLine[]>([]);
+
+  useEffect(() => {
+    linesRef.current = lines;
+  }, [lines]);
 
   useEffect(() => {
     const saved = readCart(storeSlug);
-    setLines(saved?.lines ?? []);
+    const next = saved?.lines ?? [];
+    linesRef.current = next;
+    setLines(next);
     setHydrated(true);
   }, [storeSlug]);
 
   useEffect(() => {
     if (!hydrated) return;
+
+    if (lines.length === 0) {
+      clearCart(storeSlug);
+      return;
+    }
+
     writeCart({ storeSlug, lines, updatedAt: Date.now() });
   }, [hydrated, lines, storeSlug]);
+
+  useEffect(() => {
+    function resyncFromStorage() {
+      const saved = readCart(storeSlug);
+      const next = saved?.lines ?? [];
+      linesRef.current = next;
+      setLines(next);
+    }
+
+    function onPageShow(event: PageTransitionEvent) {
+      if (event.persisted) resyncFromStorage();
+    }
+
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
+  }, [storeSlug]);
 
   const addItem = useCallback((input: AddToCartInput) => {
     const key = cartLineKey(input.productId, input.variantId);
@@ -92,8 +122,9 @@ export function CartProvider({ storeSlug, children }: CartProviderProps) {
   }, []);
 
   const clear = useCallback(() => {
+    persistEmptyCart(storeSlug);
+    linesRef.current = [];
     setLines([]);
-    clearCart(storeSlug);
   }, [storeSlug]);
 
   const value = useMemo<CartContextValue>(() => {

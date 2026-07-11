@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import { flushSync } from "react-dom";
 import { toast } from "sonner";
 import { useCart } from "@/components/storefront/cart-provider";
 import { ManualPaymentInstructions } from "@/components/storefront/manual-payment-instructions";
@@ -93,7 +94,9 @@ export function CheckoutForm({
         return;
       }
 
-      clear();
+      flushSync(() => {
+        clear();
+      });
       saveTrackSession(storeSlug, data.order.orderNumber);
       router.push(
         orderConfirmationPath(storeSlug, data.order.orderNumber, { justPlaced: true }),

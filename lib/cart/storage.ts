@@ -29,3 +29,9 @@ export function clearCart(storeSlug: string) {
   if (typeof window === "undefined") return;
   localStorage.removeItem(cartStorageKey(storeSlug));
 }
+
+/** Synchronously persist an empty cart (avoids races with async React state). */
+export function persistEmptyCart(storeSlug: string) {
+  if (typeof window === "undefined") return;
+  writeCart({ storeSlug, lines: [], updatedAt: Date.now() });
+}

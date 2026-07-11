@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { CheckCircle2, Clock } from "lucide-react";
+import { CartClearOnOrder } from "@/components/storefront/cart-clear-on-order";
 import { OrderPlacedBanner } from "@/components/storefront/order-placed-banner";
 import { PaymentReceiptViewer } from "@/components/payment-receipt-viewer";
 import { OrderIdCard } from "@/components/storefront/order-id-card";
@@ -51,6 +52,7 @@ export default async function OrderConfirmationPage({ params }: OrderConfirmatio
       <OrderStatusRefresh enabled={!isTerminal} />
 
       <Suspense fallback={null}>
+        <CartClearOnOrder />
         <OrderPlacedBanner
           storeSlug={store.slug}
           orderNumber={order.orderNumber}
