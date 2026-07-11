@@ -1,14 +1,15 @@
 "use client";
 
-import { Box, Cpu, Leaf, UtensilsCrossed } from "lucide-react";
+import { Box, Cpu, Leaf, ShoppingBag, Sparkles, UtensilsCrossed } from "lucide-react";
 import { PRODUCT_TYPES, type ProductType } from "@/lib/products/product-types";
 import { cn } from "@/lib/utils";
 
 const TYPE_ICONS: Record<ProductType, typeof Box> = {
+  ONLINE: ShoppingBag,
   PHYSICAL: Box,
   DIGITAL: Cpu,
   FOOD: Leaf,
-  SERVICE: UtensilsCrossed,
+  SERVICE: Sparkles,
 };
 
 type ProductTypeSelectorProps = {

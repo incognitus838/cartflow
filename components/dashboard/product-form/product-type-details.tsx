@@ -2,7 +2,7 @@
 
 import type { ProductMetadata } from "@/lib/products/metadata";
 import { PRODUCT_TYPE_CONFIG } from "@/lib/products/product-type-config";
-import type { ProductType } from "@/lib/products/product-types";
+import { isPhysicalLikeProductType, type ProductType } from "@/lib/products/product-types";
 
 type ProductTypeDetailsProps = {
   type: ProductType;
@@ -47,26 +47,26 @@ export function ProductTypeDetails({
         <p className="mt-1 text-[12px] text-[#86868b]">{config.subtitle}</p>
       </div>
 
-      {type === "PHYSICAL" ? (
+      {isPhysicalLikeProductType(type) ? (
         <div className="mt-5 grid gap-4 sm:grid-cols-2">
           <div>
-            <label htmlFor="physical-sku" className="cf-product-label">
+            <label htmlFor={`${type}-sku`} className="cf-product-label">
               SKU / product code
             </label>
             <input
-              id="physical-sku"
+              id={`${type}-sku`}
               value={metadata.sku}
               onChange={(e) => onMetadataChange("sku", e.target.value)}
               className="cf-input mt-2"
-              placeholder="ANK-DRESS-12"
+              placeholder={type === "ONLINE" ? "EARBUDS-PRO-BLK" : "ANK-DRESS-12"}
             />
           </div>
           <div>
-            <label htmlFor="physical-weight" className="cf-product-label">
+            <label htmlFor={`${type}-weight`} className="cf-product-label">
               Weight (kg)
             </label>
             <input
-              id="physical-weight"
+              id={`${type}-weight`}
               type="number"
               min={0}
               step="0.01"
@@ -78,11 +78,11 @@ export function ProductTypeDetails({
           </div>
           {!useVariants ? (
             <div>
-              <label htmlFor="physical-stock" className="cf-product-label">
+              <label htmlFor={`${type}-stock`} className="cf-product-label">
                 Stock quantity
               </label>
               <input
-                id="physical-stock"
+                id={`${type}-stock`}
                 type="number"
                 min={0}
                 required
@@ -93,11 +93,11 @@ export function ProductTypeDetails({
             </div>
           ) : null}
           <div>
-            <label htmlFor="physical-low-stock" className="cf-product-label">
+            <label htmlFor={`${type}-low-stock`} className="cf-product-label">
               Low-stock alert
             </label>
             <input
-              id="physical-low-stock"
+              id={`${type}-low-stock`}
               type="number"
               min={0}
               value={lowStockThreshold}
@@ -106,24 +106,28 @@ export function ProductTypeDetails({
             />
           </div>
           <div className="sm:col-span-2">
-            <label htmlFor="physical-shipping" className="cf-product-label">
+            <label htmlFor={`${type}-shipping`} className="cf-product-label">
               Shipping notes
             </label>
             <textarea
-              id="physical-shipping"
+              id={`${type}-shipping`}
               rows={2}
               value={metadata.shippingNotes}
               onChange={(e) => onMetadataChange("shippingNotes", e.target.value)}
               className="cf-input mt-2 resize-y"
-              placeholder="Nationwide delivery in 2–3 days. Lagos same-day dispatch."
+              placeholder={
+                type === "ONLINE"
+                  ? "Ships nationwide in 2–4 days. Lagos & Abuja next-day dispatch."
+                  : "Nationwide delivery in 2–3 days. Lagos same-day dispatch."
+              }
             />
           </div>
           <div className="sm:col-span-2">
-            <label htmlFor="physical-dimensions" className="cf-product-label">
+            <label htmlFor={`${type}-dimensions`} className="cf-product-label">
               Dimensions (optional)
             </label>
             <input
-              id="physical-dimensions"
+              id={`${type}-dimensions`}
               value={metadata.customFields.dimensions ?? ""}
               onChange={(e) => patchCustomField("dimensions", e.target.value)}
               className="cf-input mt-2"
@@ -311,7 +315,7 @@ export function ProductTypeDetails({
               value={metadata.serviceDuration}
               onChange={(e) => onMetadataChange("serviceDuration", e.target.value)}
               className="cf-input mt-2"
-              placeholder="45 min · Party tray · Full day"
+              placeholder="2-hour session · Half day · Full day"
             />
           </div>
           <div>
@@ -323,7 +327,7 @@ export function ProductTypeDetails({
               value={metadata.bookingLeadTime}
               onChange={(e) => onMetadataChange("bookingLeadTime", e.target.value)}
               className="cf-input mt-2"
-              placeholder="Order 24 hours ahead"
+              placeholder="Book 24 hours ahead"
             />
           </div>
           <div>
@@ -335,7 +339,7 @@ export function ProductTypeDetails({
               value={metadata.customFields.portionSize ?? ""}
               onChange={(e) => patchCustomField("portionSize", e.target.value)}
               className="cf-input mt-2"
-              placeholder="Serves 10–12 people"
+              placeholder="Up to 10 items · 3-store tour"
             />
           </div>
           <div>
@@ -375,7 +379,7 @@ export function ProductTypeDetails({
               value={metadata.customFields.bookingNotes ?? ""}
               onChange={(e) => patchCustomField("bookingNotes", e.target.value)}
               className="cf-input mt-2 resize-y"
-              placeholder="WhatsApp your event date after payment. Deposit may apply."
+              placeholder="Share your size, budget, and preferred shopping date after payment."
             />
           </div>
           <div className="sm:col-span-2 rounded-[12px] border border-[#b8956a]/25 bg-[#fffdf8] px-4 py-3 text-[12px] text-[#6e6e73]">

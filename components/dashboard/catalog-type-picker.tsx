@@ -1,15 +1,16 @@
 "use client";
 
-import { Box, Cpu, Leaf, UtensilsCrossed } from "lucide-react";
+import { Box, Cpu, Leaf, ShoppingBag, Sparkles, UtensilsCrossed } from "lucide-react";
 import { getCatalogTemplate } from "@/lib/catalog/templates";
 import { PRODUCT_TYPES, type ProductType } from "@/lib/products/product-types";
 import { cn } from "@/lib/utils";
 
 const TYPE_ICONS: Record<ProductType, typeof Box> = {
+  ONLINE: ShoppingBag,
   PHYSICAL: Box,
   DIGITAL: Cpu,
   FOOD: Leaf,
-  SERVICE: UtensilsCrossed,
+  SERVICE: Sparkles,
 };
 
 type CatalogTypePickerProps = {
@@ -31,10 +32,11 @@ export function CatalogTypePicker({
         What do you sell?
       </legend>
       <p className={cn("text-slate-500", compact ? "mt-1 text-xs" : "mt-1 text-[12px] text-[#86868b]")}>
-        Choose your catalog type — suggested categories and tags are included; edit or add your own.
+        Online gadget sellers, digital creators, and personal shoppers all start here — categories
+        and tags are suggested for you.
       </p>
       <div
-        className={cn("grid gap-2 sm:grid-cols-2", compact ? "mt-4" : "mt-3")}
+        className={cn("grid gap-2 sm:grid-cols-2 lg:grid-cols-3", compact ? "mt-4" : "mt-3")}
         role="radiogroup"
         aria-label="Catalog product type"
       >

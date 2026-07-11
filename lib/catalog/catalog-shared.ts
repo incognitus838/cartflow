@@ -79,7 +79,7 @@ export function applyTemplateToSettings(
 ): CatalogSettings | string {
   const normalized = normalizeCatalogTemplateId(templateId);
   if (!normalized || !isCatalogProductType(normalized)) {
-    return "Choose a catalog type: Physical, Digital, Food, or Service.";
+    return "Choose a catalog type: Online store, Digital, Services, Retail, or Food.";
   }
 
   const template = getCatalogTemplate(normalized);

@@ -52,6 +52,7 @@ export function parseProductMetadata(raw: unknown): ProductMetadata {
   const data = raw as Record<string, unknown>;
   const productType = data.productType;
   if (
+    productType === "ONLINE" ||
     productType === "PHYSICAL" ||
     productType === "DIGITAL" ||
     productType === "FOOD" ||

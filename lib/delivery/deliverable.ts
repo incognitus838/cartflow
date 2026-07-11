@@ -1,6 +1,6 @@
 import type { ProductType } from "@/lib/products/product-types";
 
-const DELIVERABLE_TYPES = new Set<ProductType>(["PHYSICAL", "FOOD"]);
+const DELIVERABLE_TYPES = new Set<ProductType>(["ONLINE", "PHYSICAL", "FOOD"]);
 
 export function isDeliverableProductType(productType: ProductType | string | undefined) {
   const type = productType ?? "PHYSICAL";

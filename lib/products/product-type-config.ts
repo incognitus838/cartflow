@@ -13,6 +13,17 @@ export type ProductTypeConfig = {
 };
 
 export const PRODUCT_TYPE_CONFIG: Record<ProductType, ProductTypeConfig> = {
+  ONLINE: {
+    title: "Online store product",
+    subtitle: "Gadgets and goods you sell online — track stock and how you ship to customers.",
+    titlePlaceholder: "Wireless Earbuds Pro — Black",
+    descriptionPlaceholder: "Specs, what's in the box, warranty, and delivery timeline.",
+    categoryPlaceholder: "Gadgets, Phones, Personal brand",
+    showStock: true,
+    showLowStock: true,
+    showVariants: true,
+    mediaHint: "Clear product photos build trust online. Show angles, packaging, and scale.",
+  },
   PHYSICAL: {
     title: "Physical product details",
     subtitle: "Shipping, SKU, weight, and stock for items you pack and send.",
@@ -47,11 +58,11 @@ export const PRODUCT_TYPE_CONFIG: Record<ProductType, ProductTypeConfig> = {
     mediaHint: "Clear photos help buyers trust freshness. Show portion size if possible.",
   },
   SERVICE: {
-    title: "Service & restaurant details",
-    subtitle: "Menu items, bookings, or made-to-order — set how customers order.",
-    titlePlaceholder: "Jollof Rice & Chicken — Party Tray",
-    descriptionPlaceholder: "What’s included, serving size, and how far in advance to order.",
-    categoryPlaceholder: "Restaurant, Catering, Beauty Service",
+    title: "Service details",
+    subtitle: "Personal shoppers, consulting, beauty — explain what customers get and how to book.",
+    titlePlaceholder: "Personal Shopping Session — 2 hours",
+    descriptionPlaceholder: "What you do, what's included, and how customers prepare for the session.",
+    categoryPlaceholder: "Personal shopping, Consulting, Beauty",
     showStock: false,
     showLowStock: false,
     showVariants: true,

@@ -1,23 +1,28 @@
 export const PRODUCT_TYPES = [
   {
-    value: "PHYSICAL",
-    label: "Physical Goods",
-    hint: "Shippable items with stock and SKU tracking.",
+    value: "ONLINE",
+    label: "Online store",
+    hint: "Gadgets, electronics, personal brands — sell online & ship. No physical storefront.",
   },
   {
     value: "DIGITAL",
-    label: "Digital Product",
-    hint: "Courses, eBooks, downloads — auto-delivery via link.",
-  },
-  {
-    value: "FOOD",
-    label: "Food & Drinks",
-    hint: "Meals, groceries, and beverages.",
+    label: "Digital store",
+    hint: "Courses, ebooks, templates — customers get instant access after payment.",
   },
   {
     value: "SERVICE",
-    label: "Service / Restaurant",
-    hint: "Menu items, bookings, or made-to-order services.",
+    label: "Services & bookings",
+    hint: "Personal shoppers, consulting, beauty — customers book your time or expertise.",
+  },
+  {
+    value: "PHYSICAL",
+    label: "Retail inventory",
+    hint: "Fashion, home goods, and in-stock items you pack and deliver.",
+  },
+  {
+    value: "FOOD",
+    label: "Food & drinks",
+    hint: "Meals, groceries, and beverages.",
   },
 ] as const;
 
@@ -30,8 +35,14 @@ export function defaultVariantGroupName(productType: ProductType) {
     case "FOOD":
       return "Weight";
     case "SERVICE":
-      return "Option";
+      return "Package";
+    case "ONLINE":
+      return "Model";
     default:
       return "Size";
   }
+}
+
+export function isPhysicalLikeProductType(productType: ProductType) {
+  return productType === "PHYSICAL" || productType === "ONLINE";
 }

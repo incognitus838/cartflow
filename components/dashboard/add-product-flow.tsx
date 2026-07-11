@@ -63,7 +63,7 @@ export function AddProductFlow({
       <>
         <PageHeader
           title="Catalog setup"
-          description="Choose what you sell — Physical, Digital, Food, or Service. Categories save to your store for admin review."
+          description="Online gadget sellers, digital creators, and service pros all start here. Pick your catalog type — categories save for admin review."
         />
         <CatalogManager
           initial={catalog}
@@ -87,7 +87,7 @@ export function AddProductFlow({
         <section id="catalog" className="scroll-mt-6">
           <PageHeader
             title="What do you sell?"
-            description="Pick what you sell — suggested categories and tags load automatically. Edit or add your own, then create a product."
+            description="Sell gadgets online, digital downloads, or services like personal shopping — pick your store type and suggested categories load automatically."
           />
           <CatalogManager
             initial={catalog}
