@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { normalizeOrderNumber } from "@/lib/order-number";
-import { phonesMatch } from "@/lib/orders/phone";
 import { toPublicOrderSnapshot } from "@/lib/orders/tracking";
 import { getStoreOrder, getStorefrontBySlug } from "@/lib/queries/storefront";
 
@@ -20,41 +19,21 @@ async function resolveOrder(storeSlug: string, orderNumber: string) {
   return { store, order };
 }
 
-/** POST — verify phone and return a safe order snapshot for tracking. */
-export async function POST(request: Request, context: RouteContext) {
-  const { storeSlug, orderNumber } = await context.params;
-  const resolved = await resolveOrder(storeSlug, orderNumber);
-
-  if ("error" in resolved) {
-    return NextResponse.json({ error: resolved.error }, { status: resolved.status });
-  }
-
-  const body = await request.json().catch(() => null);
-  const customerPhone =
-    body && typeof body.customerPhone === "string" ? body.customerPhone.trim() : "";
-
-  if (!customerPhone || customerPhone.length < 7) {
-    return NextResponse.json({ error: "Phone number is required." }, { status: 400 });
-  }
-
-  if (!phonesMatch(customerPhone, resolved.order.customerPhone)) {
-    return NextResponse.json(
-      { error: "Phone number does not match this order." },
-      { status: 403 },
-    );
-  }
-
+function snapshotResponse(
+  store: { name: string; slug: string; currency: string },
+  order: NonNullable<Awaited<ReturnType<typeof getStoreOrder>>>,
+) {
   return NextResponse.json({
-    order: toPublicOrderSnapshot(resolved.order, {
-      name: resolved.store.name,
-      slug: resolved.store.slug,
-      currency: resolved.store.currency,
+    order: toPublicOrderSnapshot(order, {
+      name: store.name,
+      slug: store.slug,
+      currency: store.currency,
     }),
   });
 }
 
-/** GET — poll order status (requires matching phone query param). */
-export async function GET(request: Request, context: RouteContext) {
+/** POST — look up order by ID for tracking. */
+export async function POST(_request: Request, context: RouteContext) {
   const { storeSlug, orderNumber } = await context.params;
   const resolved = await resolveOrder(storeSlug, orderNumber);
 
@@ -62,17 +41,17 @@ export async function GET(request: Request, context: RouteContext) {
     return NextResponse.json({ error: resolved.error }, { status: resolved.status });
   }
 
-  const customerPhone = new URL(request.url).searchParams.get("phone")?.trim() ?? "";
+  return snapshotResponse(resolved.store, resolved.order);
+}
 
-  if (!customerPhone || !phonesMatch(customerPhone, resolved.order.customerPhone)) {
-    return NextResponse.json({ error: "Unauthorized." }, { status: 403 });
+/** GET — poll order status by ID. */
+export async function GET(_request: Request, context: RouteContext) {
+  const { storeSlug, orderNumber } = await context.params;
+  const resolved = await resolveOrder(storeSlug, orderNumber);
+
+  if ("error" in resolved) {
+    return NextResponse.json({ error: resolved.error }, { status: resolved.status });
   }
 
-  return NextResponse.json({
-    order: toPublicOrderSnapshot(resolved.order, {
-      name: resolved.store.name,
-      slug: resolved.store.slug,
-      currency: resolved.store.currency,
-    }),
-  });
+  return snapshotResponse(resolved.store, resolved.order);
 }

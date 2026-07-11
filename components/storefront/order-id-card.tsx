@@ -3,18 +3,15 @@
 import { useState } from "react";
 import { Check, Copy } from "lucide-react";
 import { toast } from "sonner";
-import { trackOrderLookupPath, trackOrderPath } from "@/lib/storefront/paths";
+import { trackOrderLookupPath } from "@/lib/storefront/paths";
 
 type OrderIdCardProps = {
   storeSlug: string;
   orderNumber: string;
-  customerPhone?: string;
 };
 
-export function OrderIdCard({ storeSlug, orderNumber, customerPhone }: OrderIdCardProps) {
-  const trackHref = customerPhone
-    ? trackOrderLookupPath(storeSlug, orderNumber, customerPhone)
-    : trackOrderPath(storeSlug);
+export function OrderIdCard({ storeSlug, orderNumber }: OrderIdCardProps) {
+  const trackHref = trackOrderLookupPath(storeSlug, orderNumber);
   const [copied, setCopied] = useState(false);
 
   async function handleCopy() {
@@ -63,7 +60,7 @@ export function OrderIdCard({ storeSlug, orderNumber, customerPhone }: OrderIdCa
         >
           track your order
         </a>{" "}
-        anytime with your ID and phone number.
+        anytime with your order ID.
       </p>
     </section>
   );

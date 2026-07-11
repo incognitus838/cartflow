@@ -13,55 +13,45 @@ type TrackOrderFormProps = {
   storeSlug: string;
   storeName: string;
   initialOrder?: string;
-  initialPhone?: string;
 };
 
 export function TrackOrderForm({
   storeSlug,
   storeName,
   initialOrder = "",
-  initialPhone = "",
 }: TrackOrderFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [orderNumber, setOrderNumber] = useState(initialOrder);
-  const [customerPhone, setCustomerPhone] = useState(initialPhone);
   const [loading, setLoading] = useState(false);
   const [trackedOrder, setTrackedOrder] = useState<PublicOrderTracking | null>(null);
-  const [verifiedPhone, setVerifiedPhone] = useState<string | null>(null);
   const lookupKeyRef = useRef<string | null>(null);
 
   const lookupOrder = useCallback(
-    async (trimmedId: string, trimmedPhone: string, updateUrl = true) => {
+    async (trimmedId: string, updateUrl = true) => {
       setLoading(true);
 
       try {
         const res = await fetch(
           `/api/storefront/${storeSlug}/orders/${encodeURIComponent(trimmedId)}`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ customerPhone: trimmedPhone }),
-          },
+          { method: "POST" },
         );
 
         const data = await res.json();
 
         if (!res.ok) {
-          toast.error(data.error || "Order not found. Check your ID and phone number.");
+          toast.error(data.error || "Order not found. Check your order ID.");
           setTrackedOrder(null);
-          setVerifiedPhone(null);
           lookupKeyRef.current = null;
           return false;
         }
 
         setTrackedOrder(data.order as PublicOrderTracking);
-        setVerifiedPhone(trimmedPhone);
         setOrderNumber(trimmedId);
         clearTrackSession(storeSlug);
 
         if (updateUrl) {
-          const next = trackOrderLookupPath(storeSlug, trimmedId, trimmedPhone);
+          const next = trackOrderLookupPath(storeSlug, trimmedId);
           const current = `/${storeSlug}/track?${searchParams.toString()}`;
           if (current !== next) {
             router.replace(next, { scroll: false });
@@ -82,56 +72,44 @@ export function TrackOrderForm({
 
   useEffect(() => {
     let fromUrlOrder = searchParams.get("order")?.trim().toUpperCase() ?? "";
-    let fromUrlPhone = searchParams.get("phone")?.trim() ?? "";
 
-    if (!fromUrlOrder || !fromUrlPhone) {
+    if (!fromUrlOrder) {
       const saved = readTrackSession(storeSlug);
       if (saved) {
         fromUrlOrder = saved.orderNumber;
-        fromUrlPhone = saved.customerPhone;
       }
     }
 
     if (fromUrlOrder) setOrderNumber(fromUrlOrder);
-    if (fromUrlPhone) setCustomerPhone(fromUrlPhone);
+    if (!fromUrlOrder) return;
 
-    if (!fromUrlOrder || fromUrlPhone.length < 7) return;
+    if (lookupKeyRef.current === fromUrlOrder) return;
+    lookupKeyRef.current = fromUrlOrder;
 
-    const key = `${fromUrlOrder}:${fromUrlPhone}`;
-    if (lookupKeyRef.current === key) return;
-    lookupKeyRef.current = key;
-
-    const hasUrlParams = Boolean(searchParams.get("order") && searchParams.get("phone"));
-    void lookupOrder(fromUrlOrder, fromUrlPhone, !hasUrlParams);
+    const hasUrlParam = Boolean(searchParams.get("order"));
+    void lookupOrder(fromUrlOrder, !hasUrlParam);
   }, [lookupOrder, searchParams, storeSlug]);
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
 
     const trimmedId = orderNumber.trim().toUpperCase();
-    const trimmedPhone = customerPhone.trim();
 
     if (!trimmedId) {
       toast.error("Enter your order ID.");
       return;
     }
 
-    if (!trimmedPhone || trimmedPhone.length < 7) {
-      toast.error("Enter the phone number used at checkout.");
-      return;
-    }
-
     lookupKeyRef.current = null;
-    await lookupOrder(trimmedId, trimmedPhone);
+    await lookupOrder(trimmedId);
   }
 
-  if (trackedOrder && verifiedPhone) {
+  if (trackedOrder) {
     return (
       <div className="space-y-6">
         <OrderTrackingPanel
           order={trackedOrder}
           storeSlug={storeSlug}
-          customerPhone={verifiedPhone}
           showConfirmationLink
         />
 
@@ -139,7 +117,6 @@ export function TrackOrderForm({
           type="button"
           onClick={() => {
             setTrackedOrder(null);
-            setVerifiedPhone(null);
             lookupKeyRef.current = null;
           }}
           className="w-full rounded-xl border border-[var(--store-border)] bg-[var(--store-surface)] py-3 text-sm font-medium text-[var(--store-text)] transition-colors hover:bg-[var(--store-header-bg)]"
@@ -167,48 +144,28 @@ export function TrackOrderForm({
             Track your order
           </h1>
           <p className="mt-1 text-sm text-[var(--store-muted)]">
-            Enter your order ID and phone number to see live progress from {storeName}.
+            Enter your order ID to see live progress from {storeName}.
           </p>
         </div>
       </div>
 
-      <div className="mt-6 space-y-4">
-        <div>
-          <label htmlFor="orderNumber" className="mb-1.5 block text-sm font-medium text-[var(--store-text)]">
-            Order ID
-          </label>
-          <input
-            id="orderNumber"
-            type="text"
-            value={orderNumber}
-            onChange={(e) => setOrderNumber(e.target.value)}
-            placeholder="e.g. CF-20260706-0001"
-            autoComplete="off"
-            spellCheck={false}
-            className="w-full rounded-xl border border-[var(--store-border)] bg-white px-4 py-3 font-mono text-sm text-[var(--store-text)] outline-none transition-shadow placeholder:font-sans placeholder:text-[var(--store-muted)] focus:ring-2 focus:ring-[var(--store-accent)]/30"
-          />
-          <p className="mt-1.5 text-xs text-[var(--store-muted)]">
-            Found on your confirmation page right after checkout.
-          </p>
-        </div>
-
-        <div>
-          <label htmlFor="customerPhone" className="mb-1.5 block text-sm font-medium text-[var(--store-text)]">
-            Phone number
-          </label>
-          <input
-            id="customerPhone"
-            type="tel"
-            value={customerPhone}
-            onChange={(e) => setCustomerPhone(e.target.value)}
-            placeholder="08012345678"
-            autoComplete="tel"
-            className="w-full rounded-xl border border-[var(--store-border)] bg-white px-4 py-3 text-sm text-[var(--store-text)] outline-none transition-shadow placeholder:text-[var(--store-muted)] focus:ring-2 focus:ring-[var(--store-accent)]/30"
-          />
-          <p className="mt-1.5 text-xs text-[var(--store-muted)]">
-            Must match the number you used when placing the order.
-          </p>
-        </div>
+      <div className="mt-6">
+        <label htmlFor="orderNumber" className="mb-1.5 block text-sm font-medium text-[var(--store-text)]">
+          Order ID
+        </label>
+        <input
+          id="orderNumber"
+          type="text"
+          value={orderNumber}
+          onChange={(e) => setOrderNumber(e.target.value)}
+          placeholder="e.g. CF-20260706-0001"
+          autoComplete="off"
+          spellCheck={false}
+          className="w-full rounded-xl border border-[var(--store-border)] bg-white px-4 py-3 font-mono text-sm text-[var(--store-text)] outline-none transition-shadow placeholder:font-sans placeholder:text-[var(--store-muted)] focus:ring-2 focus:ring-[var(--store-accent)]/30"
+        />
+        <p className="mt-1.5 text-xs text-[var(--store-muted)]">
+          Found on your confirmation page right after checkout.
+        </p>
       </div>
 
       <button

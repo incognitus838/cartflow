@@ -94,7 +94,7 @@ export function CheckoutForm({
       }
 
       clear();
-      saveTrackSession(storeSlug, data.order.orderNumber, customerPhone);
+      saveTrackSession(storeSlug, data.order.orderNumber);
       router.push(
         orderConfirmationPath(storeSlug, data.order.orderNumber, { justPlaced: true }),
       );

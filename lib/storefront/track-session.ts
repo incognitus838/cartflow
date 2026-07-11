@@ -1,6 +1,5 @@
 export type TrackSession = {
   orderNumber: string;
-  customerPhone: string;
   savedAt: number;
 };
 
@@ -10,12 +9,11 @@ function storageKey(storeSlug: string) {
   return `cartflow:track:${storeSlug}`;
 }
 
-export function saveTrackSession(storeSlug: string, orderNumber: string, customerPhone: string) {
+export function saveTrackSession(storeSlug: string, orderNumber: string) {
   if (typeof window === "undefined") return;
 
   const payload: TrackSession = {
     orderNumber: orderNumber.trim().toUpperCase(),
-    customerPhone: customerPhone.trim(),
     savedAt: Date.now(),
   };
 
@@ -36,7 +34,6 @@ export function readTrackSession(storeSlug: string): TrackSession | null {
     const parsed = JSON.parse(raw) as TrackSession;
     if (
       !parsed?.orderNumber ||
-      !parsed?.customerPhone ||
       typeof parsed.savedAt !== "number" ||
       Date.now() - parsed.savedAt > TTL_MS
     ) {
@@ -46,7 +43,6 @@ export function readTrackSession(storeSlug: string): TrackSession | null {
 
     return {
       orderNumber: parsed.orderNumber.trim().toUpperCase(),
-      customerPhone: parsed.customerPhone.trim(),
       savedAt: parsed.savedAt,
     };
   } catch {

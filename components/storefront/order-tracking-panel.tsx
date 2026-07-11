@@ -15,7 +15,6 @@ import type { OrderStatus } from "@prisma/client";
 type OrderTrackingPanelProps = {
   order: PublicOrderTracking;
   storeSlug: string;
-  customerPhone?: string;
   pollEnabled?: boolean;
   pollIntervalMs?: number;
   showConfirmationLink?: boolean;
@@ -70,7 +69,6 @@ function paymentChipVariant(status: OrderStatus, hasReceipt: boolean): ChipVaria
 export function OrderTrackingPanel({
   order: initialOrder,
   storeSlug,
-  customerPhone,
   pollEnabled = true,
   pollIntervalMs = 30_000,
   showConfirmationLink = false,
@@ -80,16 +78,13 @@ export function OrderTrackingPanel({
   const [lastPolledAt, setLastPolledAt] = useState<Date | null>(null);
 
   const terminal = isTerminalOrderStatus(order.status);
-  const canPoll = pollEnabled && Boolean(customerPhone) && !terminal;
+  const canPoll = pollEnabled && !terminal;
 
   const fetchLatest = useCallback(async () => {
-    if (!customerPhone) return;
-
     setRefreshing(true);
     try {
-      const params = new URLSearchParams({ phone: customerPhone });
       const res = await fetch(
-        `/api/storefront/${storeSlug}/orders/${encodeURIComponent(order.orderNumber)}?${params}`,
+        `/api/storefront/${storeSlug}/orders/${encodeURIComponent(order.orderNumber)}`,
       );
       const data = await res.json();
       if (res.ok && data.order) {
@@ -101,7 +96,7 @@ export function OrderTrackingPanel({
     } finally {
       setRefreshing(false);
     }
-  }, [customerPhone, order.orderNumber, storeSlug]);
+  }, [order.orderNumber, storeSlug]);
 
   useEffect(() => {
     setOrder(initialOrder);

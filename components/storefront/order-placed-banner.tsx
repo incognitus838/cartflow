@@ -11,21 +11,15 @@ type OrderPlacedBannerProps = {
   storeSlug: string;
   orderNumber: string;
   storeName: string;
-  customerPhone: string;
 };
 
-export function OrderPlacedBanner({
-  storeSlug,
-  orderNumber,
-  storeName,
-  customerPhone,
-}: OrderPlacedBannerProps) {
+export function OrderPlacedBanner({ storeSlug, orderNumber, storeName }: OrderPlacedBannerProps) {
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const router = useRouter();
   const [visible, setVisible] = useState(false);
   const [copied, setCopied] = useState(false);
-  const trackHref = trackOrderLookupPath(storeSlug, orderNumber, customerPhone);
+  const trackHref = trackOrderLookupPath(storeSlug, orderNumber);
 
   useEffect(() => {
     if (searchParams.get("placed") !== "1") return;
@@ -54,8 +48,7 @@ export function OrderPlacedBanner({
       </span>
       <h1 className="mt-4 text-2xl font-bold tracking-tight text-emerald-950">Order placed!</h1>
       <p className="mt-2 text-sm text-emerald-900">
-        {storeName} received your order. Save your order ID below — you will need it with your phone
-        number to track progress.
+        {storeName} received your order. Save your order ID below to track progress later.
       </p>
 
       <div className="mt-5 flex flex-wrap items-center justify-center gap-3">

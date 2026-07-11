@@ -5,7 +5,7 @@
  * Demo credentials:
  *   Order ID: CF-20260707-DEMO
  *   Phone:    08099887766
- *   Track:    /glow-beauty/track?order=CF-20260707-DEMO&phone=08099887766
+ *   Track:    /glow-beauty/track?order=CF-20260707-DEMO
  */
 import { PrismaClient } from "@prisma/client";
 
@@ -113,7 +113,7 @@ async function main() {
   console.log(`  Status: ${order.status}`);
   console.log(`  Items:  ${order.items.map((i) => i.title).join(", ")}`);
   console.log(`  Total:  ₦${Number(order.total).toLocaleString("en-NG")}`);
-  console.log(`\nTrack: /${STORE_SLUG}/track?order=${ORDER_NUMBER}&phone=${CUSTOMER_PHONE}`);
+  console.log(`\nTrack: /${STORE_SLUG}/track?order=${ORDER_NUMBER}`);
 }
 
 main()

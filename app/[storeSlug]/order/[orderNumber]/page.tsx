@@ -55,7 +55,6 @@ export default async function OrderConfirmationPage({ params }: OrderConfirmatio
           storeSlug={store.slug}
           orderNumber={order.orderNumber}
           storeName={store.name}
-          customerPhone={order.customerPhone}
         />
       </Suspense>
 
@@ -99,17 +98,12 @@ export default async function OrderConfirmationPage({ params }: OrderConfirmatio
         </p>
       </div>
 
-      <OrderIdCard
-        storeSlug={store.slug}
-        orderNumber={order.orderNumber}
-        customerPhone={order.customerPhone}
-      />
+      <OrderIdCard storeSlug={store.slug} orderNumber={order.orderNumber} />
 
       <div className="mt-6">
         <OrderTrackingPanel
           order={trackingSnapshot}
           storeSlug={store.slug}
-          customerPhone={order.customerPhone}
           pollEnabled={!isTerminal}
         />
       </div>
@@ -117,7 +111,7 @@ export default async function OrderConfirmationPage({ params }: OrderConfirmatio
       <p className="mt-4 text-center text-sm text-[var(--store-muted)]">
         Bookmark{" "}
         <Link
-          href={trackOrderLookupPath(store.slug, order.orderNumber, order.customerPhone)}
+          href={trackOrderLookupPath(store.slug, order.orderNumber)}
           className="font-medium text-[var(--store-text)] underline-offset-2 hover:underline"
         >
           your tracking page

@@ -31,14 +31,9 @@ export function trackOrderPath(storeSlug: string) {
   return `/${storeSlug}/track`;
 }
 
-export function trackOrderLookupPath(
-  storeSlug: string,
-  orderNumber: string,
-  customerPhone: string,
-) {
+export function trackOrderLookupPath(storeSlug: string, orderNumber: string) {
   const params = new URLSearchParams({
     order: orderNumber.trim().toUpperCase(),
-    phone: customerPhone.trim(),
   });
   return `/${storeSlug}/track?${params}`;
 }
