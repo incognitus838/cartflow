@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { CheckCircle2, Clock } from "lucide-react";
 import { CartClearOnOrder } from "@/components/storefront/cart-clear-on-order";
-import { OrderPlacedBanner } from "@/components/storefront/order-placed-banner";
+import { OrderPlacedHero } from "@/components/storefront/order-placed-hero";
 import { PaymentReceiptViewer } from "@/components/payment-receipt-viewer";
 import { OrderIdCard } from "@/components/storefront/order-id-card";
 import { OrderStatusRefresh } from "@/components/storefront/order-status-refresh";
@@ -19,10 +19,12 @@ import { resolveStorefront } from "@/lib/storefront/resolve-store";
 
 type OrderConfirmationProps = {
   params: Promise<{ storeSlug: string; orderNumber: string }>;
+  searchParams: Promise<{ placed?: string }>;
 };
 
-export default async function OrderConfirmationPage({ params }: OrderConfirmationProps) {
+export default async function OrderConfirmationPage({ params, searchParams }: OrderConfirmationProps) {
   const { storeSlug, orderNumber } = await params;
+  const { placed } = await searchParams;
   const store = await resolveStorefront(storeSlug);
   const order = await getStoreOrder(store.id, orderNumber);
 
@@ -30,6 +32,7 @@ export default async function OrderConfirmationPage({ params }: OrderConfirmatio
     notFound();
   }
 
+  const justPlaced = placed === "1";
   const hasReceipt = orderHasReceipt(order);
   const receiptSrc = storefrontOrderReceiptUrl(store.slug, order.orderNumber);
   const isPaid =
@@ -49,16 +52,19 @@ export default async function OrderConfirmationPage({ params }: OrderConfirmatio
 
   return (
     <div className="mx-auto max-w-2xl">
-      <OrderStatusRefresh enabled={!isTerminal} />
-
       <Suspense fallback={null}>
         <CartClearOnOrder />
-        <OrderPlacedBanner
-          storeSlug={store.slug}
-          orderNumber={order.orderNumber}
-          storeName={store.name}
-        />
       </Suspense>
+
+      <OrderStatusRefresh enabled={!isTerminal} />
+
+      {justPlaced ? (
+        <OrderPlacedHero
+          storeSlug={store.slug}
+          storeName={store.name}
+          orderNumber={order.orderNumber}
+        />
+      ) : null}
 
       <div
         className={`rounded-2xl border p-6 text-center sm:p-8 ${

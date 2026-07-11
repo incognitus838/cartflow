@@ -21,14 +21,16 @@ export function CheckoutPage({ storeSlug, currency, deliveryFee, paymentAccount 
   const router = useRouter();
   const { lines } = useCart();
   const [appliedPromo, setAppliedPromo] = useState<AppliedPromo | null>(null);
+  const [placingOrder, setPlacingOrder] = useState(false);
 
   useEffect(() => {
+    if (placingOrder) return;
     if (lines.length === 0) {
       router.replace(cartPath(storeSlug));
     }
-  }, [lines.length, router, storeSlug]);
+  }, [lines.length, placingOrder, router, storeSlug]);
 
-  if (lines.length === 0) {
+  if (!placingOrder && lines.length === 0) {
     return null;
   }
 
@@ -55,6 +57,7 @@ export function CheckoutPage({ storeSlug, currency, deliveryFee, paymentAccount 
             deliveryFee={deliveryFee}
             paymentAccount={paymentAccount}
             appliedPromo={appliedPromo}
+            onPlacingChange={setPlacingOrder}
           />
         </div>
 

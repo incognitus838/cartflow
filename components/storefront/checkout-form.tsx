@@ -1,10 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import { flushSync } from "react-dom";
 import { toast } from "sonner";
-import { useCart } from "@/components/storefront/cart-provider";
 import { ManualPaymentInstructions } from "@/components/storefront/manual-payment-instructions";
 import { PaymentReceiptField } from "@/components/storefront/payment-receipt-field";
 import type { AppliedPromo } from "@/components/storefront/promo-code-input";
@@ -20,6 +17,7 @@ type CheckoutFormProps = {
   deliveryFee: number;
   paymentAccount: ManualPaymentAccount | null;
   appliedPromo?: AppliedPromo | null;
+  onPlacingChange?: (placing: boolean) => void;
 };
 
 export function CheckoutForm({
@@ -29,9 +27,8 @@ export function CheckoutForm({
   deliveryFee,
   paymentAccount,
   appliedPromo,
+  onPlacingChange,
 }: CheckoutFormProps) {
-  const router = useRouter();
-  const { clear } = useCart();
   const [loading, setLoading] = useState(false);
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
@@ -61,6 +58,7 @@ export function CheckoutForm({
     }
 
     setLoading(true);
+    onPlacingChange?.(true);
 
     try {
       const formData = new FormData();
@@ -91,19 +89,23 @@ export function CheckoutForm({
 
       if (!res.ok) {
         toast.error(data.error || "Could not place order");
+        onPlacingChange?.(false);
         return;
       }
 
-      flushSync(() => {
-        clear();
-      });
-      saveTrackSession(storeSlug, data.order.orderNumber);
-      router.push(
-        orderConfirmationPath(storeSlug, data.order.orderNumber, { justPlaced: true }),
-      );
-      router.refresh();
+      const orderNumber = data.order?.orderNumber;
+      if (!orderNumber) {
+        toast.error("Order placed but confirmation failed. Contact the store.");
+        onPlacingChange?.(false);
+        return;
+      }
+
+      saveTrackSession(storeSlug, orderNumber);
+      const confirmationUrl = orderConfirmationPath(storeSlug, orderNumber, { justPlaced: true });
+      window.location.assign(confirmationUrl);
     } catch {
       toast.error("Something went wrong. Try again.");
+      onPlacingChange?.(false);
     } finally {
       setLoading(false);
     }
