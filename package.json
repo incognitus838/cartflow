@@ -33,7 +33,8 @@
     "test:e2e": "playwright test",
     "test": "npm run test:api",
     "vercel:sync-env": "node scripts/sync-vercel-env.mjs",
-    "docs:white-paper-pdf": "node scripts/generate-white-paper-pdf.mjs"
+    "docs:white-paper-pdf": "node scripts/generate-white-paper-pdf.mjs",
+    "docs:vendor-pitch-pdf": "node scripts/generate-vendor-pitch-pdf.mjs"
   },
   "dependencies": {
     "@prisma/client": "^6.16.0",
