@@ -3,9 +3,11 @@
 import Image from "next/image";
 import { useRef, useState } from "react";
 import { FileText, ImageIcon } from "lucide-react";
-import { RECEIPT_MAX_BYTES, RECEIPT_MAX_LABEL } from "@/lib/uploads/receipt";
-
-const ACCEPT = "image/jpeg,image/png,image/webp,image/gif,application/pdf";
+import {
+  RECEIPT_ACCEPT,
+  RECEIPT_MAX_BYTES,
+  RECEIPT_MAX_LABEL,
+} from "@/lib/uploads/receipt-constants";
 
 type PaymentReceiptFieldProps = {
   file: File | null;
@@ -51,7 +53,7 @@ export function PaymentReceiptField({ file, onFileChange, required = true }: Pay
       <input
         ref={inputRef}
         type="file"
-        accept={ACCEPT}
+        accept={RECEIPT_ACCEPT}
         required={required}
         className="hidden"
         onChange={(e) => handleSelect(e.target.files?.[0] ?? null)}

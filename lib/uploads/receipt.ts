@@ -1,18 +1,15 @@
+import "server-only";
 import sharp from "sharp";
+import {
+  RECEIPT_ALLOWED_TYPES,
+  RECEIPT_MAX_BYTES,
+  RECEIPT_MAX_LABEL,
+} from "@/lib/uploads/receipt-constants";
 
-export const RECEIPT_MAX_BYTES = 500 * 1024;
 const RECEIPT_IMAGE_MAX_EDGE = 1600;
 const RECEIPT_JPEG_QUALITY = 80;
 
-const ALLOWED_TYPES = new Set([
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "image/gif",
-  "application/pdf",
-]);
-
-export const RECEIPT_MAX_LABEL = "500 KB";
+export { RECEIPT_MAX_BYTES, RECEIPT_MAX_LABEL } from "@/lib/uploads/receipt-constants";
 
 export type ParsedReceipt = {
   data: Buffer;
@@ -21,7 +18,7 @@ export type ParsedReceipt = {
 };
 
 export function isReceiptMimeType(mimeType: string) {
-  return ALLOWED_TYPES.has(mimeType);
+  return RECEIPT_ALLOWED_TYPES.has(mimeType);
 }
 
 export function isReceiptImage(mimeType: string) {
@@ -59,7 +56,7 @@ export async function parseReceiptFile(file: File): Promise<ParsedReceipt> {
     throw new Error("Please upload your payment receipt.");
   }
 
-  if (!ALLOWED_TYPES.has(file.type)) {
+  if (!RECEIPT_ALLOWED_TYPES.has(file.type)) {
     throw new Error("Upload a JPG, PNG, WebP, GIF screenshot, or PDF receipt.");
   }
 
@@ -72,7 +69,8 @@ export async function parseReceiptFile(file: File): Promise<ParsedReceipt> {
   let filename = file.name.trim() || defaultFilename(file.type);
 
   if (isReceiptImage(mimeType) && mimeType !== "image/gif") {
-    buffer = await compressReceiptImage(buffer, mimeType);
+    const compressed = await compressReceiptImage(buffer, mimeType);
+    buffer = Buffer.from(compressed);
     mimeType = "image/jpeg";
     filename = filename.replace(/\.[^.]+$/, "") + ".jpg";
 

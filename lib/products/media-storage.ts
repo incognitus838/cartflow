@@ -1,3 +1,4 @@
+import "server-only";
 import { put } from "@vercel/blob";
 import { prisma } from "@/lib/db";
 import { toPrismaBytes } from "@/lib/orders/receipt-storage";
