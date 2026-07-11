@@ -57,14 +57,14 @@ export function CheckoutPage({
   }
 
   return (
-    <div>
+    <div className="pb-24 sm:pb-0">
       <div className="mb-5 sm:mb-8">
         <h1 className="text-xl font-bold text-slate-900 sm:text-2xl">Checkout</h1>
         <p className="mt-1 text-sm text-slate-600">Complete your order — no account required.</p>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_360px] lg:gap-8">
-        <div className="space-y-6">
+      <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[1fr_360px] lg:gap-8">
+        <div className="order-2 space-y-6 lg:order-1">
           {needsDelivery && hasZones ? (
             <DeliveryZonePicker
               zones={zones}
@@ -95,7 +95,7 @@ export function CheckoutPage({
           />
         </div>
 
-        <div className="lg:sticky lg:top-24 lg:self-start">
+        <div className="order-1 lg:order-2 lg:sticky lg:top-24 lg:self-start">
           <OrderSummary
             lines={lines}
             currency={currency}

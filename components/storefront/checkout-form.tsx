@@ -137,8 +137,9 @@ export function CheckoutForm({
       </section>
 
       <form
+        id="checkout-form"
         onSubmit={handleSubmit}
-        className="rounded-2xl border border-[var(--cf-border-strong)] bg-white p-5 sm:p-6"
+        className="rounded-2xl border border-[var(--cf-border-strong)] bg-white p-5 pb-28 sm:pb-6 sm:p-6"
       >
         <h2 className="text-sm font-semibold text-[var(--cf-black)]">Your details</h2>
         <p className="mt-1 text-xs text-[var(--cf-gray-600)]">
@@ -154,7 +155,7 @@ export function CheckoutForm({
               required
               value={customerName}
               onChange={(e) => setCustomerName(e.target.value)}
-              className="w-full rounded-lg border border-[var(--cf-gray-200)] px-3 py-2.5 text-sm outline-none focus:border-[var(--cf-black)] focus:ring-2 focus:ring-black/5"
+              className="w-full rounded-lg border border-[var(--cf-gray-200)] px-3 py-2.5 text-base outline-none focus:border-[var(--cf-black)] focus:ring-2 focus:ring-black/5 sm:text-sm"
               placeholder="Chioma Nwosu"
             />
           </div>
@@ -167,7 +168,7 @@ export function CheckoutForm({
               required
               value={customerPhone}
               onChange={(e) => setCustomerPhone(e.target.value)}
-              className="w-full rounded-lg border border-[var(--cf-gray-200)] px-3 py-2.5 text-sm outline-none focus:border-[var(--cf-black)] focus:ring-2 focus:ring-black/5"
+              className="w-full rounded-lg border border-[var(--cf-gray-200)] px-3 py-2.5 text-base outline-none focus:border-[var(--cf-black)] focus:ring-2 focus:ring-black/5 sm:text-sm"
               placeholder="+2348012345678"
             />
           </div>
@@ -180,7 +181,7 @@ export function CheckoutForm({
               value={customerAddress}
               onChange={(e) => setCustomerAddress(e.target.value)}
               rows={3}
-              className="w-full rounded-lg border border-[var(--cf-gray-200)] px-3 py-2.5 text-sm outline-none focus:border-[var(--cf-black)] focus:ring-2 focus:ring-black/5"
+              className="w-full rounded-lg border border-[var(--cf-gray-200)] px-3 py-2.5 text-base outline-none focus:border-[var(--cf-black)] focus:ring-2 focus:ring-black/5 sm:text-sm"
               placeholder="Street, area, city"
             />
           </div>
@@ -193,7 +194,7 @@ export function CheckoutForm({
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-lg border border-[var(--cf-gray-200)] px-3 py-2.5 text-sm outline-none focus:border-[var(--cf-black)] focus:ring-2 focus:ring-black/5"
+              className="w-full rounded-lg border border-[var(--cf-gray-200)] px-3 py-2.5 text-base outline-none focus:border-[var(--cf-black)] focus:ring-2 focus:ring-black/5 sm:text-sm"
               placeholder="you@example.com"
             />
           </div>
@@ -206,24 +207,39 @@ export function CheckoutForm({
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={2}
-              className="w-full rounded-lg border border-[var(--cf-gray-200)] px-3 py-2.5 text-sm outline-none focus:border-[var(--cf-black)] focus:ring-2 focus:ring-black/5"
+              className="w-full rounded-lg border border-[var(--cf-gray-200)] px-3 py-2.5 text-base outline-none focus:border-[var(--cf-black)] focus:ring-2 focus:ring-black/5 sm:text-sm"
               placeholder="Deliver after 5pm"
             />
           </div>
         </div>
 
+        <div className="mt-6 sm:mt-6">
+          <button
+            type="submit"
+            disabled={loading || !paymentAccount || !receiptFile || requiresZoneSelection}
+            className="btn-primary hidden w-full py-3 sm:block"
+          >
+            {loading ? "Placing order…" : "Place order"}
+          </button>
+          <p className="mt-3 hidden text-center text-xs text-[var(--cf-gray-600)] sm:block">
+            Receipt is saved securely to your order — not on server disk — for seller review.
+          </p>
+        </div>
+      </form>
+
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-black/[0.06] bg-white/95 p-4 backdrop-blur-xl sm:hidden">
         <button
           type="submit"
+          form="checkout-form"
           disabled={loading || !paymentAccount || !receiptFile || requiresZoneSelection}
-          className="btn-primary mt-6 w-full py-3"
+          className="btn-primary w-full py-3.5 text-[15px]"
         >
           {loading ? "Placing order…" : "Place order"}
         </button>
-
-        <p className="mt-3 text-center text-xs text-[var(--cf-gray-600)]">
-          Receipt is saved securely to your order — not on server disk — for seller review.
+        <p className="mt-2 text-center text-[11px] text-[var(--cf-gray-600)]">
+          Upload receipt above before placing your order.
         </p>
-      </form>
+      </div>
     </div>
   );
 }

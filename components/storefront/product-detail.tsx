@@ -15,7 +15,7 @@ import { toNumber } from "@/lib/decimal";
 import { isOutOfStock } from "@/lib/inventory-stock";
 import type { ProductMediaType } from "@/lib/media";
 import type { ProductType } from "@/lib/products/product-types";
-import { storePath } from "@/lib/storefront/paths";
+import { cartPath, storePath } from "@/lib/storefront/paths";
 import { formatCurrency } from "@/lib/utils";
 
 export type StorefrontProductDetail = {
@@ -235,8 +235,9 @@ export function ProductDetail({
             </div>
             {!soldOut ? (
               <p className="mt-2 text-[13px] text-[#86868b]">
-                {stockLeft} in stock
-                {syncedToCart ? ` · ${inCartQty} in bag` : null}
+                {syncedToCart
+                  ? `${stockLeft} left · adjust quantity above`
+                  : `${availableStock} in stock`}
               </p>
             ) : (
               <p className="mt-2 text-[13px] font-medium text-[#dc2626]">Out of stock</p>
@@ -251,9 +252,13 @@ export function ProductDetail({
 
           <div className="mt-8 hidden sm:block">
             {syncedToCart ? (
-              <p className="rounded-[14px] border border-[#1d1d1f]/10 bg-[#f5f5f7] px-4 py-3 text-center text-[14px] font-medium text-[#1d1d1f]">
-                In your bag — use +/- above to adjust
-              </p>
+              <Link
+                href={cartPath(storeSlug)}
+                className="btn-primary inline-flex w-full items-center justify-center gap-2 py-3.5 text-[15px]"
+              >
+                <ShoppingBag className="h-5 w-5" strokeWidth={1.75} />
+                View bag ({inCartQty})
+              </Link>
             ) : canAdd ? (
               <button
                 type="button"
@@ -281,9 +286,13 @@ export function ProductDetail({
             </p>
           </div>
           {syncedToCart ? (
-            <span className="shrink-0 rounded-full bg-[#1d1d1f] px-4 py-3 text-[13px] font-semibold text-white">
-              {inCartQty} in bag
-            </span>
+            <Link
+              href={cartPath(storeSlug)}
+              className="btn-primary inline-flex shrink-0 items-center gap-2 px-5 py-3 text-[14px]"
+            >
+              <ShoppingBag className="h-4 w-4" strokeWidth={1.75} />
+              Bag ({inCartQty})
+            </Link>
           ) : canAdd ? (
             <button
               type="button"

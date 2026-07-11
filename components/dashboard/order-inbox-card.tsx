@@ -177,10 +177,10 @@ export function OrderInboxCard({ order, currency, expandable = true }: OrderInbo
       <div className="flex w-full items-stretch">
         <Link
           href={detailHref}
-          className="flex min-w-0 flex-1 items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-[#f5f5f7] sm:gap-4 sm:pl-5 sm:pr-3"
+          className="flex min-w-0 flex-1 flex-col gap-2 px-4 py-3.5 text-left transition-colors hover:bg-[#f5f5f7] sm:flex-row sm:items-center sm:gap-4 sm:pl-5 sm:pr-3"
         >
           <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
             <span className="font-mono text-[13px] font-semibold text-[#1d1d1f] underline-offset-2 hover:underline">
               {order.orderNumber}
             </span>
@@ -201,8 +201,8 @@ export function OrderInboxCard({ order, currency, expandable = true }: OrderInbo
           </p>
         </div>
 
-        <div className="flex shrink-0 flex-col items-end gap-1.5">
-          <div className="flex flex-wrap items-center justify-end gap-1.5">
+        <div className="flex shrink-0 flex-row items-center justify-between gap-2 sm:flex-col sm:items-end sm:gap-1.5">
+          <div className="flex flex-wrap items-center gap-1 sm:justify-end sm:gap-1.5">
             <PaymentStatusBadge
               status={order.status}
               hasPaymentReceipt={order.hasPaymentReceipt}
@@ -212,7 +212,7 @@ export function OrderInboxCard({ order, currency, expandable = true }: OrderInbo
               <OrderStatusBadge status={order.status} />
             ) : null}
           </div>
-          <span className="currency text-[13px] font-semibold text-[#1a7f5a]">
+          <span className="currency shrink-0 text-[13px] font-semibold text-[#1a7f5a]">
             {formatCurrency(order.total, currency)}
           </span>
         </div>
