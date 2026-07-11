@@ -40,14 +40,12 @@ export type StorefrontProductDetail = {
 type ProductDetailProps = {
   storeSlug: string;
   currency: string;
-  deliveryFee: number;
   product: StorefrontProductDetail;
 };
 
 export function ProductDetail({
   storeSlug,
   currency,
-  deliveryFee,
   product,
 }: ProductDetailProps) {
   const { lines, addItem, updateQuantity, removeItem } = useCart();
