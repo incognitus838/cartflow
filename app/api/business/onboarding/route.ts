@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createSession, getSession } from "@/lib/auth";
 import { parseBankDetails } from "@/lib/business/bank";
 import { createBusinessForOwner } from "@/lib/business/create";
+import { resolveLogoFromBody } from "@/lib/business/resolve-logo";
 import { isDatabaseConfigured, prisma } from "@/lib/db";
 import { sendStoreSubmittedEmail } from "@/lib/email/transactional";
 import { canUserCreateStore } from "@/lib/team/stores";
@@ -31,7 +32,7 @@ export async function POST(request: Request) {
   const name = typeof body?.name === "string" ? body.name.trim() : "";
   const slug = typeof body?.slug === "string" ? body.slug.trim().toLowerCase() : undefined;
   const currency = typeof body?.currency === "string" ? body.currency : "NGN";
-  const logoUrl = typeof body?.logoUrl === "string" ? body.logoUrl : undefined;
+
   const phone = typeof body?.phone === "string" ? body.phone : undefined;
   const whatsapp = typeof body?.whatsapp === "string" ? body.whatsapp : undefined;
   const description = typeof body?.description === "string" ? body.description : undefined;
@@ -49,6 +50,7 @@ export async function POST(request: Request) {
   }
 
   try {
+    const logoUrl = await resolveLogoFromBody(body, slug);
     const business = await createBusinessForOwner({
       ownerId: session.userId,
       name,

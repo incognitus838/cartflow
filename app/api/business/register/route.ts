@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createSession, hashPassword } from "@/lib/auth";
 import { parseBankDetails } from "@/lib/business/bank";
+import { resolveLogoFromBody } from "@/lib/business/resolve-logo";
 import { registerOwnerWithStore } from "@/lib/business/register-owner";
 import { isDatabaseConfigured } from "@/lib/db";
 import { sendStoreSubmittedEmail, sendWelcomeOwnerEmail } from "@/lib/email/transactional";
@@ -17,9 +18,8 @@ export async function POST(request: Request) {
   const ownerEmail = typeof body?.ownerEmail === "string" ? body.ownerEmail.toLowerCase().trim() : "";
   const password = typeof body?.password === "string" ? body.password : "";
   const name = typeof body?.name === "string" ? body.name.trim() : "";
-  const slug = typeof body?.slug === "string" ? body.slug.trim().toLowerCase() : undefined;
   const currency = typeof body?.currency === "string" ? body.currency : "NGN";
-  const logoUrl = typeof body?.logoUrl === "string" ? body.logoUrl : undefined;
+  const slug = typeof body?.slug === "string" ? body.slug.trim().toLowerCase() : undefined;
   const phone = typeof body?.phone === "string" ? body.phone : undefined;
   const whatsapp = typeof body?.whatsapp === "string" ? body.whatsapp : undefined;
   const description = typeof body?.description === "string" ? body.description : undefined;
@@ -46,6 +46,7 @@ export async function POST(request: Request) {
   }
 
   try {
+    const logoUrl = await resolveLogoFromBody(body, slug);
     const passwordHash = await hashPassword(password);
     const { user, business } = await registerOwnerWithStore({
       ownerName,

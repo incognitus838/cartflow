@@ -4,6 +4,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import {
+  LogoUploadField,
+  type LogoUploadValue,
+} from "@/components/shared/logo-upload-field";
 import { isValidSlug, suggestSlug } from "@/lib/slug";
 
 const CURRENCIES = [
@@ -58,7 +62,7 @@ export function OnboardingWizard({ mode = "register" }: OnboardingWizardProps) {
   const [slug, setSlug] = useState("");
   const [slugTouched, setSlugTouched] = useState(false);
   const [currency, setCurrency] = useState("NGN");
-  const [logoUrl, setLogoUrl] = useState("");
+  const [logoUpload, setLogoUpload] = useState<LogoUploadValue | null>(null);
   const [phone, setPhone] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
   const [description, setDescription] = useState("");
@@ -118,7 +122,8 @@ export function OnboardingWizard({ mode = "register" }: OnboardingWizardProps) {
         name: name.trim(),
         slug: finalSlug,
         currency,
-        logoUrl: logoUrl || undefined,
+        logoBase64: logoUpload?.base64,
+        logoMimeType: logoUpload?.mimeType,
         phone: phone || undefined,
         whatsapp: whatsapp || phone || undefined,
         description: description || undefined,
@@ -320,22 +325,15 @@ export function OnboardingWizard({ mode = "register" }: OnboardingWizardProps) {
               </select>
             </div>
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-slate-700">
-                Logo URL <span className="text-slate-400">(optional)</span>
+              <label htmlFor="store-logo-upload" className="mb-1.5 block text-sm font-medium text-slate-700">
+                Store logo <span className="text-slate-400">(optional)</span>
               </label>
-              <input
-                value={logoUrl}
-                onChange={(e) => setLogoUrl(e.target.value)}
-                className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
-                placeholder="https://..."
+              <LogoUploadField
+                id="store-logo-upload"
+                value={logoUpload}
+                onChange={setLogoUpload}
+                onError={(message) => toast.error(message)}
               />
-              {logoUrl ? (
-                <img
-                  src={logoUrl}
-                  alt="Logo preview"
-                  className="mt-3 h-14 w-14 rounded-xl border border-slate-100 object-cover"
-                />
-              ) : null}
             </div>
             <div>
               <label className="mb-1.5 block text-sm font-medium text-slate-700">
