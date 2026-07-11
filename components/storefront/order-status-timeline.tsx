@@ -81,7 +81,7 @@ export function OrderStatusTimeline({
   });
 
   return (
-    <section className="rounded-2xl border border-[var(--store-border)] bg-[var(--store-surface)] p-5 sm:p-6">
+    <section className="rounded-2xl border border-[var(--store-border)] bg-[var(--store-surface)] p-4 sm:p-5">
       <h2 className="text-sm font-semibold text-[var(--store-text)]">Order progress</h2>
       <p className="mt-1 text-xs text-[var(--store-muted)]">
         Updates automatically as your order moves forward.

@@ -18,6 +18,8 @@ type OrderTrackingPanelProps = {
   pollEnabled?: boolean;
   pollIntervalMs?: number;
   showConfirmationLink?: boolean;
+  /** compact = timeline + summary only (confirmation page). full = track page. */
+  variant?: "compact" | "full";
 };
 
 type ChipVariant = "neutral" | "success" | "warning" | "danger";
@@ -39,9 +41,9 @@ function StatusChip({
   };
 
   return (
-    <div className={`rounded-xl border px-3 py-2 ${styles[variant]}`}>
+    <div className={`rounded-lg border px-2.5 py-2 sm:rounded-xl sm:px-3 ${styles[variant]}`}>
       <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70">{label}</p>
-      <p className="mt-0.5 text-sm font-medium">{value}</p>
+      <p className="mt-0.5 text-xs font-medium sm:text-sm">{value}</p>
     </div>
   );
 }
@@ -72,6 +74,7 @@ export function OrderTrackingPanel({
   pollEnabled = true,
   pollIntervalMs = 30_000,
   showConfirmationLink = false,
+  variant = "full",
 }: OrderTrackingPanelProps) {
   const [order, setOrder] = useState(initialOrder);
   const [refreshing, setRefreshing] = useState(false);
@@ -79,6 +82,7 @@ export function OrderTrackingPanel({
 
   const terminal = isTerminalOrderStatus(order.status);
   const canPoll = pollEnabled && !terminal;
+  const compact = variant === "compact";
 
   const fetchLatest = useCallback(async () => {
     setRefreshing(true);
@@ -112,7 +116,7 @@ export function OrderTrackingPanel({
     return () => window.clearInterval(timer);
   }, [canPoll, fetchLatest, pollIntervalMs]);
 
-  const variant = headlineVariant(order.status, order.hasReceipt, order.paymentRejectionReason);
+  const variantTone = headlineVariant(order.status, order.hasReceipt, order.paymentRejectionReason);
   const isPaid =
     order.status === "PAID" ||
     order.status === "PROCESSING" ||
@@ -120,99 +124,138 @@ export function OrderTrackingPanel({
     order.status === "DELIVERED";
 
   const bannerClass =
-    variant === "success"
+    variantTone === "success"
       ? "border-emerald-200 bg-emerald-50"
-      : variant === "warning"
+      : variantTone === "warning"
         ? "border-amber-200 bg-amber-50"
-        : variant === "danger"
+        : variantTone === "danger"
           ? "border-red-200 bg-red-50"
           : "border-[var(--store-border)] bg-[var(--store-surface)]";
 
   const iconClass =
-    variant === "success"
+    variantTone === "success"
       ? "text-emerald-600"
-      : variant === "warning"
+      : variantTone === "warning"
         ? "text-amber-600"
-        : variant === "danger"
+        : variantTone === "danger"
           ? "text-red-600"
           : "text-[var(--store-text)]";
 
   return (
-    <div className="space-y-6">
-      <section className={`rounded-2xl border p-5 sm:p-6 ${bannerClass}`}>
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex items-start gap-4">
-            <span
-              className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white shadow-sm ${iconClass}`}
-            >
-              {isPaid || order.status === "DELIVERED" ? (
-                <CheckCircle2 className="h-7 w-7" />
-              ) : (
-                <Clock className="h-7 w-7" />
-              )}
-            </span>
-            <div>
-              <p className="text-xs font-medium uppercase tracking-wide text-[var(--store-muted)]">
-                {order.storeName}
-              </p>
-              <h2 className="mt-1 text-xl font-bold tracking-tight text-[var(--store-text)] sm:text-2xl">
-                {order.headline}
-              </h2>
-              <p className="mt-1 font-mono text-sm text-[var(--store-muted)]">{order.orderNumber}</p>
+    <div className={compact ? "space-y-4" : "space-y-6"}>
+      {!compact ? (
+        <section className={`rounded-2xl border p-4 sm:p-6 ${bannerClass}`}>
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex min-w-0 items-start gap-3">
+              <span
+                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white shadow-sm sm:h-12 sm:w-12 ${iconClass}`}
+              >
+                {isPaid || order.status === "DELIVERED" ? (
+                  <CheckCircle2 className="h-6 w-6 sm:h-7 sm:w-7" />
+                ) : (
+                  <Clock className="h-6 w-6 sm:h-7 sm:w-7" />
+                )}
+              </span>
+              <div className="min-w-0">
+                <p className="text-xs font-medium uppercase tracking-wide text-[var(--store-muted)]">
+                  {order.storeName}
+                </p>
+                <h2 className="mt-1 text-lg font-bold tracking-tight text-[var(--store-text)] sm:text-2xl">
+                  {order.headline}
+                </h2>
+                <p className="mt-1 break-all font-mono text-xs text-[var(--store-muted)] sm:text-sm">
+                  {order.orderNumber}
+                </p>
+              </div>
             </div>
+
+            {canPoll ? (
+              <button
+                type="button"
+                onClick={() => void fetchLatest()}
+                disabled={refreshing}
+                className="inline-flex shrink-0 items-center gap-1 rounded-full border border-[var(--store-border)] bg-white px-2.5 py-1.5 text-xs font-medium text-[var(--store-text)] transition-colors hover:bg-[var(--store-header-bg)] disabled:opacity-60"
+                title="Refresh status"
+              >
+                <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} />
+                <span className="hidden sm:inline">{refreshing ? "Updating…" : "Refresh"}</span>
+              </button>
+            ) : null}
           </div>
 
+          {canPoll ? (
+            <p className="mt-3 text-xs text-[var(--store-muted)]">
+              {lastPolledAt
+                ? `Updated ${lastPolledAt.toLocaleTimeString()} · auto-refresh every 30s`
+                : "Live updates every 30 seconds"}
+            </p>
+          ) : null}
+
+          <div className="mt-4 grid grid-cols-2 gap-2 sm:gap-3">
+            <StatusChip
+              label="Payment"
+              value={order.paymentStatus}
+              variant={paymentChipVariant(order.status, order.hasReceipt)}
+            />
+            {order.needsDelivery && order.deliveryStatus ? (
+              <StatusChip
+                label="Delivery"
+                value={order.deliveryStatus}
+                variant={
+                  order.status === "DELIVERED"
+                    ? "success"
+                    : order.status === "SHIPPED"
+                      ? "warning"
+                      : "neutral"
+                }
+              />
+            ) : (
+              <div className="hidden sm:block" />
+            )}
+          </div>
+
+          {order.customerAddress ? (
+            <p className="mt-4 flex items-start gap-2 text-sm text-[var(--store-muted)]">
+              <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>{order.customerAddress}</span>
+            </p>
+          ) : null}
+        </section>
+      ) : (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[var(--store-border)] bg-[var(--store-surface)] px-3 py-2.5 sm:px-4">
+          <div className="grid flex-1 grid-cols-2 gap-2">
+            <StatusChip
+              label="Payment"
+              value={order.paymentStatus}
+              variant={paymentChipVariant(order.status, order.hasReceipt)}
+            />
+            {order.needsDelivery && order.deliveryStatus ? (
+              <StatusChip
+                label="Delivery"
+                value={order.deliveryStatus}
+                variant={
+                  order.status === "DELIVERED"
+                    ? "success"
+                    : order.status === "SHIPPED"
+                      ? "warning"
+                      : "neutral"
+                }
+              />
+            ) : null}
+          </div>
           {canPoll ? (
             <button
               type="button"
               onClick={() => void fetchLatest()}
               disabled={refreshing}
-              className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-[var(--store-border)] bg-white px-3 py-1.5 text-xs font-medium text-[var(--store-text)] transition-colors hover:bg-[var(--store-header-bg)] disabled:opacity-60"
-              title="Refresh status"
+              className="inline-flex items-center gap-1.5 rounded-full border border-[var(--store-border)] bg-white px-3 py-1.5 text-xs font-medium text-[var(--store-text)]"
             >
               <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} />
               {refreshing ? "Updating…" : "Refresh"}
             </button>
           ) : null}
         </div>
-
-        {lastPolledAt ? (
-          <p className="mt-3 text-xs text-[var(--store-muted)]">
-            Last updated {lastPolledAt.toLocaleTimeString()}
-            {canPoll ? " — checking automatically every 30s" : ""}
-          </p>
-        ) : canPoll ? (
-          <p className="mt-3 text-xs text-[var(--store-muted)]">Live updates every 30 seconds</p>
-        ) : null}
-
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          <StatusChip
-            label="Payment"
-            value={order.paymentStatus}
-            variant={paymentChipVariant(order.status, order.hasReceipt)}
-          />
-          {order.needsDelivery && order.deliveryStatus ? (
-            <StatusChip
-              label="Delivery"
-              value={order.deliveryStatus}
-              variant={
-                order.status === "DELIVERED"
-                  ? "success"
-                  : order.status === "SHIPPED"
-                    ? "warning"
-                    : "neutral"
-              }
-            />
-          ) : null}
-        </div>
-
-        {order.customerAddress ? (
-          <p className="mt-4 flex items-start gap-2 text-sm text-[var(--store-muted)]">
-            <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
-            <span>{order.customerAddress}</span>
-          </p>
-        ) : null}
-      </section>
+      )}
 
       <OrderStatusTimeline
         status={order.status}
@@ -227,9 +270,9 @@ export function OrderTrackingPanel({
         deliveryFee={order.deliveryFee}
       />
 
-      <section className="rounded-2xl border border-[var(--store-border)] bg-[var(--store-surface)] p-5 sm:p-6">
-        <h3 className="text-sm font-semibold text-[var(--store-text)]">Items</h3>
-        <ul className="mt-4 space-y-3">
+      <section className="rounded-2xl border border-[var(--store-border)] bg-[var(--store-surface)] p-4 sm:p-5">
+        <h3 className="text-sm font-semibold text-[var(--store-text)]">Order summary</h3>
+        <ul className="mt-3 space-y-2.5">
           {order.items.map((item, index) => (
             <li key={`${item.title}-${index}`} className="flex items-start justify-between gap-3 text-sm">
               <div className="min-w-0">
@@ -248,7 +291,7 @@ export function OrderTrackingPanel({
           ))}
         </ul>
 
-        <div className="mt-4 space-y-2 border-t border-[var(--store-border)] pt-4 text-sm">
+        <div className="mt-3 space-y-1.5 border-t border-[var(--store-border)] pt-3 text-sm">
           <div className="flex justify-between text-[var(--store-muted)]">
             <span>Subtotal</span>
             <span>{formatCurrency(order.subtotal, order.currency)}</span>
