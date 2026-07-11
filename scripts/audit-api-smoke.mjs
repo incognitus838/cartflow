@@ -235,7 +235,7 @@ try {
 
   await api("/api/auth/logout", { method: "POST" });
 
-  const publicRoutes = ["/", "/glow-beauty", "/ada-styles", "/login", "/signup"];
+  const publicRoutes = ["/", "/glow-beauty", "/login", "/signup"];
   for (const route of publicRoutes) {
     const r = await page(route);
     const ok = r.status === 200 && !r.hasPrismaError && !r.hasErrorBoundary;

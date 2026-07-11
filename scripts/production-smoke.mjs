@@ -44,14 +44,14 @@ async function main() {
   }
 
   try {
-    const { res, text } = await fetchText("/big-loto");
+    const { res, text } = await fetchText("/glow-beauty");
     if (res.status === 200 && !text.includes("PrismaClientValidationError")) {
-      pass("Storefront big-loto", "loads");
+      pass("Storefront glow-beauty", "loads");
     } else {
-      fail("Storefront big-loto", `HTTP ${res.status}`);
+      fail("Storefront glow-beauty", `HTTP ${res.status}`);
     }
   } catch (error) {
-    fail("Storefront big-loto", error instanceof Error ? error.message : String(error));
+    fail("Storefront glow-beauty", error instanceof Error ? error.message : String(error));
   }
 
   try {
