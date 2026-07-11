@@ -57,7 +57,7 @@ export function CheckoutPage({
   }
 
   return (
-    <div className="pb-24 sm:pb-0">
+    <div className="pb-8 sm:pb-0">
       <div className="mb-5 sm:mb-8">
         <h1 className="text-xl font-bold text-slate-900 sm:text-2xl">Checkout</h1>
         <p className="mt-1 text-sm text-slate-600">Complete your order — no account required.</p>

@@ -11,7 +11,7 @@ type StoreFooterProps = {
 
 export function StoreFooter({ storeName, storeSlug, currency, deliveryFee }: StoreFooterProps) {
   return (
-    <footer className="mt-auto border-t border-black/[0.06] bg-white px-4 py-10 sm:px-6">
+    <footer className="mt-auto border-t border-black/[0.06] bg-white px-4 pt-10 pb-[calc(9rem+env(safe-area-inset-bottom,0px))] sm:px-6 sm:py-10">
       <div className="mx-auto max-w-7xl text-center">
         <p className="text-[13px] text-[#86868b]">
           {deliveryFee > 0

@@ -227,7 +227,7 @@ export function CheckoutForm({
         </div>
       </form>
 
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-black/[0.06] bg-white/95 p-4 backdrop-blur-xl sm:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-black/[0.06] bg-white/95 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur-xl sm:hidden">
         <button
           type="submit"
           form="checkout-form"

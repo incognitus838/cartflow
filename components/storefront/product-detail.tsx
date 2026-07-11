@@ -277,7 +277,7 @@ export function ProductDetail({
         </div>
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-black/[0.06] bg-white/90 p-4 backdrop-blur-xl sm:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-black/[0.06] bg-white/90 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur-xl sm:hidden">
         <div className="flex items-center gap-3">
           <div className="min-w-0 flex-1">
             <p className="truncate text-[13px] font-medium text-[#1d1d1f]">{product.title}</p>

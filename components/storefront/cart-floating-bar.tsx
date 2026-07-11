@@ -15,12 +15,13 @@ export function CartFloatingBar({ currency }: CartFloatingBarProps) {
   const { itemCount, subtotal } = useCart();
   const { open, openDrawer } = useCartDrawer();
 
-  const onCartPage =
+  const hideBar =
     pathname.endsWith("/cart") ||
     pathname.endsWith("/checkout") ||
-    pathname.includes("/order/");
+    pathname.includes("/order/") ||
+    pathname.includes("/products/");
 
-  if (itemCount === 0 || open || onCartPage) return null;
+  if (itemCount === 0 || open || hideBar) return null;
 
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-5 z-30 flex justify-center px-4">
