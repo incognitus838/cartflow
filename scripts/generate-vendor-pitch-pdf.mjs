@@ -13,8 +13,8 @@ const outPath = path.join(root, "notes", "CartFlow-Vendor-Pitch.pdf");
 
 const ACCENT = "#1A7F5A";
 const MUTED = "#6E6E73";
-const TITLE = "Vendor Pitch & FAQ";
-const SUBTITLE = "July 2026 · For vendor meetings";
+const TITLE = "Guide for Store Owners";
+const SUBTITLE = "July 2026";
 
 function escapeHtml(text) {
   return text
@@ -139,7 +139,7 @@ function buildHtml(body) {
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>CartFlow Vendor Pitch</title>
+  <title>CartFlow — Guide for Store Owners</title>
   <style>
     @page { size: A4; margin: 2cm 2.2cm; }
     body {
