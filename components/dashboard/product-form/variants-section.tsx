@@ -2,7 +2,7 @@
 
 import { Plus, Sparkles, Trash2 } from "lucide-react";
 import type { ProductType } from "@/lib/products/product-types";
-import { defaultVariantGroupName } from "@/lib/products/product-types";
+import { getVariantUiConfig } from "@/lib/products/variant-config";
 import {
   cartesianVariantCombinations,
   combinationsToVariantRows,
@@ -31,8 +31,10 @@ export function VariantsSection({
   variants,
   onVariantsChange,
 }: VariantsSectionProps) {
+  const variantUi = getVariantUiConfig(productType);
+
   function addGroup() {
-    onGroupsChange([...groups, createVariantGroup(defaultVariantGroupName(productType))]);
+    onGroupsChange([...groups, createVariantGroup(variantUi.defaultGroupName)]);
     onUseVariantsChange(true);
   }
 
@@ -84,10 +86,7 @@ export function VariantsSection({
           <h2 className="text-[15px] font-semibold tracking-tight text-[#1d1d1f]">
             Variants &amp; options
           </h2>
-          <p className="mt-1 text-[12px] text-[#86868b]">
-            Build size, colour, flavour, or module groups — then generate combinations with stock per
-            variant.
-          </p>
+          <p className="mt-1 text-[12px] text-[#86868b]">{variantUi.sectionDescription}</p>
         </div>
         <label className="flex items-center gap-2 text-[13px] text-[#1d1d1f]">
           <input
@@ -115,7 +114,7 @@ export function VariantsSection({
                   value={group.name}
                   onChange={(e) => updateGroup(group.id, { name: e.target.value })}
                   className="cf-input mt-1.5"
-                  placeholder="Size"
+                  placeholder={variantUi.groupNamePlaceholder}
                 />
               </label>
               <button
@@ -134,7 +133,7 @@ export function VariantsSection({
                     value={option}
                     onChange={(e) => updateOption(group.id, index, e.target.value)}
                     className="cf-input"
-                    placeholder={productType === "DIGITAL" ? "Module 1" : "EU 41"}
+                    placeholder={variantUi.optionPlaceholder}
                   />
                   <button
                     type="button"
@@ -156,6 +155,12 @@ export function VariantsSection({
             </div>
           </div>
         ))}
+
+        {groups.length === 0 && variantUi.tip ? (
+          <p className="rounded-[12px] bg-[#f5f5f7] px-4 py-3 text-[12px] text-[#6e6e73]">
+            {variantUi.tip}
+          </p>
+        ) : null}
 
         <div className="flex flex-wrap gap-2">
           <button type="button" onClick={addGroup} className="btn-secondary text-[13px]">
@@ -179,7 +184,7 @@ export function VariantsSection({
                 <th scope="col">Variant</th>
                 <th scope="col">SKU</th>
                 <th scope="col">Price override</th>
-                <th scope="col">Stock</th>
+                {variantUi.trackVariantStock ? <th scope="col">Stock</th> : null}
                 <th scope="col" className="w-10" />
               </tr>
             </thead>
@@ -197,7 +202,7 @@ export function VariantsSection({
                         )
                       }
                       className="cf-input"
-                      placeholder="Size M / Red"
+                      placeholder={variantUi.variantNamePlaceholder}
                       required
                     />
                   </td>
@@ -231,22 +236,24 @@ export function VariantsSection({
                       placeholder="Optional"
                     />
                   </td>
-                  <td>
-                    <input
-                      type="number"
-                      min={0}
-                      required
-                      value={row.stock}
-                      onChange={(e) =>
-                        onVariantsChange(
-                          variants.map((item, i) =>
-                            i === index ? { ...item, stock: e.target.value } : item,
-                          ),
-                        )
-                      }
-                      className="cf-input"
-                    />
-                  </td>
+                  {variantUi.trackVariantStock ? (
+                    <td>
+                      <input
+                        type="number"
+                        min={0}
+                        required
+                        value={row.stock}
+                        onChange={(e) =>
+                          onVariantsChange(
+                            variants.map((item, i) =>
+                              i === index ? { ...item, stock: e.target.value } : item,
+                            ),
+                          )
+                        }
+                        className="cf-input"
+                      />
+                    </td>
+                  ) : null}
                   <td>
                     <button
                       type="button"
@@ -271,9 +278,7 @@ export function VariantsSection({
           </button>
         </div>
       ) : (
-        <p className="mt-4 text-[13px] text-[#86868b]">
-          Single-SKU product — set stock in inventory below.
-        </p>
+        <p className="mt-4 text-[13px] text-[#86868b]">{variantUi.singleSkuHint}</p>
       )}
     </section>
   );

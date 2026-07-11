@@ -68,7 +68,7 @@ export function ProductForm({
   const [mediaRows, setMediaRows] = useState<MediaRow[]>(initial.media);
   const [variants, setVariants] = useState<VariantFormRow[]>(initial.variants);
   const [variantGroups, setVariantGroups] = useState([
-    createVariantGroup(metadata.productType === "DIGITAL" ? "Module" : "Size"),
+    createVariantGroup(defaultVariantGroupName(metadata.productType)),
   ]);
   const [useVariants, setUseVariants] = useState(initial.variants.length > 0);
   const [selectedTags, setSelectedTags] = useState(initial.metadata.tags);
