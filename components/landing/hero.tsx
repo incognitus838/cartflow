@@ -1,7 +1,7 @@
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { HeroChatter } from "@/components/landing/hero-chatter";
+import { LazyImage } from "@/components/storefront/lazy-image";
 import type { DemoStoreConfig } from "@/lib/demo/stores";
 
 type HeroProps = {
@@ -57,12 +57,11 @@ export function Hero({ demoStore }: HeroProps) {
                   className="group bg-white p-5 text-left transition-colors hover:bg-[#fbfbfd]"
                 >
                   <div className="relative mb-4 aspect-[4/5] overflow-hidden rounded-[14px] bg-[#f5f5f7]">
-                    <Image
+                    <LazyImage
                       src={item.image}
                       alt={item.alt}
-                      fill
                       sizes="(max-width: 640px) 100vw, 280px"
-                      className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+                      className="transition-transform duration-500 group-hover:scale-[1.02]"
                     />
                   </div>
                   <p className="text-[10px] font-medium uppercase tracking-wider text-[#86868b]">
