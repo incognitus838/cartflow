@@ -198,6 +198,17 @@ async function main() {
     REVALIDATE_SECRET: revalidateSecret,
   };
 
+  for (const key of [
+    "ZEPTOMAIL_SEND_TOKEN",
+    "EMAIL_PROVIDER",
+    "TRANSACTIONAL_FROM_EMAIL",
+    "NOTIFICATION_FROM_EMAIL",
+    "RESEND_API_KEY",
+  ]) {
+    const value = local[key]?.trim();
+    if (value) vars[key] = value;
+  }
+
   const targets = ["production", "preview", "development"];
 
   for (const [key, value] of Object.entries(vars)) {

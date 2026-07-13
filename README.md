@@ -100,7 +100,7 @@ prisma/           # Schema + seed
    - `DATABASE_URL` — Neon PostgreSQL connection string
    - `AUTH_SECRET` — 32+ character random string
    - `NEXT_PUBLIC_APP_URL` — your production URL (e.g. `https://cartflow.vercel.app`)
-   - Optional: `RESEND_API_KEY`, `TWILIO_*` for live notifications
+   - Optional: `ZEPTOMAIL_SEND_TOKEN`, `TWILIO_*` for live notifications
 3. Build command is `npm run vercel-build` (runs `prisma generate` then `next build`).
 4. After first deploy, run `npm run db:push` against production DB (or use Neon SQL console).
 
@@ -108,7 +108,7 @@ prisma/           # Schema + seed
 
 In development, email/SMS are logged to the server console. In production, configure:
 
-- **Email:** [Resend](https://resend.com) via `RESEND_API_KEY` + `NOTIFICATION_FROM_EMAIL`
+- **Email:** [ZeptoMail](https://www.zoho.com/zeptomail/) via `ZEPTOMAIL_SEND_TOKEN` + verified `TRANSACTIONAL_FROM_EMAIL` / `NOTIFICATION_FROM_EMAIL`. Test: `npm run test:email -- you@example.com`
 - **SMS:** [Twilio](https://twilio.com) via `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM_NUMBER`
 
 All attempts are stored in `NotificationLog` and visible on order detail pages.
