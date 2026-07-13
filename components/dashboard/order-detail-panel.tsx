@@ -18,6 +18,7 @@ import type { PaymentReviewStatus } from "@/lib/orders/payment-status";
 import { getPaymentReviewStatus } from "@/lib/orders/payment-status";
 import { toNumber } from "@/lib/decimal";
 import { dashboardOrderReceiptUrl } from "@/lib/storefront/receipt-url";
+import { getPublicAppBaseUrl } from "@/lib/storefront/paths";
 import { buildWhatsAppOrderUrl } from "@/lib/storefront/whatsapp";
 import { formatCurrency } from "@/lib/utils";
 
@@ -154,7 +155,7 @@ export function OrderDetailPanel({
     });
   const canReviewPayment =
     canApprovePayments && status === "PENDING" && hasPaymentReceipt && paymentStatus === "needs_review";
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "";
+  const appUrl = getPublicAppBaseUrl();
   const trackingUrl =
     storeSlug && appUrl
       ? `${appUrl}/${storeSlug}/track?order=${encodeURIComponent(order.orderNumber)}`

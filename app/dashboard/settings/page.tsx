@@ -7,6 +7,7 @@ import { TeamPanel } from "@/components/dashboard/team-panel";
 import { PageHeader } from "@/components/shared/page-header";
 import { requireStoreOwner } from "@/lib/auth-server";
 import { toNumber } from "@/lib/decimal";
+import { getAppBaseUrl } from "@/lib/storefront/paths";
 
 type PageProps = {
   searchParams: Promise<{ tab?: string }>;
@@ -20,7 +21,7 @@ export default async function SettingsPage({ searchParams }: PageProps) {
   if (tab === "stores") {
     redirect("/dashboard/stores");
   }
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3001";
+  const appUrl = getAppBaseUrl();
 
   return (
     <>

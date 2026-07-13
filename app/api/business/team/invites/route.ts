@@ -4,6 +4,7 @@ import { requireApiStoreOwner } from "@/lib/api/require-business";
 import { createStaffInvite } from "@/lib/team/invites";
 import type { MemberPermissions } from "@/lib/team/permissions-shared";
 import { parseMemberPermissions } from "@/lib/team/permissions-shared";
+import { getAppBaseUrl } from "@/lib/storefront/paths";
 
 export const runtime = "nodejs";
 
@@ -46,7 +47,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: parsed }, { status: 400 });
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3001";
+  const appUrl = getAppBaseUrl();
 
   try {
     const result = await createStaffInvite({

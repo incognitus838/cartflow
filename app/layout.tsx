@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "sonner";
 import { PwaRegister } from "@/components/pwa-register";
+import { getAppBaseUrl } from "@/lib/storefront/paths";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -17,7 +18,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3001"),
+  metadataBase: new URL(getAppBaseUrl()),
   title: "CartFlow | Effortless Commerce. Timeless Elegance.",
   description:
     "The iPhone of social commerce. Premium storefronts, seamless checkout, and a beautifully designed dashboard for WhatsApp and DM sellers.",

@@ -6,11 +6,12 @@ import {
   countActiveBusinessProducts,
   listStorefrontPreviewProducts,
 } from "@/lib/queries/dashboard";
+import { getAppBaseUrl } from "@/lib/storefront/paths";
 import { serializeStoreProduct } from "@/lib/storefront/serialize-product";
 
 export default async function StorefrontPage() {
   const { business } = await requireLivePermission("storefront");
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3001";
+  const appUrl = getAppBaseUrl();
 
   const [previewProducts, catalogTotalCount] = await Promise.all([
     listStorefrontPreviewProducts(business.id),

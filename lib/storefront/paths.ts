@@ -1,5 +1,48 @@
+export const CANONICAL_APP_URL = "https://cartflow.com.ng";
+
+const LOCAL_DEV_URL = "http://localhost:3001";
+
+function normalizeBaseUrl(url: string) {
+  return url.replace(/\/$/, "");
+}
+
+/**
+ * Public site origin for share links, emails, and metadata.
+ * Prefers cartflow.com.ng over legacy *.vercel.app deployment URLs.
+ */
 export function getAppBaseUrl() {
-  return (process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3001").replace(/\/$/, "");
+  const fromEnv = process.env.NEXT_PUBLIC_APP_URL?.trim();
+  const normalized = fromEnv ? normalizeBaseUrl(fromEnv) : "";
+
+  if (normalized.includes("vercel.app")) {
+    return CANONICAL_APP_URL;
+  }
+
+  if (normalized && !normalized.includes("localhost")) {
+    return normalized;
+  }
+
+  if (process.env.VERCEL_ENV === "production" || process.env.NODE_ENV === "production") {
+    return CANONICAL_APP_URL;
+  }
+
+  return normalized || LOCAL_DEV_URL;
+}
+
+/** Safe for client components where NEXT_PUBLIC_APP_URL is inlined at build time. */
+export function getPublicAppBaseUrl() {
+  const fromEnv = process.env.NEXT_PUBLIC_APP_URL?.trim() ?? "";
+  const normalized = fromEnv ? normalizeBaseUrl(fromEnv) : "";
+
+  if (normalized.includes("vercel.app")) {
+    return CANONICAL_APP_URL;
+  }
+
+  if (normalized.includes("localhost")) {
+    return normalized || LOCAL_DEV_URL;
+  }
+
+  return normalized || CANONICAL_APP_URL;
 }
 
 export function storePath(storeSlug: string) {

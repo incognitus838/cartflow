@@ -1,7 +1,8 @@
 import "server-only";
+import { getAppBaseUrl } from "@/lib/storefront/paths";
 
 export function getAppUrl() {
-  return (process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3001").replace(/\/$/, "");
+  return getAppBaseUrl();
 }
 
 export type EmailProvider = "zeptomail" | "resend";

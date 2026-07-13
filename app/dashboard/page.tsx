@@ -18,6 +18,7 @@ import { toNumber } from "@/lib/decimal";
 import { formatCurrency } from "@/lib/utils";
 import { getLowStockProducts } from "@/lib/inventory";
 import { getBusinessStats } from "@/lib/queries/dashboard";
+import { absoluteStoreUrl } from "@/lib/storefront/paths";
 
 export default async function DashboardPage() {
   const { business } = await requireBusiness();
@@ -49,8 +50,7 @@ export default async function DashboardPage() {
     getLowStockProducts(business.id),
   ]);
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3001";
-  const storeUrl = `${appUrl}/${business.slug}`;
+  const storeUrl = absoluteStoreUrl(business.slug);
 
   const cards = [
     {
