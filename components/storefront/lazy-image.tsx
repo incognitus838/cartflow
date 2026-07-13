@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { ImageIcon } from "lucide-react";
 import { useState } from "react";
-import { optimizeImageUrl } from "@/lib/images";
+import { isLocalStaticImage, optimizeImageUrl } from "@/lib/images";
 import { cn } from "@/lib/utils";
 
 type LazyImageProps = {
@@ -42,7 +42,8 @@ export function LazyImage({
   height,
 }: LazyImageProps) {
   const [failed, setFailed] = useState(false);
-  const optimized = optimizeImageUrl(src, priority ? 900 : 480);
+  const unoptimized = isLocalStaticImage(src);
+  const optimized = unoptimized ? src : optimizeImageUrl(src, priority ? 900 : 480);
 
   if (!src || failed) {
     return (
@@ -60,6 +61,7 @@ export function LazyImage({
         fill
         sizes={sizes}
         priority={priority}
+        unoptimized={unoptimized}
         className={cn("object-cover", className)}
         onError={() => setFailed(true)}
       />
@@ -74,6 +76,7 @@ export function LazyImage({
       height={height ?? 480}
       sizes={sizes}
       priority={priority}
+      unoptimized={unoptimized}
       className={cn("object-cover", className)}
       onError={() => setFailed(true)}
     />
