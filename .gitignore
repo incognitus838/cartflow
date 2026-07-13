@@ -64,3 +64,6 @@ warm-cookies.txt
 *-result.json
 *-results.json
 check-health.mjs
+
+.vercel
+.env*

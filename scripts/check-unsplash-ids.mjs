@@ -1,27 +1,11 @@
-import { readFileSync } from "fs";
-import { fileURLToPath } from "url";
-import { dirname, join } from "path";
+import { CATEGORY_PHOTO_IDS } from "../lib/catalog/product-image-catalog.mjs";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const root = join(__dirname, "..");
-
-const FILES = [
-  "lib/demo/stores.mjs",
-  "lib/catalog/demo-verticals.mjs",
-  "lib/catalog/beauty-categories.mjs",
-  "lib/catalog/demo-images.mjs",
-  "lib/catalog/skincare-images.mjs",
-];
-
-function extractIds(content) {
+function collectUniqueIds() {
   const ids = new Set();
-  // photo-XXXX in URLs
-  for (const m of content.matchAll(/photo-([a-zA-Z0-9_-]+)/g)) {
-    ids.add(m[1]);
-  }
-  // img("XXXX") shorthand
-  for (const m of content.matchAll(/img\("([a-zA-Z0-9_-]+)"\)/g)) {
-    ids.add(m[1]);
+  for (const categories of Object.values(CATEGORY_PHOTO_IDS)) {
+    for (const photoIds of Object.values(categories)) {
+      for (const id of photoIds) ids.add(id);
+    }
   }
   return ids;
 }
@@ -37,16 +21,7 @@ async function headCheck(id) {
 }
 
 async function main() {
-  const allIds = new Set();
-  const bySource = {};
-
-  for (const rel of FILES) {
-    const path = join(root, rel);
-    const content = readFileSync(path, "utf8");
-    const ids = extractIds(content);
-    bySource[rel] = [...ids].sort();
-    for (const id of ids) allIds.add(id);
-  }
+  const allIds = collectUniqueIds();
 
   const sorted = [...allIds].sort();
   console.log(`Checking ${sorted.length} unique Unsplash photo IDs...\n`);

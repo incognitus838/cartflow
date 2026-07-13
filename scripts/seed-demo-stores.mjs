@@ -2,7 +2,14 @@
  * Seed or refresh all seven rotating demo stores.
  * Run: npm run db:seed-demos
  */
+import { config as loadEnv } from "dotenv";
+import { dirname, join } from "path";
+import { fileURLToPath } from "url";
 import { PrismaClient } from "@prisma/client";
+
+const root = join(dirname(fileURLToPath(import.meta.url)), "..");
+loadEnv({ path: join(root, ".env.local") });
+loadEnv({ path: join(root, ".env") });
 import { seedDemoStore } from "../lib/catalog/seed-demo-store.mjs";
 import { DEMO_STORES, getDailyDemoStore } from "../lib/demo/stores.mjs";
 
