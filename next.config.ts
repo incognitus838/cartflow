@@ -4,6 +4,12 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["@prisma/client", "bcryptjs", "prisma"],
   images: {
     formats: ["image/avif", "image/webp"],
+    localPatterns: [
+      {
+        pathname: "/demo-products/**",
+        search: "",
+      },
+    ],
     remotePatterns: [
       {
         protocol: "https",
