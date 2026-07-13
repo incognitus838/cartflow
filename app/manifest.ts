@@ -7,14 +7,20 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "Social commerce storefronts for WhatsApp sellers",
     start_url: "/",
     display: "standalone",
-    background_color: "#f8fafc",
-    theme_color: "#059669",
+    background_color: "#fbfbfd",
+    theme_color: "#1a7f5a",
     icons: [
       {
         src: "/icon.svg",
         sizes: "any",
         type: "image/svg+xml",
         purpose: "any",
+      },
+      {
+        src: "/icon.svg",
+        sizes: "512x512",
+        type: "image/svg+xml",
+        purpose: "maskable",
       },
     ],
   };

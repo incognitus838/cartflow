@@ -22,6 +22,11 @@ export const metadata: Metadata = {
   description:
     "The iPhone of social commerce. Premium storefronts, seamless checkout, and a beautifully designed dashboard for WhatsApp and DM sellers.",
   manifest: "/manifest.webmanifest",
+  icons: {
+    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
+    apple: [{ url: "/apple-icon.svg", type: "image/svg+xml" }],
+    shortcut: [{ url: "/icon.svg", type: "image/svg+xml" }],
+  },
   appleWebApp: {
     capable: true,
     title: "CartFlow",
@@ -30,7 +35,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#1d1d1f",
+  themeColor: "#1a7f5a",
   width: "device-width",
   initialScale: 1,
 };
