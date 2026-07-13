@@ -24,6 +24,7 @@
     "db:ensure-bank": "npx dotenv-cli -e .env.local -- node scripts/ensure-demo-bank.mjs",
     "db:reseed-skincare": "npx dotenv-cli -e .env.local -- node scripts/reseed-ada-skincare.mjs",
     "db:seed-beauty": "npx dotenv-cli -e .env.local -- node scripts/seed-glow-beauty.mjs",
+    "db:seed-demos": "npx dotenv-cli -e .env.local -- node scripts/seed-demo-stores.mjs",
     "db:seed-demo-order": "npx dotenv-cli -e .env.local -- node scripts/seed-glow-beauty-demo-order.mjs",
     "db:usage": "npx dotenv-cli -e .env.local -- node scripts/db-usage.mjs",
     "db:enrich-gallery": "npx dotenv-cli -e .env.local -- node scripts/enrich-product-gallery.mjs",

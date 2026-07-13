@@ -2,32 +2,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { HeroChatter } from "@/components/landing/hero-chatter";
+import type { DemoStoreConfig } from "@/lib/demo/stores";
 
-const heroProducts = [
-  {
-    name: "Oud Lagos Serum",
-    price: "₦12,500",
-    category: "Skincare",
-    image: "/landing/oud-lagos-serum.png",
-    alt: "Oud Lagos Serum dropper bottle on a stone pedestal",
-  },
-  {
-    name: "Oud Lagos Eau de Parfum",
-    price: "₦28,000",
-    category: "Fragrance",
-    image: "/landing/oud-lagos-eau-de-parfum.png",
-    alt: "Glow Beauty Oud Lagos Eau de Parfum bottle with white orchid on marble",
-  },
-  {
-    name: "Lagos Crossbody Bag",
-    price: "₦38,500",
-    category: "Accessories",
-    image: "/landing/lagos-crossbody-bag.png",
-    alt: "Brown leather Lagos crossbody bag with gold clasp on white marble",
-  },
-] as const;
+type HeroProps = {
+  demoStore: DemoStoreConfig;
+};
 
-export function Hero() {
+export function Hero({ demoStore }: HeroProps) {
   return (
     <section className="px-4 pb-24 pt-14 sm:px-6 sm:pb-32 sm:pt-20">
       <div className="mx-auto max-w-6xl">
@@ -48,13 +29,14 @@ export function Hero() {
               Start free
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
             </Link>
-            <Link href="/glow-beauty" className="btn-secondary px-7 py-3.5 text-[15px]">
+            <Link href={`/${demoStore.slug}`} className="btn-secondary px-7 py-3.5 text-[15px]">
               View demo store
             </Link>
           </div>
 
           <p className="mt-8 text-[13px] text-[#86868b]">
-            Free tier · Live in minutes · Built for WhatsApp sellers
+            Today&apos;s demo: <span className="font-medium text-[#1d1d1f]">{demoStore.name}</span> ·{" "}
+            {demoStore.type} · Free tier · Live in minutes
           </p>
         </div>
 
@@ -65,11 +47,11 @@ export function Hero() {
               <div className="h-2.5 w-2.5 rounded-full bg-[#febc2e]" />
               <div className="h-2.5 w-2.5 rounded-full bg-[#28c840]" />
               <span className="ml-3 text-[11px] tracking-wide text-[#86868b]">
-                cartflow.app/glow-beauty
+                cartflow.app/{demoStore.slug}
               </span>
             </div>
             <div className="grid gap-px bg-black/[0.04] sm:grid-cols-3">
-              {heroProducts.map((item) => (
+              {demoStore.heroProducts.map((item) => (
                 <article
                   key={item.name}
                   className="group bg-white p-5 text-left transition-colors hover:bg-[#fbfbfd]"
