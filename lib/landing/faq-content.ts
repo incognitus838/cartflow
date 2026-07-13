@@ -72,10 +72,3 @@ export const FAQ_ITEMS: FaqItem[] = [
     answer: "Coming soon. For now, bank transfer works for most WhatsApp sellers.",
   },
 ];
-
-export const FAQ_LINKS = [
-  { label: "Sign up", href: "/signup" },
-  { label: "Login to your dashboard", href: "/login" },
-  { label: "Live demo store", href: "/glow-beauty" },
-  { label: "Customer order tracking (demo)", href: "/glow-beauty/track" },
-] as const;

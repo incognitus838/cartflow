@@ -1,5 +1,4 @@
-import Link from "next/link";
-import { FAQ_ITEMS, FAQ_LINKS } from "@/lib/landing/faq-content";
+import { FAQ_ITEMS } from "@/lib/landing/faq-content";
 
 export function Faq() {
   return (
@@ -43,40 +42,6 @@ export function Faq() {
             </details>
           ))}
         </div>
-
-        <div className="mt-16">
-          <h2 className="text-center text-[22px] font-semibold tracking-tight text-[#1d1d1f] sm:text-[24px]">
-            Your links
-          </h2>
-          <div className="cf-card mt-8 overflow-hidden">
-            <table className="w-full text-left text-[14px]">
-              <tbody>
-                {FAQ_LINKS.map((link, index) => (
-                  <tr
-                    key={link.href}
-                    className={index > 0 ? "border-t border-black/[0.06]" : undefined}
-                  >
-                    <th
-                      scope="row"
-                      className="w-[42%] px-5 py-4 font-medium text-[#1d1d1f] sm:px-6"
-                    >
-                      {link.label}
-                    </th>
-                    <td className="px-5 py-4 sm:px-6">
-                      <Link
-                        href={link.href}
-                        className="break-all font-medium text-[#1a7f5a] transition-colors hover:text-[#156b4b]"
-                      >
-                        {link.href}
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
       </div>
     </section>
   );
