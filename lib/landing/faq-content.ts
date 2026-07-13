@@ -5,70 +5,28 @@ export type FaqItem = {
 
 export const FAQ_ITEMS: FaqItem[] = [
   {
-    question: "Is CartFlow free?",
-    answer: "Yes. You can start with up to 10 products at no cost.",
-  },
-  {
-    question: "Do I need technical skills?",
-    answer: "No. If you use WhatsApp and can upload photos, you can use CartFlow.",
-  },
-  {
-    question: "How do customers pay me?",
+    question: "How do I get started?",
     answer:
-      "By bank transfer to your account. They upload a screenshot or PDF as proof at checkout.",
+      "CartFlow is free for up to 10 products. No technical skills needed — if you use WhatsApp and can upload photos, you are set. Before signing up, have your store name, phone, WhatsApp, bank details, and product photos with prices ready.",
   },
   {
-    question: "Does CartFlow hold my money?",
-    answer: "No. Payment goes directly to your bank.",
-  },
-  {
-    question: "Can I add staff to my store?",
+    question: "How do payments work?",
     answer:
-      "Yes, on the Pro plan. Give each person a role so they only access what they need.",
+      "Customers pay by bank transfer to your account and upload a screenshot or PDF as proof at checkout. CartFlow never holds your money — it goes straight to you. Card payments via Paystack are coming soon; bank transfer works for most WhatsApp sellers today.",
   },
   {
-    question: "Can staff approve payments or change my bank account?",
-    answer: "No. Only you as the owner can approve payments and manage bank details.",
-  },
-  {
-    question: "What does the Fulfillment role do?",
+    question: "Can I add staff, and what can they do?",
     answer:
-      "They handle orders after payment — packing, shipping updates, delivery status, and customer notes. They cannot approve money.",
+      "Yes, on the Pro plan. Fulfillment staff handle packing, shipping updates, and delivery status — not payments. Catalog staff manage products, photos, prices, and stock — not orders. Only you as the owner can approve payments and change bank details. You can approve payments from your phone anywhere while your team keeps orders moving.",
   },
   {
-    question: "What does the Catalog role do?",
-    answer: "They manage products, photos, prices, and stock. They do not see orders.",
-  },
-  {
-    question: "Can I run my store when I am traveling?",
+    question: "What is the customer checkout experience?",
     answer:
-      "Yes. Approve payments from anywhere on your phone. Your team updates order status and products while you control the sales.",
+      "Customers do not need an account — they checkout as guests with name, phone, and address. You can charge different delivery fees by area using delivery zones (for example Lekki, Mainland, or Pickup).",
   },
   {
-    question: "Do customers need to create an account?",
-    answer: "No. They checkout as guests with name, phone, and address.",
-  },
-  {
-    question: "Can I charge different delivery fees for different areas?",
-    answer: "Yes. Use delivery zones (for example Lekki, Mainland, Pickup).",
-  },
-  {
-    question: "Does stock update when I approve an order?",
+    question: "Orders, stock, and notifications",
     answer:
-      "Yes, if you turn on auto-deduct in Settings. Stock is restored if you refund an order.",
-  },
-  {
-    question: "Will I get an email when someone orders?",
-    answer:
-      "Not yet. Check your dashboard for new orders. Email alerts are coming in a future update.",
-  },
-  {
-    question: "What do I need before signing up?",
-    answer:
-      "Store name, phone, WhatsApp, bank details, and product photos with prices ready.",
-  },
-  {
-    question: "When will card payments (Paystack) be available?",
-    answer: "Coming soon. For now, bank transfer works for most WhatsApp sellers.",
+      "Turn on auto-deduct in Settings and stock updates when you approve an order; stock is restored if you refund. Email alerts when someone orders are not live yet — check your dashboard for new orders. Email notifications are coming in a future update.",
   },
 ];
