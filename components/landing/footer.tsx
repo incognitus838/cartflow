@@ -13,7 +13,10 @@ export function Footer() {
         <p className="text-[13px] text-[#86868b]">
           © {new Date().getFullYear()} CartFlow · Effortless Commerce. Timeless Elegance.
         </p>
-        <div className="flex gap-8 text-[13px] text-[#86868b]">
+        <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-2 text-[13px] text-[#86868b]">
+          <Link href="/#faq" className="transition-colors hover:text-[#1d1d1f]">
+            FAQ
+          </Link>
           <Link href="/login" className="transition-colors hover:text-[#1d1d1f]">
             Log in
           </Link>
