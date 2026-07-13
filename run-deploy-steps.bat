@@ -10,5 +10,5 @@ git status
 git add -A
 git commit -m "fix: category-specific demo product images (Pexels + verified Unsplash)"
 if errorlevel 1 exit /b 1
-git push origin main
+git push origin master
 exit /b %errorlevel%
