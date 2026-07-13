@@ -9,7 +9,7 @@ import { readFileSync, existsSync } from "fs";
 import { join, resolve } from "path";
 
 const PROJECT_NAME = "cartflow";
-const PRODUCTION_URL = process.env.CARTFLOW_PRODUCTION_URL ?? "https://cartflow-839.vercel.app";
+const PRODUCTION_URL = process.env.CARTFLOW_PRODUCTION_URL ?? "https://cartflow.com.ng";
 const API = "https://api.vercel.com";
 
 function loadEnvFile(path) {

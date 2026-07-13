@@ -2,10 +2,10 @@
 /**
  * Lightweight production smoke checks (read-only + login).
  * Run: node scripts/production-smoke.mjs
- * Env: SMOKE_BASE_URL (default https://cartflow-839.vercel.app)
+ * Env: SMOKE_BASE_URL (default https://cartflow.com.ng)
  */
 
-const BASE = (process.env.SMOKE_BASE_URL || "https://cartflow-839.vercel.app").replace(/\/$/, "");
+const BASE = (process.env.SMOKE_BASE_URL || "https://cartflow.com.ng").replace(/\/$/, "");
 
 const checks = [];
 

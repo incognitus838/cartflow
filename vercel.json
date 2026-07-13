@@ -5,6 +5,20 @@
   "installCommand": "npm install",
   "regions": ["iad1"],
   "env": {
-    "NEXT_PUBLIC_APP_URL": "https://cartflow-839.vercel.app"
-  }
+    "NEXT_PUBLIC_APP_URL": "https://cartflow.com.ng"
+  },
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "cartflow-839.vercel.app" }],
+      "destination": "https://cartflow.com.ng/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "www.cartflow.com.ng" }],
+      "destination": "https://cartflow.com.ng/:path*",
+      "permanent": true
+    }
+  ]
 }
