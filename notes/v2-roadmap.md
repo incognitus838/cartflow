@@ -3,7 +3,9 @@
 Last updated: 2026-07-11  
 Live app: https://cartflow-839.vercel.app
 
-v1 is **launch-ready** for manual bank-transfer sellers. v2 focuses on payments automation, self-serve growth, and operational scale.
+v1 is **clear to ship** for manual bank-transfer sellers. Production smoke and API audit pass; seller settings and bank accounts are DB-backed (no runtime hardcoding). v2 focuses on payments automation, notifications, self-serve growth, and operational scale.
+
+**Manual ops today (acceptable for v1):** Order and status updates are handled by sellers in the dashboard — **email/SMS notifications are not live in production** (`RESEND_API_KEY` / domain not configured). Team invites and customer updates are done manually (WhatsApp, phone, dashboard). Fix in v2.
 
 ---
 
@@ -14,6 +16,23 @@ v1 is **launch-ready** for manual bank-transfer sellers. v2 focuses on payments 
 - Seller dashboard: orders, payment approve/decline/refund, inventory sync, KPIs
 - Admin: store approval, plan assignment, impersonation, platform overview
 - Order tracking for customers; stock deduct on approve, restore on refund
+- Seller settings & bank details synced with DB; storefront cache revalidates on save
+- Production smoke (7/7) + API audit (17/17 steps/routes)
+
+---
+
+## v2 — Notifications (priority — manual today)
+
+| Item | Why | v1 workaround |
+|------|-----|----------------|
+| **Transactional email (Resend)** | New order alerts, approval/rejection, welcome, team invites — code exists but **not configured** | Sellers check dashboard; owner shares team passwords manually |
+| **Customer order status email/SMS** | `notifyCustomerOnStatus` toggle has no live delivery | Seller updates status in dashboard; customer tracks via order link / WhatsApp |
+| **Receipt / payment reminders** | Reduce abandoned PENDING orders | Seller follows up manually (WhatsApp) |
+| Domain + env setup (`RESEND_API_KEY`, `TRANSACTIONAL_FROM_EMAIL`, `NOTIFICATION_FROM_EMAIL`) | Required before any email sends in prod | N/A — deferred |
+
+**Success metric:** Seller receives email within 60s of new order; customer receives email on status change when enabled.
+
+See also: `notes/later.md` (Resend setup steps), `lib/email/`, `lib/notifications/`.
 
 ---
 
@@ -37,7 +56,7 @@ v1 is **launch-ready** for manual bank-transfer sellers. v2 focuses on payments 
 | WhatsApp order notifications (deep links) | Primary channel for NG/Africa sellers |
 | Shareable product cards (OG + WA preview) | Viral storefront links |
 | Abandoned cart / receipt reminders | Recover PENDING orders with no receipt |
-| Basic email/SMS receipt nudges | Optional, config per store |
+| Basic email/SMS receipt nudges | Covered in Notifications section above |
 | Referral / affiliate codes | Growth loop for power sellers |
 
 ---
@@ -90,12 +109,13 @@ v1 is **launch-ready** for manual bank-transfer sellers. v2 focuses on payments 
 
 ## Suggested v2 sequencing
 
-1. **Paystack checkout** — highest seller/customer pain  
-2. **WhatsApp notifications** — low effort, high retention  
-3. **Self-serve billing** — revenue for CartFlow  
-4. **Digital file delivery** — unlock digital-store catalog fully  
-5. **Service booking** — unlock services catalog fully  
-6. **Admin SLA + seller health** — scale support without headcount  
+1. **Transactional email (Resend + domain)** — unblocks order alerts; code wired, config missing  
+2. **Paystack checkout** — highest seller/customer pain after notifications  
+3. **WhatsApp notifications** — low effort, high retention  
+4. **Self-serve billing** — revenue for CartFlow
+5. **Digital file delivery** — unlock digital-store catalog fully  
+6. **Service booking** — unlock services catalog fully  
+7. **Admin SLA + seller health** — scale support without headcount
 
 ---
 

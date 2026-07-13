@@ -1,8 +1,9 @@
 /**
  * Download semantic product images to public/demo-products/
  * Run: npm run demo:download-images
+ * Force overwrite: npm run demo:download-images -- --force
  */
-import { mkdir, writeFile, readFile } from "fs/promises";
+import { mkdir, writeFile } from "fs/promises";
 import { existsSync } from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -11,16 +12,19 @@ import { listAllImageDownloads } from "../lib/catalog/product-image-catalog.mjs"
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const MANIFEST = path.join(root, "public", "demo-products", "manifest.json");
+const force = process.argv.includes("--force");
 
 async function downloadOne(item) {
   const dest = path.join(root, item.fileRelative);
   await mkdir(path.dirname(dest), { recursive: true });
 
-  if (existsSync(dest)) {
+  if (!force && existsSync(dest)) {
     return { ...item, status: "skipped" };
   }
 
-  const res = await fetch(item.remoteUrl);
+  const res = await fetch(item.remoteUrl, {
+    headers: { "User-Agent": "CartflowDemoImageDownloader/1.0" },
+  });
   if (!res.ok) {
     throw new Error(`HTTP ${res.status} for ${item.remoteUrl}`);
   }
@@ -37,7 +41,9 @@ async function downloadOne(item) {
 
 async function main() {
   const items = listAllImageDownloads();
-  console.log(`Downloading ${items.length} product images...\n`);
+  console.log(
+    `Downloading ${items.length} product images${force ? " (force overwrite)" : ""}...\n`,
+  );
 
   let downloaded = 0;
   let skipped = 0;
@@ -71,11 +77,11 @@ async function main() {
   const manifest = {
     generatedAt: new Date().toISOString(),
     count: items.length,
-    items: items.map(({ vertical, categorySlug, slot, photoId, localPath }) => ({
+    items: items.map(({ vertical, categorySlug, slot, sourceId, localPath }) => ({
       vertical,
       categorySlug,
       slot,
-      photoId,
+      sourceId,
       localPath,
     })),
   };
