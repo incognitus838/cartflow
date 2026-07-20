@@ -28,7 +28,7 @@ export function CheckoutPage({
   isDemoStore = false,
 }: CheckoutPageProps) {
   const router = useRouter();
-  const { lines, selectedDeliveryZoneId, setSelectedDeliveryZoneId } = useCart();
+  const { lines, hydrated, selectedDeliveryZoneId, setSelectedDeliveryZoneId } = useCart();
   const [appliedPromo, setAppliedPromo] = useState<AppliedPromo | null>(null);
   const [placingOrder, setPlacingOrder] = useState(false);
 
@@ -47,15 +47,29 @@ export function CheckoutPage({
     onSelectZone: setSelectedDeliveryZoneId,
   });
 
+  // Only bounce to cart after the bag has loaded from storage.
+  // Otherwise first paint is empty and checkout immediately redirects.
   useEffect(() => {
-    if (placingOrder) return;
+    if (!hydrated || placingOrder) return;
     if (lines.length === 0) {
       router.replace(cartPath(storeSlug));
     }
-  }, [lines.length, placingOrder, router, storeSlug]);
+  }, [hydrated, lines.length, placingOrder, router, storeSlug]);
+
+  if (!hydrated) {
+    return (
+      <div className="py-16 text-center">
+        <p className="text-sm text-slate-600">Loading your bag…</p>
+      </div>
+    );
+  }
 
   if (!placingOrder && lines.length === 0) {
-    return null;
+    return (
+      <div className="py-16 text-center">
+        <p className="text-sm text-slate-600">Your bag is empty. Redirecting…</p>
+      </div>
+    );
   }
 
   return (

@@ -17,6 +17,8 @@ type CartContextValue = {
   lines: CartLine[];
   itemCount: number;
   subtotal: number;
+  /** False until localStorage cart has been read for this store. */
+  hydrated: boolean;
   selectedDeliveryZoneId: string | null;
   setSelectedDeliveryZoneId: (zoneId: string | null) => void;
   addItem: (input: AddToCartInput) => void;
@@ -43,6 +45,7 @@ export function CartProvider({ storeSlug, children }: CartProviderProps) {
   }, [lines]);
 
   useEffect(() => {
+    setHydrated(false);
     const saved = readCart(storeSlug);
     const next = saved?.lines ?? [];
     linesRef.current = next;
@@ -193,6 +196,7 @@ export function CartProvider({ storeSlug, children }: CartProviderProps) {
       lines,
       itemCount,
       subtotal,
+      hydrated,
       selectedDeliveryZoneId,
       setSelectedDeliveryZoneId,
       addItem,
@@ -203,6 +207,7 @@ export function CartProvider({ storeSlug, children }: CartProviderProps) {
   }, [
     addItem,
     clear,
+    hydrated,
     lines,
     removeItem,
     selectedDeliveryZoneId,

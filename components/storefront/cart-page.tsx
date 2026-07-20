@@ -16,8 +16,14 @@ type CartPageProps = {
 };
 
 export function CartPage({ storeSlug, currency, fallbackDeliveryFee }: CartPageProps) {
-  const { lines, updateQuantity, removeItem, selectedDeliveryZoneId, setSelectedDeliveryZoneId } =
-    useCart();
+  const {
+    lines,
+    hydrated,
+    updateQuantity,
+    removeItem,
+    selectedDeliveryZoneId,
+    setSelectedDeliveryZoneId,
+  } = useCart();
 
   const {
     zones,
@@ -33,6 +39,14 @@ export function CartPage({ storeSlug, currency, fallbackDeliveryFee }: CartPageP
     selectedZoneId: selectedDeliveryZoneId,
     onSelectZone: setSelectedDeliveryZoneId,
   });
+
+  if (!hydrated) {
+    return (
+      <div className="py-16 text-center">
+        <p className="text-sm text-slate-600">Loading your bag…</p>
+      </div>
+    );
+  }
 
   if (lines.length === 0) {
     return (
