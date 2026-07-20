@@ -7,7 +7,7 @@ import type { SessionInvalidReason } from "@/lib/auth/validate-session";
 export async function forceLogoutRedirect(
   reason: SessionInvalidReason | "timeout" = "access_revoked",
   redirectTo = "/login",
-) {
+): Promise<never> {
   await clearSession();
   redirect(`${redirectTo}?reason=${reason}`);
 }

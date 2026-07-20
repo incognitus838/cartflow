@@ -89,35 +89,30 @@ export async function requireAuth(redirectTo = "/login") {
 
 export async function requireBusiness() {
   const ctx = await requireAuth();
+  const userId = ctx.user.id;
 
-  if (!ctx.business || !ctx.storeAccessRole || !ctx.permissions) {
-    const stores = await listAccessibleStores(ctx.user.id);
+  async function switchStoreOrLogout(): Promise<never> {
+    const stores = await listAccessibleStores(userId);
     if (stores.length > 0) {
       await updateSessionBusiness(stores[0].id);
       redirect("/dashboard");
     }
-    await forceLogoutRedirect("access_revoked");
+    return forceLogoutRedirect("access_revoked");
   }
 
-  // forceLogoutRedirect/redirect never return; assert after the guard for TS.
-  const business = ctx.business!;
-  const storeAccessRole = ctx.storeAccessRole!;
-  const permissions = ctx.permissions!;
+  if (!ctx.business || !ctx.storeAccessRole || !ctx.permissions) {
+    return switchStoreOrLogout();
+  }
 
-  if (business.deletedAt) {
-    const stores = await listAccessibleStores(ctx.user.id);
-    if (stores.length > 0) {
-      await updateSessionBusiness(stores[0].id);
-      redirect("/dashboard");
-    }
-    await forceLogoutRedirect("access_revoked");
+  if (ctx.business.deletedAt) {
+    return switchStoreOrLogout();
   }
 
   return {
     ...ctx,
-    business,
-    storeAccessRole,
-    permissions,
+    business: ctx.business,
+    storeAccessRole: ctx.storeAccessRole,
+    permissions: ctx.permissions,
   };
 }
 
