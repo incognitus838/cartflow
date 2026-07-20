@@ -6,6 +6,24 @@ import { resolveStoreAccessContext } from "@/lib/store-access";
 import type { MemberPermissions } from "@/lib/team/permissions-shared";
 import { assertBusinessAccess, resolveActiveBusinessId } from "@/lib/tenant";
 
+function storeAccessDeniedResponse(session: { role: string }) {
+  // Never clear platform admin sessions when a seller-scoped route is hit by mistake.
+  if (session.role === "ADMIN") {
+    return NextResponse.json(
+      {
+        error: "This action requires seller store access. Use the admin API for platform actions.",
+        reason: "admin_wrong_scope",
+      },
+      { status: 403 },
+    );
+  }
+
+  return NextResponse.json(
+    { error: "Your store access was removed.", reason: "access_revoked" },
+    { status: 401 },
+  );
+}
+
 export async function requireApiBusiness() {
   const session = await getSession();
   if (!session) {
@@ -28,26 +46,20 @@ export async function requireApiBusiness() {
 
   const businessId = await resolveActiveBusinessId(session);
   if (!businessId) {
-    await clearSession();
-    return {
-      error: NextResponse.json(
-        { error: "Your store access was removed.", reason: "access_revoked" },
-        { status: 401 },
-      ),
-    };
+    if (session.role !== "ADMIN") {
+      await clearSession();
+    }
+    return { error: storeAccessDeniedResponse(session) };
   }
 
   try {
     const business = await assertBusinessAccess(session.userId, businessId, session);
     const access = await resolveStoreAccessContext(session, session.userId, businessId);
     if (!access) {
-      await clearSession();
-      return {
-        error: NextResponse.json(
-          { error: "Your store access was removed.", reason: "access_revoked" },
-          { status: 401 },
-        ),
-      };
+      if (session.role !== "ADMIN") {
+        await clearSession();
+      }
+      return { error: storeAccessDeniedResponse(session) };
     }
     return {
       session,
@@ -57,13 +69,10 @@ export async function requireApiBusiness() {
       accessPreset: access.accessPreset,
     };
   } catch {
-    await clearSession();
-    return {
-      error: NextResponse.json(
-        { error: "Your store access was removed.", reason: "access_revoked" },
-        { status: 401 },
-      ),
-    };
+    if (session.role !== "ADMIN") {
+      await clearSession();
+    }
+    return { error: storeAccessDeniedResponse(session) };
   }
 }
 

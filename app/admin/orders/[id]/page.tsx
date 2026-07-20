@@ -40,10 +40,13 @@ export default async function AdminOrderDetailPage({ params }: AdminOrderDetailP
 
       <OrderDetailPanel
         currency={order.business.currency}
+        storeSlug={order.business.slug}
         backHref="/admin/orders"
         backLabel="Back to platform orders"
         receiptSrc={adminOrderReceiptUrl(order.id)}
         patchUrl={`/api/admin/orders/${order.id}`}
+        paymentReviewUrl={`/api/admin/orders/${order.id}/payment-review`}
+        canApprovePayments
         order={{
           id: order.id,
           orderNumber: order.orderNumber,
@@ -64,6 +67,14 @@ export default async function AdminOrderDetailPage({ params }: AdminOrderDetailP
           paymentReceiptMimeType: order.paymentReceiptMimeType,
           paymentReceiptFilename: order.paymentReceiptFilename,
           paymentReceiptSubmittedAt: order.paymentReceiptSubmittedAt?.toISOString() ?? null,
+          paymentRejectionReason: order.paymentRejectionReason,
+          paymentEvents: order.paymentEvents.map((event) => ({
+            id: event.id,
+            action: event.action,
+            reason: event.reason,
+            actorName: event.actorName,
+            createdAt: event.createdAt.toISOString(),
+          })),
           createdAt: order.createdAt.toISOString(),
           items: order.items,
           notifications: order.notifications.map((n) => ({

@@ -10,6 +10,7 @@ const adminOrderInclude = {
   customer: { select: { email: true } },
   items: { orderBy: { id: "asc" as const } },
   notifications: { orderBy: { createdAt: "desc" as const }, take: 10 },
+  paymentEvents: { orderBy: { createdAt: "desc" as const } },
 };
 
 export type AdminOrderDetail = Prisma.OrderGetPayload<{

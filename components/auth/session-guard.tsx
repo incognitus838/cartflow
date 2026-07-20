@@ -41,6 +41,10 @@ export function SessionGuard({ scope = "dashboard" }: SessionGuardProps) {
         const data = (await res.json().catch(() => ({}))) as { reason?: string };
         loggingOut.current = true;
         const reason = data.reason ?? "session_expired";
+        // Seller-scoped APIs may return access_revoked; do not force-logout platform admins.
+        if (scope === "admin" && reason === "access_revoked") {
+          return;
+        }
         const message =
           reason === "suspended"
             ? "Your account has been suspended."

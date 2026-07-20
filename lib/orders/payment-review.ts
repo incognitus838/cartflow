@@ -11,7 +11,7 @@ export type PaymentReviewInput = {
   reason?: string;
   actorName?: string;
   actorUserId?: string;
-  actorRole?: "owner" | "staff";
+  actorRole?: "owner" | "staff" | "admin";
 };
 
 export function parsePaymentReview(body: unknown): PaymentReviewInput | string {
@@ -96,7 +96,9 @@ export async function reviewOrderPayment(
       action: "PAYMENT_APPROVED",
       actorUserId: input.actorUserId,
       actorName: input.actorName,
-      detail: `Payment approved for order ${existing.orderNumber}${input.actorRole === "staff" ? " · staff" : ""}`,
+      detail: `Payment approved for order ${existing.orderNumber}${
+        input.actorRole === "staff" ? " · staff" : input.actorRole === "admin" ? " · platform admin" : ""
+      }`,
       metadata: { orderId: existing.id, orderNumber: existing.orderNumber },
     });
     return order;
@@ -140,7 +142,9 @@ export async function reviewOrderPayment(
     action: "PAYMENT_REJECTED",
     actorUserId: input.actorUserId,
     actorName: input.actorName,
-    detail: `Payment rejected for order ${existing.orderNumber}${input.actorRole === "staff" ? " · staff" : ""}`,
+    detail: `Payment rejected for order ${existing.orderNumber}${
+      input.actorRole === "staff" ? " · staff" : input.actorRole === "admin" ? " · platform admin" : ""
+    }`,
     metadata: { orderId: existing.id, orderNumber: existing.orderNumber, reason },
   });
   return order;
