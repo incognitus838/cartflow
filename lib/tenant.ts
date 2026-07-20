@@ -13,6 +13,7 @@ export async function getBusinessForUser(userId: string, businessId: string) {
   return prisma.business.findFirst({
     where: {
       id: businessId,
+      deletedAt: null,
       OR: [
         { ownerId: userId },
         { members: { some: { userId, isSuspended: false } } },
@@ -32,13 +33,17 @@ export async function resolveBusinessForSession(session: SessionPayload) {
   }
 
   const owned = await prisma.business.findFirst({
-    where: { ownerId: session.userId },
+    where: { ownerId: session.userId, deletedAt: null },
     orderBy: { createdAt: "asc" },
   });
   if (owned) return owned;
 
   const membership = await prisma.businessMember.findFirst({
-    where: { userId: session.userId, isSuspended: false },
+    where: {
+      userId: session.userId,
+      isSuspended: false,
+      business: { deletedAt: null },
+    },
     include: { business: true },
     orderBy: { createdAt: "asc" },
   });
@@ -75,14 +80,18 @@ export async function resolveActiveBusinessId(session: SessionPayload) {
   }
 
   const owned = await prisma.business.findFirst({
-    where: { ownerId: session.userId },
+    where: { ownerId: session.userId, deletedAt: null },
     select: { id: true },
     orderBy: { createdAt: "asc" },
   });
   if (owned) return owned.id;
 
   const membership = await prisma.businessMember.findFirst({
-    where: { userId: session.userId, isSuspended: false },
+    where: {
+      userId: session.userId,
+      isSuspended: false,
+      business: { deletedAt: null },
+    },
     select: { businessId: true },
     orderBy: { createdAt: "asc" },
   });
