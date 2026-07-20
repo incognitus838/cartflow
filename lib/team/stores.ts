@@ -13,17 +13,23 @@ const storeSelect = {
   slug: true,
   approvalStatus: true,
   isActive: true,
+  isSuspended: true,
 } as const;
 
 export async function listAccessibleStores(userId: string): Promise<AccessibleStore[]> {
   const [owned, memberships] = await Promise.all([
     prisma.business.findMany({
-      where: { ownerId: userId },
+      where: { ownerId: userId, deletedAt: null },
       select: storeSelect,
       orderBy: { createdAt: "asc" },
     }),
     prisma.businessMember.findMany({
-      where: { userId, isSuspended: false, role: "STAFF" },
+      where: {
+        userId,
+        isSuspended: false,
+        role: "STAFF",
+        business: { deletedAt: null },
+      },
       include: {
         business: { select: storeSelect },
       },
@@ -60,7 +66,7 @@ export async function listAccessibleStores(userId: string): Promise<AccessibleSt
 
 export async function listOwnedStores(userId: string): Promise<OwnedStoreDetail[]> {
   const businesses = await prisma.business.findMany({
-    where: { ownerId: userId },
+    where: { ownerId: userId, deletedAt: null },
     select: {
       ...storeSelect,
       createdAt: true,
@@ -81,7 +87,7 @@ export async function listOwnedStores(userId: string): Promise<OwnedStoreDetail[
 }
 
 export async function countOwnedStores(userId: string) {
-  return prisma.business.count({ where: { ownerId: userId } });
+  return prisma.business.count({ where: { ownerId: userId, deletedAt: null } });
 }
 
 function ownerStoreCap(plans: BusinessPlan[]): number | null {

@@ -3,10 +3,11 @@ import type { BusinessPlan, StoreApprovalStatus } from "@prisma/client";
 import { StoresTable, type StoreLiveFilter } from "@/components/admin/stores-table";
 import { PageHeader } from "@/components/shared/page-header";
 import { listAdminBusinesses } from "@/lib/admin/queries";
+import { countDeletedStores } from "@/lib/admin/store-lifecycle";
 
 const VALID_APPROVAL: StoreApprovalStatus[] = ["PENDING", "APPROVED", "REJECTED"];
 const VALID_PLANS: BusinessPlan[] = ["FREE", "STARTER", "PRO", "ENTERPRISE"];
-const VALID_LIVE: StoreLiveFilter[] = ["active", "inactive", "public"];
+const VALID_LIVE: StoreLiveFilter[] = ["active", "inactive", "public", "suspended"];
 
 type AdminStoresPageProps = {
   searchParams: Promise<{
@@ -31,13 +32,16 @@ export default async function AdminStoresPage({ searchParams }: AdminStoresPageP
       ? (params.live as StoreLiveFilter)
       : "";
 
-  const stores = await listAdminBusinesses({ take: 200 });
+  const [stores, recycleBinCount] = await Promise.all([
+    listAdminBusinesses({ take: 200 }),
+    countDeletedStores(),
+  ]);
 
   return (
     <>
       <PageHeader
         title="Stores"
-        description={`Manage plans, activation, and seller impersonation. ${stores.length} stores on the platform.`}
+        description={`Manage plans, suspend, delete, and seller impersonation. ${stores.length} active stores on the platform.`}
       />
       <Suspense fallback={null}>
         <StoresTable
@@ -45,7 +49,10 @@ export default async function AdminStoresPage({ searchParams }: AdminStoresPageP
             ...store,
             createdAt: store.createdAt.toISOString(),
             submittedAt: store.submittedAt?.toISOString() ?? null,
+            suspendedAt: store.suspendedAt?.toISOString() ?? null,
+            suspendReason: store.suspendReason,
           }))}
+          recycleBinCount={recycleBinCount}
           initialApproval={initialApproval}
           initialPlan={initialPlan}
           initialLive={initialLive}

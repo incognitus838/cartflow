@@ -20,7 +20,13 @@ function cachedQuery<T>(
 
 async function fetchStorefrontBySlug(slug: string) {
   return prisma.business.findFirst({
-    where: { slug, isActive: true, approvalStatus: "APPROVED" },
+    where: {
+      slug,
+      isActive: true,
+      approvalStatus: "APPROVED",
+      isSuspended: false,
+      deletedAt: null,
+    },
     select: {
       id: true,
       name: true,

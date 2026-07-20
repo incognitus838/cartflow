@@ -3,6 +3,8 @@ import type { BusinessPlan, StoreApprovalStatus } from "@prisma/client";
 export type StoreApprovalSnapshot = {
   approvalStatus: StoreApprovalStatus;
   isActive: boolean;
+  isSuspended?: boolean;
+  deletedAt?: Date | string | null;
   rejectionReason?: string | null;
   resubmissionAllowed?: boolean;
   submittedAt?: Date | null;
@@ -11,7 +13,12 @@ export type StoreApprovalSnapshot = {
 
 /** Store is visible on public storefront routes. */
 export function isStorePubliclyLive(store: StoreApprovalSnapshot) {
-  return store.approvalStatus === "APPROVED" && store.isActive;
+  return (
+    store.approvalStatus === "APPROVED" &&
+    store.isActive &&
+    !store.isSuspended &&
+    !store.deletedAt
+  );
 }
 
 export const PRODUCTS_LOCKED_UNTIL_APPROVAL =

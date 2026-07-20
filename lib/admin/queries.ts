@@ -14,7 +14,7 @@ const STORE_CONNECTED_USER_WHERE = {
 
 export async function getAdminStats() {
   const [businesses, users, orders, revenue, recentBusinesses, recentOrders] = await Promise.all([
-    prisma.business.count(),
+    prisma.business.count({ where: { deletedAt: null } }),
     prisma.user.count({ where: STORE_CONNECTED_USER_WHERE }),
     prisma.order.count(),
     prisma.order.aggregate({
@@ -22,6 +22,7 @@ export async function getAdminStats() {
       _sum: { total: true },
     }),
     prisma.business.findMany({
+      where: { deletedAt: null },
       orderBy: { createdAt: "desc" },
       take: 10,
       select: {
@@ -30,6 +31,7 @@ export async function getAdminStats() {
         slug: true,
         plan: true,
         isActive: true,
+        isSuspended: true,
         approvalStatus: true,
         submittedAt: true,
         createdAt: true,
@@ -48,6 +50,7 @@ export async function getAdminStats() {
 
   const planBreakdown = await prisma.business.groupBy({
     by: ["plan"],
+    where: { deletedAt: null },
     _count: { _all: true },
   });
 
@@ -58,7 +61,7 @@ export async function getAdminStats() {
 
   const [pendingOrders, pendingStoreApprovals] = await Promise.all([
     prisma.order.count({ where: { status: "PENDING" } }),
-    prisma.business.count({ where: { approvalStatus: "PENDING" } }),
+    prisma.business.count({ where: { approvalStatus: "PENDING", deletedAt: null } }),
   ]);
 
   return {
@@ -89,15 +92,18 @@ export async function listAdminBusinesses(options?: { search?: string; take?: nu
   const take = options?.take ?? 100;
 
   return prisma.business.findMany({
-    where: search
-      ? {
-          OR: [
-            { name: { contains: search, mode: "insensitive" } },
-            { slug: { contains: search, mode: "insensitive" } },
-            { owner: { email: { contains: search, mode: "insensitive" } } },
-          ],
-        }
-      : undefined,
+    where: {
+      deletedAt: null,
+      ...(search
+        ? {
+            OR: [
+              { name: { contains: search, mode: "insensitive" } },
+              { slug: { contains: search, mode: "insensitive" } },
+              { owner: { email: { contains: search, mode: "insensitive" } } },
+            ],
+          }
+        : {}),
+    },
     orderBy: { createdAt: "desc" },
     take,
     select: {
@@ -106,6 +112,9 @@ export async function listAdminBusinesses(options?: { search?: string; take?: nu
       slug: true,
       plan: true,
       isActive: true,
+      isSuspended: true,
+      suspendedAt: true,
+      suspendReason: true,
       approvalStatus: true,
       submittedAt: true,
       createdAt: true,

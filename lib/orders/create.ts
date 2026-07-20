@@ -16,7 +16,12 @@ export async function createGuestOrder(
   receipt?: ParsedReceipt,
 ) {
   const business = await prisma.business.findFirst({
-    where: { id: businessId, isActive: true },
+    where: {
+      id: businessId,
+      isActive: true,
+      isSuspended: false,
+      deletedAt: null,
+    },
     select: { id: true },
   });
 
