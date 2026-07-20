@@ -17,6 +17,7 @@ type CheckoutPageProps = {
   currency: string;
   fallbackDeliveryFee: number;
   paymentAccount: ManualPaymentAccount | null;
+  isDemoStore?: boolean;
 };
 
 export function CheckoutPage({
@@ -24,6 +25,7 @@ export function CheckoutPage({
   currency,
   fallbackDeliveryFee,
   paymentAccount,
+  isDemoStore = false,
 }: CheckoutPageProps) {
   const router = useRouter();
   const { lines, selectedDeliveryZoneId, setSelectedDeliveryZoneId } = useCart();
@@ -90,6 +92,7 @@ export function CheckoutPage({
             deliveryZoneId={selectedDeliveryZoneId}
             requiresZoneSelection={requiresZoneSelection}
             paymentAccount={paymentAccount}
+            isDemoStore={isDemoStore}
             appliedPromo={appliedPromo}
             onPlacingChange={setPlacingOrder}
           />

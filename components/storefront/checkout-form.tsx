@@ -11,6 +11,7 @@ import type { CartLine } from "@/lib/cart/types";
 import type { ManualPaymentAccount } from "@/lib/payments/manual";
 import { orderConfirmationPath } from "@/lib/storefront/paths";
 import { saveTrackSession } from "@/lib/storefront/track-session";
+import { formatCurrency } from "@/lib/utils";
 
 type CheckoutFormProps = {
   storeSlug: string;
@@ -20,6 +21,8 @@ type CheckoutFormProps = {
   deliveryZoneId?: string | null;
   requiresZoneSelection?: boolean;
   paymentAccount: ManualPaymentAccount | null;
+  /** Public CartFlow demo — no bank details, no real transfer. */
+  isDemoStore?: boolean;
   appliedPromo?: AppliedPromo | null;
   onPlacingChange?: (placing: boolean) => void;
 };
@@ -32,6 +35,7 @@ export function CheckoutForm({
   deliveryZoneId,
   requiresZoneSelection = false,
   paymentAccount,
+  isDemoStore = false,
   appliedPromo,
   onPlacingChange,
 }: CheckoutFormProps) {
@@ -54,12 +58,12 @@ export function CheckoutForm({
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
 
-    if (!paymentAccount) {
+    if (!isDemoStore && !paymentAccount) {
       toast.error("This store has not set up bank payments yet.");
       return;
     }
 
-    if (!receiptFile) {
+    if (!isDemoStore && !receiptFile) {
       toast.error("Upload your payment receipt before placing the order.");
       return;
     }
@@ -91,7 +95,11 @@ export function CheckoutForm({
           })),
         ),
       );
-      formData.append("receipt", receiptFile);
+      if (isDemoStore) {
+        formData.append("demoCheckout", "1");
+      } else if (receiptFile) {
+        formData.append("receipt", receiptFile);
+      }
 
       const res = await fetch(`/api/storefront/${storeSlug}/checkout`, {
         method: "POST",
@@ -124,20 +132,40 @@ export function CheckoutForm({
     }
   }
 
+  const canPlace =
+    !loading &&
+    !requiresZoneSelection &&
+    (isDemoStore || (Boolean(paymentAccount) && Boolean(receiptFile)));
+
   return (
     <div className="space-y-6">
-      <ManualPaymentInstructions account={paymentAccount} total={total} currency={currency} />
+      {isDemoStore ? (
+        <section className="rounded-2xl border border-amber-200 bg-amber-50 p-5 sm:p-6">
+          <h2 className="text-sm font-semibold text-amber-950">Demo store — do not send money</h2>
+          <p className="mt-2 text-sm leading-relaxed text-amber-900/90">
+            This is a CartFlow product demo. There is no bank account to pay. Place a sample order
+            to try the flow — nothing is charged and no real transfer is needed.
+          </p>
+          <p className="mt-3 text-lg font-semibold tracking-tight text-amber-950">
+            Order total (demo only): {formatCurrency(total, currency)}
+          </p>
+        </section>
+      ) : (
+        <>
+          <ManualPaymentInstructions account={paymentAccount} total={total} currency={currency} />
 
-      <section className="rounded-2xl border border-[var(--cf-border-strong)] bg-white p-5 sm:p-6">
-        <h2 className="text-sm font-semibold text-[var(--cf-black)]">Payment receipt</h2>
-        <p className="mt-1 text-xs text-[var(--cf-gray-600)]">
-          Transfer the amount above, then upload your bank confirmation screenshot or PDF.
-          Your order is only submitted once proof is attached.
-        </p>
-        <div className="mt-4">
-          <PaymentReceiptField file={receiptFile} onFileChange={setReceiptFile} />
-        </div>
-      </section>
+          <section className="rounded-2xl border border-[var(--cf-border-strong)] bg-white p-5 sm:p-6">
+            <h2 className="text-sm font-semibold text-[var(--cf-black)]">Payment receipt</h2>
+            <p className="mt-1 text-xs text-[var(--cf-gray-600)]">
+              Transfer the amount above, then upload your bank confirmation screenshot or PDF.
+              Your order is only submitted once proof is attached.
+            </p>
+            <div className="mt-4">
+              <PaymentReceiptField file={receiptFile} onFileChange={setReceiptFile} />
+            </div>
+          </section>
+        </>
+      )}
 
       <form
         id="checkout-form"
@@ -217,15 +245,13 @@ export function CheckoutForm({
         </div>
 
         <div className="mt-6 sm:mt-6">
-          <button
-            type="submit"
-            disabled={loading || !paymentAccount || !receiptFile || requiresZoneSelection}
-            className="btn-primary hidden w-full py-3 sm:block"
-          >
-            {loading ? "Placing order…" : "Place order"}
+          <button type="submit" disabled={!canPlace} className="btn-primary hidden w-full py-3 sm:block">
+            {loading ? "Placing order…" : isDemoStore ? "Place demo order" : "Place order"}
           </button>
           <p className="mt-3 hidden text-center text-xs text-[var(--cf-gray-600)] sm:block">
-            Receipt is saved securely to your order — not on server disk — for seller review.
+            {isDemoStore
+              ? "Demo only — no payment is collected."
+              : "Receipt is saved securely to your order — not on server disk — for seller review."}
           </p>
         </div>
       </form>
@@ -239,13 +265,15 @@ export function CheckoutForm({
         <button
           type="submit"
           form="checkout-form"
-          disabled={loading || !paymentAccount || !receiptFile || requiresZoneSelection}
+          disabled={!canPlace}
           className="btn-primary w-full py-3.5 text-[15px]"
         >
-          {loading ? "Placing order…" : "Place order"}
+          {loading ? "Placing order…" : isDemoStore ? "Place demo order" : "Place order"}
         </button>
         <p className="mt-2 text-center text-[11px] text-[var(--cf-gray-600)]">
-          Upload receipt above before placing your order.
+          {isDemoStore
+            ? "Demo only — no bank transfer required."
+            : "Upload receipt above before placing your order."}
         </p>
       </div>
     </div>

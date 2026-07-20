@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
+import { isDemoStoreSlug } from "@/lib/demo/is-demo-store";
 import { createGuestOrderWithNotify } from "@/lib/orders/create";
+import { buildDemoCheckoutReceipt } from "@/lib/orders/demo-receipt";
 import { parseCheckoutFormData } from "@/lib/orders/validation";
 import { getStorefrontBySlug } from "@/lib/queries/storefront";
 import { parseReceiptFile } from "@/lib/uploads/receipt";
@@ -16,10 +18,16 @@ export async function POST(request: Request, context: RouteContext) {
     return NextResponse.json({ error: "Store not found." }, { status: 404 });
   }
 
+  const isDemo = isDemoStoreSlug(store.slug);
+
   const contentType = request.headers.get("content-type") ?? "";
   if (!contentType.includes("multipart/form-data")) {
     return NextResponse.json(
-      { error: "Checkout requires multipart form data with a payment receipt." },
+      {
+        error: isDemo
+          ? "Checkout requires form data."
+          : "Checkout requires multipart form data with a payment receipt.",
+      },
       { status: 400 },
     );
   }
@@ -43,22 +51,27 @@ export async function POST(request: Request, context: RouteContext) {
     return NextResponse.json({ error: parsed }, { status: 400 });
   }
 
-  const receiptFile = formData.get("receipt");
-  if (!(receiptFile instanceof File) || receiptFile.size === 0) {
-    return NextResponse.json(
-      { error: "Upload your payment receipt (screenshot or PDF) before placing the order." },
-      { status: 400 },
-    );
-  }
-
   let receipt;
-  try {
-    receipt = await parseReceiptFile(receiptFile);
-  } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Invalid receipt file." },
-      { status: 400 },
-    );
+  if (isDemo) {
+    // Never require a real transfer or bank receipt on public demos.
+    receipt = buildDemoCheckoutReceipt();
+  } else {
+    const receiptFile = formData.get("receipt");
+    if (!(receiptFile instanceof File) || receiptFile.size === 0) {
+      return NextResponse.json(
+        { error: "Upload your payment receipt (screenshot or PDF) before placing the order." },
+        { status: 400 },
+      );
+    }
+
+    try {
+      receipt = await parseReceiptFile(receiptFile);
+    } catch (error) {
+      return NextResponse.json(
+        { error: error instanceof Error ? error.message : "Invalid receipt file." },
+        { status: 400 },
+      );
+    }
   }
 
   try {
@@ -70,6 +83,7 @@ export async function POST(request: Request, context: RouteContext) {
         status: order.status,
         total: Number(order.total),
         hasReceipt: true,
+        demo: isDemo,
       },
     });
   } catch (error) {
