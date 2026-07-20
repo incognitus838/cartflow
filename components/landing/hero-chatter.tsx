@@ -8,7 +8,7 @@ export const sellerChatter = [
   "Last price abeg.",
   "Which size you want?",
   "You get this one?",
-  "I dey travel but my shop dey open.",
+  "I don travel but my shop dey open.",
 ] as const;
 
 /** How long each phrase stays fully visible */
@@ -103,8 +103,9 @@ export function HeroChatter() {
       </div>
 
       <p className="cf-subtext mx-auto mt-5 max-w-lg text-[17px] sm:text-[18px]">
-        Sound familiar? Share one link — prices, stock, and checkout sorted. You rest, your shop
-        still sells.
+        You know that feeling. Reply after reply, same questions, money still in limbo. Drop one
+        beautiful store link — they browse, pay, and leave a receipt. You approve when you&apos;re
+        ready. Your shop keeps selling even when you step away.
       </p>
     </div>
   );
