@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/db";
 import { logOrderPaymentEvent } from "@/lib/orders/payment-events";
-import { receiptWriteData } from "@/lib/orders/receipt-storage";
+import { orderHasReceipt, receiptWriteData } from "@/lib/orders/receipt-storage";
 import { parseReceiptFile, type ParsedReceipt } from "@/lib/uploads/receipt";
 
 export async function attachReceiptToOrder(orderId: string, receipt: ParsedReceipt) {
@@ -49,7 +49,7 @@ export async function submitOrderReceipt(
     throw new Error("This order can no longer accept a payment receipt.");
   }
 
-  const hasReceipt = Boolean(order.paymentReceiptData && order.paymentReceiptData.byteLength > 0);
+  const hasReceipt = orderHasReceipt(order);
   const canResubmit = Boolean(order.paymentRejectionReason);
 
   if (hasReceipt && !canResubmit) {

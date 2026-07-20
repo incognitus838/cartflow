@@ -1,15 +1,17 @@
+import { receiptByteLength } from "@/lib/orders/receipt-storage";
+
 export function buildReceiptResponse(order: {
   paymentReceiptData: Uint8Array | Buffer | null;
   paymentReceiptMimeType: string | null;
   paymentReceiptFilename: string | null;
 }) {
-  if (!order.paymentReceiptData || order.paymentReceiptData.byteLength === 0) {
+  if (receiptByteLength(order.paymentReceiptData) === 0) {
     return null;
   }
 
   const mimeType = order.paymentReceiptMimeType ?? "application/octet-stream";
   const filename = order.paymentReceiptFilename ?? "payment-receipt";
-  const body = Buffer.from(order.paymentReceiptData);
+  const body = Buffer.from(order.paymentReceiptData as Uint8Array);
 
   return new Response(body, {
     headers: {

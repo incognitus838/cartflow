@@ -38,6 +38,23 @@ export async function reviewOrderPayment(
   orderId: string,
   input: PaymentReviewInput,
 ) {
+  // Load receipt fields with an explicit select first — more reliable for Bytes on Neon.
+  const receiptRow = await prisma.order.findFirst({
+    where: scopedOrderWhere(businessId, orderId),
+    select: {
+      id: true,
+      status: true,
+      paymentReceiptData: true,
+      paymentReceiptMimeType: true,
+      paymentReceiptFilename: true,
+      paymentReceiptSubmittedAt: true,
+    },
+  });
+
+  if (!receiptRow) throw new Error("Order not found");
+
+  const hasReceipt = orderHasReceipt(receiptRow);
+
   const existing = await prisma.order.findFirst({
     where: scopedOrderWhere(businessId, orderId),
     include: {
@@ -52,7 +69,7 @@ export async function reviewOrderPayment(
     if (existing.status !== "PENDING") {
       throw new Error("Only pending orders can be approved.");
     }
-    if (!orderHasReceipt(existing)) {
+    if (!hasReceipt) {
       throw new Error("Upload a payment receipt before approving.");
     }
 
@@ -107,7 +124,7 @@ export async function reviewOrderPayment(
   if (existing.status !== "PENDING") {
     throw new Error("Only pending orders can be rejected.");
   }
-  if (!orderHasReceipt(existing)) {
+  if (!hasReceipt) {
     throw new Error("There is no payment receipt to reject.");
   }
 
