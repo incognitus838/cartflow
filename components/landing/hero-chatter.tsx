@@ -11,33 +11,21 @@ export const sellerChatter = [
   "I dey travel but my shop dey open.",
 ] as const;
 
-const HOLD_MS = 2800;
-const FADE_MS = 400;
+const HOLD_MS = 3000;
 
+/**
+ * Rotating seller phrases in the landing hero.
+ * Uses JS interval + keyed remount so it runs the same on mobile and desktop
+ * (including Windows laptops with "animation effects" reduced).
+ */
 export function HeroChatter() {
   const [index, setIndex] = useState(0);
-  const [visible, setVisible] = useState(true);
 
   useEffect(() => {
-    const reduceMotion =
-      typeof window !== "undefined" &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-    if (reduceMotion) return;
-
-    let fadeTimer: ReturnType<typeof setTimeout> | undefined;
-    const cycleTimer = setInterval(() => {
-      setVisible(false);
-      fadeTimer = setTimeout(() => {
-        setIndex((current) => (current + 1) % sellerChatter.length);
-        setVisible(true);
-      }, FADE_MS);
+    const id = window.setInterval(() => {
+      setIndex((current) => (current + 1) % sellerChatter.length);
     }, HOLD_MS);
-
-    return () => {
-      clearInterval(cycleTimer);
-      if (fadeTimer) clearTimeout(fadeTimer);
-    };
+    return () => window.clearInterval(id);
   }, []);
 
   const phrase = sellerChatter[index];
@@ -51,12 +39,10 @@ export function HeroChatter() {
       <div
         className="cf-hero-chatter-stage cf-heading mt-4 text-[30px] leading-[1.15] sm:text-[40px] lg:text-[46px]"
         aria-live="polite"
+        aria-atomic="true"
       >
-        <p
-          className={`cf-hero-chatter-line cf-hero-chatter-line--active ${
-            visible ? "cf-hero-chatter-line--in" : "cf-hero-chatter-line--out"
-          }`}
-        >
+        {/* key forces a fresh enter animation each phrase (works where CSS delays fail) */}
+        <p key={phrase} className="cf-hero-chatter-line cf-hero-chatter-line--enter">
           <span className="cf-hero-chatter-quote" aria-hidden>
             &ldquo;
           </span>
@@ -65,6 +51,17 @@ export function HeroChatter() {
             &rdquo;
           </span>
         </p>
+      </div>
+
+      <div className="mt-4 flex items-center justify-center gap-1.5" aria-hidden>
+        {sellerChatter.map((item, i) => (
+          <span
+            key={item}
+            className={`h-1.5 rounded-full transition-all duration-300 ${
+              i === index ? "w-4 bg-[#b8956a]" : "w-1.5 bg-black/15"
+            }`}
+          />
+        ))}
       </div>
 
       <p className="cf-subtext mx-auto mt-5 max-w-lg text-[17px] sm:text-[18px]">

@@ -235,6 +235,8 @@ body {
   align-items: center;
   justify-content: center;
   text-align: center;
+  /* Reserve space so layout does not jump when longer phrases appear */
+  min-height: 3.2em;
 }
 
 .cf-hero-chatter-line {
@@ -247,21 +249,21 @@ body {
   width: 100%;
 }
 
-.cf-hero-chatter-line--active {
-  transition:
-    opacity 0.4s ease,
-    transform 0.4s ease;
-  will-change: opacity, transform;
+/* Enter animation applied on each phrase change via React key remount */
+.cf-hero-chatter-line--enter {
+  animation: cf-hero-chatter-enter 0.45s ease both;
 }
 
-.cf-hero-chatter-line--in {
-  opacity: 1;
-  transform: translateY(0);
-}
+@keyframes cf-hero-chatter-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
 
-.cf-hero-chatter-line--out {
-  opacity: 0;
-  transform: translateY(-8px);
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .cf-hero-chatter-quote {
@@ -275,12 +277,10 @@ body {
   display: inline-block;
 }
 
+/* Still cycle text when OS reduces motion; only drop the slide/fade. */
 @media (prefers-reduced-motion: reduce) {
-  .cf-hero-chatter-line--active {
-    transition: none;
-  }
-
-  .cf-hero-chatter-line--out {
+  .cf-hero-chatter-line--enter {
+    animation: none;
     opacity: 1;
     transform: none;
   }
