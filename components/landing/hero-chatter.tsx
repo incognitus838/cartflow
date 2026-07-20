@@ -11,24 +11,46 @@ export const sellerChatter = [
   "I dey travel but my shop dey open.",
 ] as const;
 
-const HOLD_MS = 3000;
+/** How long each phrase stays fully visible */
+const HOLD_MS = 2600;
+/** Must match CSS animation duration */
+const FADE_MS = 700;
 
 /**
- * Rotating seller phrases in the landing hero.
- * Uses JS interval + keyed remount so it runs the same on mobile and desktop
- * (including Windows laptops with "animation effects" reduced).
+ * Hero rotating quotes — JS advances the phrase; CSS keyframes handle opacity crossfade.
  */
 export function HeroChatter() {
-  const [index, setIndex] = useState(0);
+  const [active, setActive] = useState(0);
+  const [outgoing, setOutgoing] = useState<number | null>(null);
+  const [reduceMotion, setReduceMotion] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const sync = () => setReduceMotion(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
 
   useEffect(() => {
     const id = window.setInterval(() => {
-      setIndex((current) => (current + 1) % sellerChatter.length);
-    }, HOLD_MS);
+      setActive((current) => {
+        const next = (current + 1) % sellerChatter.length;
+        if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+          setOutgoing(current);
+        }
+        return next;
+      });
+    }, HOLD_MS + FADE_MS);
+
     return () => window.clearInterval(id);
   }, []);
 
-  const phrase = sellerChatter[index];
+  useEffect(() => {
+    if (outgoing === null) return;
+    const id = window.setTimeout(() => setOutgoing(null), FADE_MS);
+    return () => window.clearTimeout(id);
+  }, [outgoing]);
 
   return (
     <div className="mx-auto mt-6 max-w-2xl">
@@ -41,25 +63,41 @@ export function HeroChatter() {
         aria-live="polite"
         aria-atomic="true"
       >
-        {/* key forces a fresh enter animation each phrase (works where CSS delays fail) */}
-        <p key={phrase} className="cf-hero-chatter-line cf-hero-chatter-line--enter">
+        {outgoing !== null && !reduceMotion ? (
+          <p
+            key={`out-${outgoing}-${active}`}
+            className="cf-hero-chatter-line cf-hero-chatter-line--out"
+            aria-hidden
+          >
+            <span className="cf-hero-chatter-quote">&ldquo;</span>
+            <span className="cf-hero-chatter-text">{sellerChatter[outgoing]}</span>
+            <span className="cf-hero-chatter-quote">&rdquo;</span>
+          </p>
+        ) : null}
+
+        <p
+          key={`in-${active}`}
+          className={
+            reduceMotion
+              ? "cf-hero-chatter-line cf-hero-chatter-line--static"
+              : "cf-hero-chatter-line cf-hero-chatter-line--in"
+          }
+        >
           <span className="cf-hero-chatter-quote" aria-hidden>
             &ldquo;
           </span>
-          <span className="cf-hero-chatter-text">{phrase}</span>
+          <span className="cf-hero-chatter-text">{sellerChatter[active]}</span>
           <span className="cf-hero-chatter-quote" aria-hidden>
             &rdquo;
           </span>
         </p>
       </div>
 
-      <div className="mt-4 flex items-center justify-center gap-1.5" aria-hidden>
+      <div className="mt-5 flex items-center justify-center gap-1.5" aria-hidden>
         {sellerChatter.map((item, i) => (
           <span
             key={item}
-            className={`h-1.5 rounded-full transition-all duration-300 ${
-              i === index ? "w-4 bg-[#b8956a]" : "w-1.5 bg-black/15"
-            }`}
+            className={`cf-hero-chatter-dot ${i === active ? "cf-hero-chatter-dot--active" : ""}`}
           />
         ))}
       </div>

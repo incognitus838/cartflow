@@ -228,15 +228,14 @@ body {
   line-height: 1.6;
 }
 
+/* Hero chatter: opacity keyframe crossfade (JS advances phrase) */
 .cf-hero-chatter-stage {
   position: relative;
   display: flex;
-  min-height: 2.8em;
+  min-height: 3.2em;
   align-items: center;
   justify-content: center;
   text-align: center;
-  /* Reserve space so layout does not jump when longer phrases appear */
-  min-height: 3.2em;
 }
 
 .cf-hero-chatter-line {
@@ -249,20 +248,56 @@ body {
   width: 100%;
 }
 
-/* Enter animation applied on each phrase change via React key remount */
-.cf-hero-chatter-line--enter {
-  animation: cf-hero-chatter-enter 0.45s ease both;
+/* Crossfade layers sit on top of each other */
+.cf-hero-chatter-line--in,
+.cf-hero-chatter-line--out {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.08em;
+  margin: 0;
+  width: 100%;
 }
 
-@keyframes cf-hero-chatter-enter {
-  from {
+.cf-hero-chatter-line--static {
+  opacity: 1;
+}
+
+/* Incoming phrase — soft opacity rise */
+.cf-hero-chatter-line--in {
+  animation: cf-hero-opacity-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Outgoing phrase — soft opacity fall */
+.cf-hero-chatter-line--out {
+  animation: cf-hero-opacity-out 0.7s cubic-bezier(0.4, 0, 0.2, 1) both;
+  pointer-events: none;
+}
+
+@keyframes cf-hero-opacity-in {
+  0% {
     opacity: 0;
     transform: translateY(10px);
   }
 
-  to {
+  100% {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes cf-hero-opacity-out {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(-8px);
   }
 }
 
@@ -277,12 +312,34 @@ body {
   display: inline-block;
 }
 
-/* Still cycle text when OS reduces motion; only drop the slide/fade. */
+.cf-hero-chatter-dot {
+  display: block;
+  height: 6px;
+  width: 6px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.12);
+  transition:
+    width 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    background 0.35s ease;
+}
+
+.cf-hero-chatter-dot--active {
+  width: 18px;
+  background: #b8956a;
+}
+
+/* Reduced motion: keep phrase cycling, skip keyframe motion */
 @media (prefers-reduced-motion: reduce) {
-  .cf-hero-chatter-line--enter {
+  .cf-hero-chatter-line--in,
+  .cf-hero-chatter-line--out {
     animation: none;
+    position: relative;
     opacity: 1;
     transform: none;
+  }
+
+  .cf-hero-chatter-dot {
+    transition: none;
   }
 }
 
