@@ -6,10 +6,10 @@ import { Hero } from "@/components/landing/hero";
 import { HowItWorks } from "@/components/landing/how-it-works";
 import { Navbar } from "@/components/landing/navbar";
 import { Pricing } from "@/components/landing/pricing";
-import { getDailyDemoStore } from "@/lib/demo/stores";
+import { getDemoStore } from "@/lib/demo/stores";
 
 export default function Home() {
-  const demoStore = getDailyDemoStore();
+  const demoStore = getDemoStore();
 
   return (
     <>

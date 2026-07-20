@@ -1,5 +1,5 @@
 /**
- * Wipe the database and seed seven rotating demo stores (+ demo seller & admin).
+ * Wipe the database and seed the Glow Beauty demo store (+ demo seller & admin).
  * Run: npm run db:reset-glow-beauty
  */
 import { spawnSync } from "node:child_process";
@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { seedDemoStore } from "../lib/catalog/seed-demo-store.mjs";
-import { DEMO_STORES, getDailyDemoStore } from "../lib/demo/stores.mjs";
+import { DEMO_STORES, getDemoStore } from "../lib/demo/stores.mjs";
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const prisma = new PrismaClient();
@@ -72,7 +72,7 @@ async function verify() {
 }
 
 async function main() {
-  console.log("Resetting database — seven demo stores...\n");
+  console.log("Resetting database — Glow Beauty demo store...\n");
 
   console.log("1/4 Force-reset schema...");
   run("npx", ["prisma", "db", "push", "--force-reset", "--accept-data-loss"]);
@@ -93,12 +93,11 @@ async function main() {
   await verify();
 
   const base = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3001";
-  const today = getDailyDemoStore();
+  const demo = getDemoStore();
   console.log(`\nDone.`);
-  console.log(`  Today's demo: ${base}/demo  →  ${today.name} (/${today.slug})`);
-  console.log(`  All demos:    ${DEMO_STORES.map((s) => `/${s.slug}`).join(", ")}`);
-  console.log(`  Seller:       demo@cartflow.app / ${DEMO_PASSWORD}`);
-  console.log(`  Admin:        admin@cartflow.app / ${DEMO_PASSWORD}`);
+  console.log(`  Demo store: ${base}/demo  →  ${demo.name} (/${demo.slug})`);
+  console.log(`  Seller:     demo@cartflow.app / ${DEMO_PASSWORD}`);
+  console.log(`  Admin:      admin@cartflow.app / ${DEMO_PASSWORD}`);
 }
 
 main()

@@ -35,7 +35,7 @@ export function Hero({ demoStore }: HeroProps) {
           </div>
 
           <p className="mt-8 text-[13px] text-[#86868b]">
-            Today&apos;s demo: <span className="font-medium text-[#1d1d1f]">{demoStore.name}</span> ·{" "}
+            Demo store: <span className="font-medium text-[#1d1d1f]">{demoStore.name}</span> ·{" "}
             {demoStore.type} · Free tier · Live in minutes
           </p>
         </div>
@@ -47,7 +47,7 @@ export function Hero({ demoStore }: HeroProps) {
               <div className="h-2.5 w-2.5 rounded-full bg-[#febc2e]" />
               <div className="h-2.5 w-2.5 rounded-full bg-[#28c840]" />
               <span className="ml-3 text-[11px] tracking-wide text-[#86868b]">
-                cartflow.app/{demoStore.slug}
+                cartflow.com.ng/{demoStore.slug}
               </span>
             </div>
             <div className="grid gap-px bg-black/[0.04] sm:grid-cols-3">

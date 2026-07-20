@@ -1,5 +1,5 @@
 /**
- * Seed or refresh all seven rotating demo stores.
+ * Seed or refresh the Glow Beauty demo store.
  * Run: npm run db:seed-demos
  */
 import { config as loadEnv } from "dotenv";
@@ -11,7 +11,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 loadEnv({ path: join(root, ".env.local") });
 loadEnv({ path: join(root, ".env") });
 import { seedDemoStore } from "../lib/catalog/seed-demo-store.mjs";
-import { DEMO_STORES, getDailyDemoStore } from "../lib/demo/stores.mjs";
+import { DEMO_STORES, getDemoStore } from "../lib/demo/stores.mjs";
 
 const prisma = new PrismaClient();
 
@@ -22,7 +22,7 @@ async function main() {
     process.exit(1);
   }
 
-  console.log(`Seeding ${DEMO_STORES.length} demo stores...\n`);
+  console.log(`Seeding ${DEMO_STORES.length} demo store...\n`);
 
   for (const store of DEMO_STORES) {
     const { productCount } = await seedDemoStore(prisma, store, owner.id);
@@ -30,8 +30,8 @@ async function main() {
   }
 
   const base = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3001";
-  const today = getDailyDemoStore();
-  console.log(`\nToday's featured demo: ${base}/demo → ${today.name} (/${today.slug})`);
+  const demo = getDemoStore();
+  console.log(`\nDemo store: ${base}/demo → ${demo.name} (/${demo.slug})`);
 }
 
 main()
