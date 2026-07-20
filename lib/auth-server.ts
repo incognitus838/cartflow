@@ -99,7 +99,12 @@ export async function requireBusiness() {
     await forceLogoutRedirect("access_revoked");
   }
 
-  if (ctx.business.deletedAt) {
+  // forceLogoutRedirect/redirect never return; assert after the guard for TS.
+  const business = ctx.business!;
+  const storeAccessRole = ctx.storeAccessRole!;
+  const permissions = ctx.permissions!;
+
+  if (business.deletedAt) {
     const stores = await listAccessibleStores(ctx.user.id);
     if (stores.length > 0) {
       await updateSessionBusiness(stores[0].id);
@@ -108,10 +113,11 @@ export async function requireBusiness() {
     await forceLogoutRedirect("access_revoked");
   }
 
-  return ctx as typeof ctx & {
-    business: NonNullable<typeof ctx.business>;
-    storeAccessRole: StoreAccessRole;
-    permissions: MemberPermissions;
+  return {
+    ...ctx,
+    business,
+    storeAccessRole,
+    permissions,
   };
 }
 
