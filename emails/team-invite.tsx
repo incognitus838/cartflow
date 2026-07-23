@@ -1,4 +1,8 @@
-import { CartflowLayout, EmailParagraph } from "./components/cartflow-layout";
+import {
+  CartflowLayout,
+  DetailCard,
+  EmailParagraph,
+} from "./components/cartflow-layout";
 
 export type TeamInviteEmailProps = {
   recipientName?: string | null;
@@ -24,6 +28,7 @@ export function TeamInviteEmail({
   return (
     <CartflowLayout
       preview={`Invitation to ${storeName}`}
+      eyebrow="Team access"
       title={`Invitation to ${storeName}`}
       appUrl={appUrl}
       cta={{ label: "Accept invitation", href: inviteUrl }}
@@ -33,10 +38,15 @@ export function TeamInviteEmail({
       <EmailParagraph>
         {invitedByName} has invited you to join the seller dashboard for {storeName} on CartFlow.
       </EmailParagraph>
-      <EmailParagraph>Access level: {roleLabel}.</EmailParagraph>
+      <DetailCard
+        rows={[
+          { label: "Store", value: storeName },
+          { label: "Access level", value: roleLabel },
+          { label: "Expires", value: `${expiresInDays} days` },
+        ]}
+      />
       <EmailParagraph>
-        Please accept this invitation using the button below. This link expires in{" "}
-        {expiresInDays} days.
+        Please accept this invitation using the button below.
       </EmailParagraph>
     </CartflowLayout>
   );

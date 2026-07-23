@@ -1,4 +1,8 @@
-import { CartflowLayout, EmailList, EmailParagraph } from "./components/cartflow-layout";
+import {
+  CartflowLayout,
+  EmailList,
+  EmailParagraph,
+} from "./components/cartflow-layout";
 
 export type WelcomeEmailProps = {
   name: string;
@@ -10,9 +14,10 @@ export function WelcomeEmail({ name, dashboardUrl, appUrl }: WelcomeEmailProps) 
   return (
     <CartflowLayout
       preview="Your CartFlow account has been created"
+      eyebrow="Account"
       title="Welcome to CartFlow"
       appUrl={appUrl}
-      cta={{ label: "Open dashboard", href: dashboardUrl }}
+      cta={{ label: "Open your dashboard", href: dashboardUrl }}
       footerNote="If you did not create this account, please disregard this message."
     >
       <EmailParagraph>Dear {name},</EmailParagraph>

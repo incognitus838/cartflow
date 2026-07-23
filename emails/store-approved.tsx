@@ -1,4 +1,9 @@
-import { CartflowLayout, EmailList, EmailParagraph } from "./components/cartflow-layout";
+import {
+  CartflowLayout,
+  EmailList,
+  EmailParagraph,
+  StatusPill,
+} from "./components/cartflow-layout";
 
 export type StoreApprovedEmailProps = {
   ownerName: string;
@@ -18,11 +23,14 @@ export function StoreApprovedEmail({
   return (
     <CartflowLayout
       preview={`${storeName} is approved and live`}
+      eyebrow="Store approval"
       title="Your store has been approved"
       appUrl={appUrl}
+      tone="success"
       cta={{ label: "Add products", href: productsUrl }}
       footerNote={`Your public storefront: ${storefrontUrl}`}
     >
+      <StatusPill label="Approved · Live" tone="success" />
       <EmailParagraph>Dear {ownerName},</EmailParagraph>
       <EmailParagraph>
         We are pleased to inform you that {storeName} has been approved and is now live on

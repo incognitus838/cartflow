@@ -1,4 +1,10 @@
-import { CartflowLayout, EmailList, EmailParagraph } from "./components/cartflow-layout";
+import {
+  CartflowLayout,
+  DetailCard,
+  EmailList,
+  EmailParagraph,
+  StatusPill,
+} from "./components/cartflow-layout";
 
 export type NewOrderEmailProps = {
   ownerName: string;
@@ -28,18 +34,24 @@ export function NewOrderEmail({
   return (
     <CartflowLayout
       preview={`New order ${orderNumber} — ${total}`}
+      eyebrow="Commerce"
       title="New order received"
       appUrl={appUrl}
+      tone="commerce"
       cta={{ label: "Review order", href: ordersUrl }}
     >
+      <StatusPill label="Awaiting review" />
       <EmailParagraph>Dear {ownerName},</EmailParagraph>
       <EmailParagraph>A new order has been placed at {storeName}.</EmailParagraph>
-      <EmailParagraph>Order number: {orderNumber}</EmailParagraph>
-      <EmailParagraph>
-        Customer: {customerName} · {customerPhone}
-      </EmailParagraph>
-      <EmailParagraph>Total: {total}</EmailParagraph>
-      <EmailParagraph>Items:</EmailParagraph>
+      <DetailCard
+        rows={[
+          { label: "Order", value: orderNumber },
+          { label: "Customer", value: customerName },
+          { label: "Phone", value: customerPhone },
+          { label: "Total", value: total },
+        ]}
+      />
+      <EmailParagraph>Items</EmailParagraph>
       <EmailList items={items} />
       {customerNote ? <EmailParagraph>Customer note: {customerNote}</EmailParagraph> : null}
       <EmailParagraph>
