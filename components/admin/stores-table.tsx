@@ -81,6 +81,9 @@ export function StoresTable({
   const [suspendReason, setSuspendReason] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleteReason, setDeleteReason] = useState("");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkPlan, setBulkPlan] = useState<BusinessPlan>("FREE");
+  const [bulkLoading, setBulkLoading] = useState(false);
 
   function syncUrl(next: {
     approval?: "" | StoreApprovalStatus;
@@ -121,6 +124,101 @@ export function StoresTable({
       );
     });
   }, [rows, search, approval, plan, live]);
+
+  const filteredIds = useMemo(() => filtered.map((s) => s.id), [filtered]);
+  const allFilteredSelected =
+    filteredIds.length > 0 && filteredIds.every((id) => selected.has(id));
+  const someFilteredSelected =
+    filteredIds.some((id) => selected.has(id)) && !allFilteredSelected;
+
+  function toggleSelect(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSelectAllFiltered() {
+    setSelected((prev) => {
+      if (allFilteredSelected) {
+        const next = new Set(prev);
+        for (const id of filteredIds) next.delete(id);
+        return next;
+      }
+      const next = new Set(prev);
+      for (const id of filteredIds) next.add(id);
+      return next;
+    });
+  }
+
+  async function applyBulkPlan(mode: "ids" | "filters") {
+    if (mode === "ids" && selected.size === 0) {
+      toast.error("Select at least one store");
+      return;
+    }
+
+    const selectedCount = mode === "ids" ? selected.size : filtered.length;
+    const ok = window.confirm(
+      mode === "ids"
+        ? `Set plan to ${bulkPlan} for ${selected.size} selected store(s)?`
+        : `Set plan to ${bulkPlan} for ALL stores matching current filters (including any not loaded in this list, up to 5,000)? This cannot be easily undone.`,
+    );
+    if (!ok) return;
+
+    setBulkLoading(true);
+    try {
+      const res = await fetch("/api/admin/businesses/bulk-plan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(
+          mode === "ids"
+            ? { plan: bulkPlan, mode: "ids", ids: Array.from(selected) }
+            : {
+                plan: bulkPlan,
+                mode: "filters",
+                filters: {
+                  approval: approval || undefined,
+                  plan: plan || undefined,
+                  live: live || undefined,
+                  search: search.trim() || undefined,
+                },
+              },
+        ),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        updated?: number;
+      };
+      if (!res.ok) {
+        toast.error(data.error || "Bulk plan update failed");
+        return;
+      }
+      const updated = data.updated ?? selectedCount;
+      if (mode === "ids") {
+        setRows((current) =>
+          current.map((row) =>
+            selected.has(row.id) ? { ...row, plan: bulkPlan } : row,
+          ),
+        );
+      } else {
+        setRows((current) =>
+          current.map((row) => {
+            const inFilter = filteredIds.includes(row.id);
+            return inFilter ? { ...row, plan: bulkPlan } : row;
+          }),
+        );
+      }
+      setSelected(new Set());
+      toast.success(`Updated ${updated} store(s) to ${bulkPlan}`);
+      router.refresh();
+    } catch {
+      toast.error("Something went wrong");
+    } finally {
+      setBulkLoading(false);
+    }
+  }
 
   async function patchStore(id: string, body: Record<string, unknown>) {
     setLoadingId(id);
@@ -309,11 +407,68 @@ export function StoresTable({
         }
       />
 
+      <div className="flex flex-col gap-3 rounded-xl border border-[#e8e8ed] bg-[#fafafa] p-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
+        <div>
+          <p className="text-[13px] font-medium text-[#1d1d1f]">Bulk plan change</p>
+          <p className="mt-0.5 text-[12px] text-[#86868b]">
+            Select rows, or apply to every store matching the filters above (up to
+            5,000). Useful for mass downgrades.
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <label className="sr-only" htmlFor="bulk-plan-target">
+            Target plan
+          </label>
+          <select
+            id="bulk-plan-target"
+            value={bulkPlan}
+            onChange={(e) => setBulkPlan(e.target.value as BusinessPlan)}
+            disabled={bulkLoading}
+            className="cf-input max-w-[8.5rem] py-2 text-[12px] font-medium"
+          >
+            {PLANS.map((p) => (
+              <option key={p} value={p}>
+                {p}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            disabled={bulkLoading || selected.size === 0}
+            onClick={() => void applyBulkPlan("ids")}
+            className="cf-btn-inline text-[12px] disabled:opacity-50"
+          >
+            {bulkLoading ? "Updating…" : `Apply to selected (${selected.size})`}
+          </button>
+          <button
+            type="button"
+            disabled={bulkLoading || filtered.length === 0}
+            onClick={() => void applyBulkPlan("filters")}
+            className="cf-btn-inline cf-btn-inline-ghost text-[12px] disabled:opacity-50"
+            title="Updates all matching stores in the database, not only this list"
+          >
+            Apply to all matching filters
+          </button>
+        </div>
+      </div>
+
       <div className="cf-table-shell overflow-x-auto">
         <table className="min-w-[920px]">
           <caption className="sr-only">Platform stores</caption>
           <thead>
             <tr>
+              <th scope="col" className="w-10">
+                <input
+                  type="checkbox"
+                  checked={allFilteredSelected}
+                  ref={(el) => {
+                    if (el) el.indeterminate = someFilteredSelected;
+                  }}
+                  onChange={toggleSelectAllFiltered}
+                  aria-label="Select all filtered stores"
+                  className="h-3.5 w-3.5 rounded border-[#d2d2d7]"
+                />
+              </th>
               <th scope="col">Store</th>
               <th scope="col">Owner</th>
               <th scope="col">Plan</th>
@@ -325,7 +480,16 @@ export function StoresTable({
           </thead>
           <tbody>
             {filtered.map((store) => (
-              <tr key={store.id}>
+              <tr key={store.id} className={selected.has(store.id) ? "bg-[#f5f5f7]/50" : undefined}>
+                <td>
+                  <input
+                    type="checkbox"
+                    checked={selected.has(store.id)}
+                    onChange={() => toggleSelect(store.id)}
+                    aria-label={`Select ${store.name}`}
+                    className="h-3.5 w-3.5 rounded border-[#d2d2d7]"
+                  />
+                </td>
                 <td>
                   <p className="font-medium text-[#1d1d1f]">{store.name}</p>
                   <p className="text-[12px] text-[#b8956a]">/{store.slug}</p>

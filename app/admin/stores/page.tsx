@@ -33,7 +33,7 @@ export default async function AdminStoresPage({ searchParams }: AdminStoresPageP
       : "";
 
   const [stores, recycleBinCount] = await Promise.all([
-    listAdminBusinesses({ take: 200 }),
+    listAdminBusinesses({ take: 5000 }),
     countDeletedStores(),
   ]);
 
@@ -41,7 +41,7 @@ export default async function AdminStoresPage({ searchParams }: AdminStoresPageP
     <>
       <PageHeader
         title="Stores"
-        description={`Manage plans, suspend, delete, and seller impersonation. ${stores.length} active stores on the platform.`}
+        description={`Manage plans (including bulk changes), suspend, delete, and seller impersonation. ${stores.length} active stores loaded (max 5,000).`}
       />
       <Suspense fallback={null}>
         <StoresTable
