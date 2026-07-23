@@ -226,8 +226,12 @@ export function CheckoutForm({
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full rounded-lg border border-[var(--cf-gray-200)] px-3 py-2.5 text-base outline-none focus:border-[var(--cf-black)] focus:ring-2 focus:ring-black/5 sm:text-sm"
-              placeholder="you@example.com"
+              placeholder="you@gmail.com"
             />
+            <p className="mt-1.5 text-xs leading-relaxed text-[var(--cf-gray-600)]">
+              Add your email (e.g. Gmail) to receive order updates when payment is approved, and when
+              your order is shipped or delivered.
+            </p>
           </div>
 
           <div>
