@@ -62,29 +62,40 @@ export function sendWelcomeOwnerEmail(input: { name: string; email: string }) {
     const dashboardUrl = `${appUrl}/dashboard`;
     const subject = "Welcome to CartFlow";
     const text = [
-      `Hi ${input.name},`,
+      `Dear ${input.name},`,
       "",
-      "Your store application has been submitted to CartFlow.",
+      "Thank you for creating an account with CartFlow.",
       "",
-      "While we review your store, you can configure your catalog and dashboard settings.",
+      "Your store application has been received and is awaiting platform review. During this period, you may sign in to your dashboard to prepare catalog categories and store settings.",
       "",
-      `Open dashboard: ${dashboardUrl}`,
+      "Product uploads and your public storefront will become available once your store is approved.",
+      "",
+      `Dashboard: ${dashboardUrl}`,
+      "",
+      "Kind regards,",
+      "The CartFlow Team",
     ].join("\n");
 
     const html = renderEmailLayout({
-      preview: "Your CartFlow store is submitted",
+      preview: "Your CartFlow account has been created",
       title: "Welcome to CartFlow",
       bodyHtml: [
-        paragraph(`Hi ${input.name},`),
-        paragraph("Thanks for launching your store on CartFlow. Your application is in the review queue."),
+        paragraph(`Dear ${input.name},`),
+        paragraph("Thank you for creating an account with CartFlow."),
+        paragraph(
+          "Your store application has been received and is awaiting platform review. During this period, you may sign in to prepare your catalog structure and store settings.",
+        ),
         bulletList([
-          "Configure catalog categories while you wait",
-          "Add products once your store is approved",
-          "Share your checkout link on WhatsApp when live",
+          "Complete bank and contact details in Settings",
+          "Organise catalog categories and product types",
+          "Add products and share your store link after approval",
         ]),
+        paragraph(
+          "Product uploads and your public storefront will become available once your store is approved.",
+        ),
       ].join(""),
       cta: { label: "Open dashboard", href: dashboardUrl },
-      footerNote: "Product uploads and your public storefront unlock after platform approval.",
+      footerNote: "If you did not create this account, please disregard this message.",
     });
 
     return { recipient: input.email, subject, body: text, html };
@@ -101,30 +112,41 @@ export function sendStoreSubmittedEmail(input: {
   queueTransactionalEmail(() => {
     const appUrl = getAppUrl();
     const dashboardUrl = `${appUrl}/dashboard`;
-    const subject = `${input.storeName} submitted for review`;
+    const subject = `${input.storeName} — application under review`;
     const text = [
-      `Hi ${input.ownerName},`,
+      `Dear ${input.ownerName},`,
       "",
-      `Your store "${input.storeName}" has been submitted for CartFlow approval.`,
+      `We confirm that your store application for "${input.storeName}" (/${input.storeSlug}) has been submitted successfully.`,
       "",
-      "While you wait (usually within 24 hours), update bank/contact info and set up catalog categories in your dashboard.",
+      "Our team will review your application, typically within 24 hours. Completing bank details, contact information, and catalog setup in your dashboard may help accelerate approval.",
+      "",
+      "Products, live orders, and your public storefront will unlock after approval.",
       "",
       `Dashboard: ${dashboardUrl}`,
+      "",
+      "Kind regards,",
+      "The CartFlow Team",
     ].join("\n");
 
     const html = renderEmailLayout({
       preview: `${input.storeName} is under review`,
-      title: "Application submitted",
+      title: "Application under review",
       bodyHtml: [
-        paragraph(`Hi ${input.ownerName},`),
-        paragraph(`Your store ${input.storeName} (/${input.storeSlug}) is now in the admin review queue.`),
-        paragraph("Finish your setup checklist while you wait — this helps us approve you faster."),
+        paragraph(`Dear ${input.ownerName},`),
+        paragraph(
+          `We confirm that your store application for ${input.storeName} (/${input.storeSlug}) has been submitted successfully.`,
+        ),
+        paragraph(
+          "Our team will review your application, typically within 24 hours. Completing the items below may assist a timely decision.",
+        ),
         bulletList([
-          "Bank details and contact info in Settings",
+          "Bank transfer details and contact information",
           "Catalog categories and tags",
-          "Platform review (usually within 24 hours)",
+          "Accurate store name and description",
         ]),
-        paragraph("Products, orders, and your public store link unlock after approval."),
+        paragraph(
+          "Products, live orders, and your public storefront will unlock after approval.",
+        ),
       ].join(""),
       cta: { label: "Open dashboard", href: dashboardUrl },
     });
@@ -148,28 +170,42 @@ export function sendStoreApprovedEmail(input: {
 }) {
   queueTransactionalEmail(() => {
     const appUrl = getAppUrl();
-    const dashboardUrl = `${appUrl}/dashboard/products`;
+    const productsUrl = `${appUrl}/dashboard/products`;
     const storefrontUrl = `${appUrl}/${input.storeSlug}`;
-    const subject = `${input.storeName} is approved — you're live!`;
+    const subject = `${input.storeName} has been approved`;
     const text = [
-      `Hi ${input.ownerName},`,
+      `Dear ${input.ownerName},`,
       "",
-      `Great news — ${input.storeName} has been approved on CartFlow.`,
+      `We are pleased to inform you that ${input.storeName} has been approved and is now live on CartFlow.`,
       "",
-      `Add products: ${dashboardUrl}`,
+      "You may now add products, customise your storefront, and share your store link with customers.",
+      "",
+      `Add products: ${productsUrl}`,
       `Storefront: ${storefrontUrl}`,
+      "",
+      "Kind regards,",
+      "The CartFlow Team",
     ].join("\n");
 
     const html = renderEmailLayout({
-      preview: "Your store is live on CartFlow",
-      title: "You're approved!",
+      preview: `${input.storeName} is approved and live`,
+      title: "Your store has been approved",
       bodyHtml: [
-        paragraph(`Hi ${input.ownerName},`),
-        paragraph(`${input.storeName} is now live on CartFlow.`),
-        paragraph("Add your first products, customize your storefront, and share your link with customers."),
+        paragraph(`Dear ${input.ownerName},`),
+        paragraph(
+          `We are pleased to inform you that ${input.storeName} has been approved and is now live on CartFlow.`,
+        ),
+        paragraph(
+          "You may now add products, customise your storefront presentation, and share your store link with customers via WhatsApp or social channels.",
+        ),
+        bulletList([
+          "Add products with clear pricing and stock",
+          "Confirm bank details for customer transfers",
+          "Share your storefront link with buyers",
+        ]),
       ].join(""),
-      cta: { label: "Add products", href: dashboardUrl },
-      footerNote: `Your storefront: ${storefrontUrl}`,
+      cta: { label: "Add products", href: productsUrl },
+      footerNote: `Your public storefront: ${storefrontUrl}`,
     });
 
     return {
@@ -193,29 +229,40 @@ export function sendStoreRejectedEmail(input: {
   queueTransactionalEmail(() => {
     const appUrl = getAppUrl();
     const settingsUrl = `${appUrl}/dashboard/settings`;
-    const subject = `Update needed for ${input.storeName}`;
+    const subject = `${input.storeName} — application update required`;
+    const nextStep = input.canResubmit
+      ? `Please review the reason below, update your store details in Settings, and contact support if you wish to resubmit.`
+      : `Please contact support if you believe this decision was made in error.`;
     const text = [
-      `Hi ${input.ownerName},`,
+      `Dear ${input.ownerName},`,
       "",
-      `Your store application for ${input.storeName} was not approved.`,
+      `Following review, we are unable to approve the application for ${input.storeName} at this time.`,
       "",
       `Reason: ${input.reason}`,
       "",
-      input.canResubmit ? `Update details: ${settingsUrl}` : "Contact support if this was a mistake.",
-    ].join("\n");
+      nextStep,
+      "",
+      input.canResubmit ? `Settings: ${settingsUrl}` : "",
+      "",
+      "Kind regards,",
+      "The CartFlow Team",
+    ]
+      .filter(Boolean)
+      .join("\n");
 
     const html = renderEmailLayout({
-      preview: "Your store application needs updates",
-      title: "Application not approved",
+      preview: `Update required for ${input.storeName}`,
+      title: "Application update required",
       bodyHtml: [
-        paragraph(`Hi ${input.ownerName},`),
-        paragraph(`We couldn't approve ${input.storeName} yet.`),
+        paragraph(`Dear ${input.ownerName},`),
+        paragraph(
+          `Following review, we are unable to approve the application for ${input.storeName} at this time.`,
+        ),
         paragraph(`Reason: ${input.reason}`),
-        input.canResubmit
-          ? paragraph("Update your store details in Settings, then contact support to resubmit if needed.")
-          : paragraph("Contact support if you believe this was a mistake."),
+        paragraph(nextStep),
       ].join(""),
       cta: input.canResubmit ? { label: "Update store details", href: settingsUrl } : undefined,
+      footerNote: "This message relates to your CartFlow store application.",
     });
 
     return {
@@ -239,30 +286,38 @@ export function sendTeamInviteEmail(input: {
 }) {
   queueTransactionalEmail(() => {
     const roleLabel = presetLabel(input.accessPreset);
-    const greeting = input.recipientName ? `Hi ${input.recipientName},` : "Hi,";
-    const subject = `You're invited to ${input.storeName} on CartFlow`;
+    const greeting = input.recipientName ? `Dear ${input.recipientName},` : "Dear colleague,";
+    const subject = `Invitation to join ${input.storeName} on CartFlow`;
     const text = [
       greeting,
       "",
-      `${input.invitedByName} invited you to help manage ${input.storeName} on CartFlow.`,
+      `${input.invitedByName} has invited you to join the seller dashboard for ${input.storeName} on CartFlow.`,
+      "",
       `Access level: ${roleLabel}`,
       "",
-      `Accept your invite: ${input.inviteUrl}`,
+      `Please accept this invitation using the link below. The link expires in ${INVITE_TTL_DAYS} days.`,
       "",
-      `This link expires in ${INVITE_TTL_DAYS} days.`,
+      input.inviteUrl,
+      "",
+      "Kind regards,",
+      "The CartFlow Team",
     ].join("\n");
 
     const html = renderEmailLayout({
-      preview: `Join ${input.storeName} on CartFlow`,
-      title: `Join ${input.storeName}`,
+      preview: `Invitation to ${input.storeName}`,
+      title: `Invitation to ${input.storeName}`,
       bodyHtml: [
         paragraph(greeting.replace(/,$/, "")),
-        paragraph(`${input.invitedByName} invited you to the ${input.storeName} seller dashboard on CartFlow.`),
-        paragraph(`Your access level: ${roleLabel}`),
-        paragraph("Create your account or sign in with this email to accept."),
+        paragraph(
+          `${input.invitedByName} has invited you to join the seller dashboard for ${input.storeName} on CartFlow.`,
+        ),
+        paragraph(`Access level: ${roleLabel}.`),
+        paragraph(
+          `Please accept this invitation using the button below. This link expires in ${INVITE_TTL_DAYS} days.`,
+        ),
       ].join(""),
-      cta: { label: "Accept invite", href: input.inviteUrl },
-      footerNote: `This invite expires in ${INVITE_TTL_DAYS} days.`,
+      cta: { label: "Accept invitation", href: input.inviteUrl },
+      footerNote: "If you were not expecting this invitation, you may ignore this email.",
     });
 
     return {

@@ -9,16 +9,21 @@ type SendNotificationInput = {
   recipient: string;
   subject?: string;
   body: string;
+  html?: string;
 };
 
-async function deliverSms(recipient: string, body: string) {
-  const sid = process.env.TWILIO_ACCOUNT_SID?.trim();
-  const token = process.env.TWILIO_AUTH_TOKEN?.trim();
-  const from = process.env.TWILIO_FROM_NUMBER?.trim();
+export function isSmsConfigured() {
+  return Boolean(
+    process.env.TWILIO_ACCOUNT_SID?.trim() &&
+      process.env.TWILIO_AUTH_TOKEN?.trim() &&
+      process.env.TWILIO_FROM_NUMBER?.trim(),
+  );
+}
 
-  if (!sid || !token || !from) {
-    throw new Error("Twilio is not configured — SMS skipped.");
-  }
+async function deliverSms(recipient: string, body: string) {
+  const sid = process.env.TWILIO_ACCOUNT_SID!.trim();
+  const token = process.env.TWILIO_AUTH_TOKEN!.trim();
+  const from = process.env.TWILIO_FROM_NUMBER!.trim();
 
   const params = new URLSearchParams({
     To: recipient,
@@ -45,6 +50,11 @@ async function deliverSms(recipient: string, body: string) {
 }
 
 export async function sendNotification(input: SendNotificationInput) {
+  // SMS is deferred until Twilio is configured — skip quietly (no FAILED spam).
+  if (input.channel === "SMS" && !isSmsConfigured()) {
+    return;
+  }
+
   const log = await prisma.notificationLog.create({
     data: {
       businessId: input.businessId,
@@ -63,6 +73,7 @@ export async function sendNotification(input: SendNotificationInput) {
         to: input.recipient,
         subject: input.subject || "CartFlow",
         text: input.body,
+        html: input.html,
         from: "notification",
       });
       if (!result.sent) {
