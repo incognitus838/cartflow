@@ -6,26 +6,27 @@ Items we are intentionally not doing right now. Pick up when ready.
 
 ---
 
-## Transactional email (ZeptoMail)
+## Transactional email (Resend)
 
-**Status:** Code supports ZeptoMail; add token + verified domain to go live.
+**Status:** Code supports Resend (and ZeptoMail). Prefer Resend for cartflow.com.ng.
 
-**Setup (cartflow.com.ng):**
+**Setup:**
 
-1. Create a [ZeptoMail](https://www.zoho.com/zeptomail/) account and **Agent**.
-2. Add and verify **cartflow.com.ng** in the Agent (SPF + DKIM DNS records ZeptoMail provides).
-3. Add sender addresses in ZeptoMail (e.g. `hello@cartflow.com.ng`, `orders@cartflow.com.ng`).
-4. Copy **Send Mail Token**: Agent → SMTP/API → API tab.
-5. Add to `.env.local`:
+1. Create a [Resend](https://resend.com) account.
+2. **API Keys** → Create → copy `re_...` into `.env.local` as `RESEND_API_KEY`.
+3. Set `EMAIL_PROVIDER=resend`.
+4. **Quick test (before domain DNS):**
    ```
-   ZEPTOMAIL_SEND_TOKEN="your-send-mail-token"
-   TRANSACTIONAL_FROM_EMAIL="hello@cartflow.com.ng"
-   NOTIFICATION_FROM_EMAIL="orders@cartflow.com.ng"
+   TRANSACTIONAL_FROM_EMAIL="CartFlow <onboarding@resend.dev>"
+   NOTIFICATION_FROM_EMAIL="CartFlow Orders <onboarding@resend.dev>"
    ```
-6. Test locally: `npm run test:email -- your@email.com`
-7. Push to Vercel: `npm run vercel:sync-env` (syncs email vars from `.env.local`), then redeploy.
+   Send only to the email on your Resend account:
+   `npm run test:email -- you@your-resend-login.com`
+5. **Production domain:** Domains → Add `cartflow.com.ng` → add SPF/DKIM DNS records → wait for Verified.
+6. Switch senders to `hello@cartflow.com.ng` / `orders@cartflow.com.ng`.
+7. Push env to Vercel: `npm run vercel:sync-env` (requires `VERCEL_TOKEN`), then redeploy.
 
-**Legacy Resend:** still supported if `RESEND_API_KEY` is set and `ZEPTOMAIL_SEND_TOKEN` is empty. Set `EMAIL_PROVIDER=resend` to force Resend when both are present.
+**ZeptoMail alternative:** set `ZEPTOMAIL_SEND_TOKEN` and `EMAIL_PROVIDER=zeptomail` instead.
 
 **Already implemented (no code changes needed):**
 

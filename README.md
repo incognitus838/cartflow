@@ -108,7 +108,7 @@ prisma/           # Schema + seed
 
 In development, email/SMS are logged to the server console. In production, configure:
 
-- **Email:** [ZeptoMail](https://www.zoho.com/zeptomail/) via `ZEPTOMAIL_SEND_TOKEN` + verified `TRANSACTIONAL_FROM_EMAIL` / `NOTIFICATION_FROM_EMAIL`. Test: `npm run test:email -- you@example.com`
+- **Email:** [Resend](https://resend.com) via `RESEND_API_KEY` + `EMAIL_PROVIDER=resend` + verified `TRANSACTIONAL_FROM_EMAIL` / `NOTIFICATION_FROM_EMAIL`. Test: `npm run test:email -- you@example.com`
 - **SMS:** [Twilio](https://twilio.com) via `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM_NUMBER`
 
 All attempts are stored in `NotificationLog` and visible on order detail pages.
