@@ -228,14 +228,24 @@ body {
   line-height: 1.6;
 }
 
-/* Hero chatter: opacity keyframe crossfade (JS advances phrase) */
+/* Hero chatter: soft opacity crossfade (JS advances phrase) */
 .cf-hero-chatter-stage {
+  --cf-hero-fade-ms: 900ms;
   position: relative;
   display: flex;
-  min-height: 3.2em;
+  /* Tall enough for 2-line quotes on narrow phones — avoids jump mid-transition */
+  min-height: 5.25em;
   align-items: center;
   justify-content: center;
   text-align: center;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+@media (min-width: 640px) {
+  .cf-hero-chatter-stage {
+    min-height: 3.4em;
+  }
 }
 
 .cf-hero-chatter-line {
@@ -246,13 +256,18 @@ body {
   gap: 0.08em;
   margin: 0;
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 0 0.25rem;
 }
 
-/* Crossfade layers sit on top of each other */
+/* Crossfade layers stacked; no layout thrash */
 .cf-hero-chatter-line--in,
 .cf-hero-chatter-line--out {
   position: absolute;
-  inset: 0;
+  left: 0;
+  right: 0;
+  top: 50%;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -260,44 +275,86 @@ body {
   gap: 0.08em;
   margin: 0;
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 0 0.25rem;
+  transform: translateY(-50%);
+  will-change: opacity;
 }
 
 .cf-hero-chatter-line--static {
   opacity: 1;
+  position: relative;
+  transform: none;
 }
 
-/* Incoming phrase — soft opacity rise */
+/* Mobile: opacity only — vertical slide feels harsh on small screens */
 .cf-hero-chatter-line--in {
-  animation: cf-hero-opacity-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: cf-hero-fade-in var(--cf-hero-fade-ms) cubic-bezier(0.33, 1, 0.68, 1) both;
 }
 
-/* Outgoing phrase — soft opacity fall */
 .cf-hero-chatter-line--out {
-  animation: cf-hero-opacity-out 0.7s cubic-bezier(0.4, 0, 0.2, 1) both;
+  animation: cf-hero-fade-out var(--cf-hero-fade-ms) cubic-bezier(0.32, 0, 0.67, 0) both;
   pointer-events: none;
+  z-index: 1;
 }
 
-@keyframes cf-hero-opacity-in {
+.cf-hero-chatter-line--in {
+  z-index: 2;
+}
+
+@keyframes cf-hero-fade-in {
   0% {
     opacity: 0;
-    transform: translateY(10px);
   }
 
   100% {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 
-@keyframes cf-hero-opacity-out {
+@keyframes cf-hero-fade-out {
   0% {
     opacity: 1;
-    transform: translateY(0);
   }
 
   100% {
     opacity: 0;
-    transform: translateY(-8px);
+  }
+}
+
+/* Desktop only: tiny lift for a richer crossfade */
+@media (min-width: 640px) {
+  .cf-hero-chatter-line--in {
+    animation-name: cf-hero-fade-in-desktop;
+  }
+
+  .cf-hero-chatter-line--out {
+    animation-name: cf-hero-fade-out-desktop;
+  }
+
+  @keyframes cf-hero-fade-in-desktop {
+    0% {
+      opacity: 0;
+      transform: translateY(calc(-50% + 6px));
+    }
+
+    100% {
+      opacity: 1;
+      transform: translateY(-50%);
+    }
+  }
+
+  @keyframes cf-hero-fade-out-desktop {
+    0% {
+      opacity: 1;
+      transform: translateY(-50%);
+    }
+
+    100% {
+      opacity: 0;
+      transform: translateY(calc(-50% - 5px));
+    }
   }
 }
 
@@ -309,7 +366,7 @@ body {
 }
 
 .cf-hero-chatter-text {
-  display: inline-block;
+  display: inline;
 }
 
 .cf-hero-chatter-dot {
@@ -319,8 +376,8 @@ body {
   border-radius: 999px;
   background: rgba(0, 0, 0, 0.12);
   transition:
-    width 0.35s cubic-bezier(0.22, 1, 0.36, 1),
-    background 0.35s ease;
+    width 0.4s cubic-bezier(0.33, 1, 0.68, 1),
+    background 0.4s ease;
 }
 
 .cf-hero-chatter-dot--active {
@@ -328,14 +385,14 @@ body {
   background: #b8956a;
 }
 
-/* Reduced motion: keep phrase cycling, skip keyframe motion */
 @media (prefers-reduced-motion: reduce) {
   .cf-hero-chatter-line--in,
   .cf-hero-chatter-line--out {
-    animation: none;
+    animation: none !important;
     position: relative;
     opacity: 1;
     transform: none;
+    top: auto;
   }
 
   .cf-hero-chatter-dot {
