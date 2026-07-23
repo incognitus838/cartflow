@@ -34,6 +34,7 @@
     "db:reset-glow-beauty": "npx dotenv-cli -e .env.local -- node scripts/reset-glow-beauty-only.mjs",
     "test:api": "npx dotenv-cli -e .env.local -- node scripts/audit-api-smoke.mjs",
     "test:email": "npx dotenv-cli -e .env.local -- node scripts/test-email.mjs",
+    "email:dev": "email dev --dir emails --port 3005",
     "test:e2e": "playwright test",
     "test": "npm run test:api",
     "vercel:sync-env": "node scripts/sync-vercel-env.mjs",
@@ -43,6 +44,8 @@
   },
   "dependencies": {
     "@prisma/client": "^6.16.0",
+    "@react-email/components": "^1.0.12",
+    "@react-email/render": "^2.1.0",
     "@vercel/blob": "^0.27.3",
     "bcryptjs": "^3.0.2",
     "jose": "^6.1.0",
@@ -67,7 +70,9 @@
     "dotenv-cli": "^11.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.2.7",
+    "react-email": "^6.9.0",
     "tailwindcss": "^4",
+    "tsx": "^4.23.1",
     "typescript": "^5"
   }
 }

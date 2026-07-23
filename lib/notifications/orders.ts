@@ -1,7 +1,10 @@
+import { NewOrderEmail } from "@/emails/new-order";
+import { OrderStatusEmail } from "@/emails/order-status";
+import { PaymentRejectedEmail } from "@/emails/payment-rejected";
 import { prisma } from "@/lib/db";
 import { toNumber } from "@/lib/decimal";
 import { getAppUrl } from "@/lib/email/config";
-import { bulletList, paragraph, renderEmailLayout } from "@/lib/email/templates/layout";
+import { renderEmailTemplate } from "@/lib/email/render-template";
 import { sendNotification, isSmsConfigured } from "@/lib/notifications/send";
 import { trackOrderLookupPath } from "@/lib/storefront/paths";
 import { formatCurrency } from "@/lib/utils";
@@ -46,49 +49,22 @@ export async function notifyNewOrder(orderId: string) {
     (item) =>
       `${item.title}${item.variantName ? ` (${item.variantName})` : ""} × ${item.quantity}`,
   );
+  const appUrl = getAppUrl();
 
-  const text = [
-    `Dear ${order.business.owner.name},`,
-    "",
-    `A new order has been placed at ${order.business.name}.`,
-    "",
-    `Order number: ${order.orderNumber}`,
-    `Customer: ${order.customerName}`,
-    `Phone: ${order.customerPhone}`,
-    `Total: ${total}`,
-    "",
-    "Items:",
-    ...itemList.map((line) => `• ${line}`),
-    order.notes ? `\nCustomer note: ${order.notes}` : "",
-    "",
-    "Please review the payment receipt and confirm the order in your dashboard.",
-    "",
-    `Orders: ${ordersUrl}`,
-    "",
-    "Kind regards,",
-    "CartFlow",
-  ]
-    .filter(Boolean)
-    .join("\n");
-
-  const html = renderEmailLayout({
-    preview: `New order ${order.orderNumber} — ${total}`,
-    title: "New order received",
-    bodyHtml: [
-      paragraph(`Dear ${order.business.owner.name},`),
-      paragraph(`A new order has been placed at ${order.business.name}.`),
-      paragraph(`Order number: ${order.orderNumber}`),
-      paragraph(`Customer: ${order.customerName} · ${order.customerPhone}`),
-      paragraph(`Total: ${total}`),
-      paragraph("Items:"),
-      bulletList(itemList),
-      order.notes ? paragraph(`Customer note: ${order.notes}`) : "",
-      paragraph(
-        "Please review the payment receipt and confirm the order in your dashboard.",
-      ),
-    ].join(""),
-    cta: { label: "Review order", href: ordersUrl },
-  });
+  const { html, text } = await renderEmailTemplate(
+    NewOrderEmail({
+      ownerName: order.business.owner.name,
+      storeName: order.business.name,
+      orderNumber: order.orderNumber,
+      customerName: order.customerName,
+      customerPhone: order.customerPhone,
+      total,
+      items: itemList,
+      customerNote: order.notes,
+      ordersUrl,
+      appUrl,
+    }),
+  );
 
   await sendNotification({
     businessId: order.businessId,
@@ -122,38 +98,18 @@ export async function notifyOrderStatusChange(orderId: string, newStatus: OrderS
   const customerEmail = order.customer?.email;
   const label = statusLabel(newStatus);
   const trackUrl = orderTrackUrl(order.business.slug, order.orderNumber);
+  const appUrl = getAppUrl();
 
-  const text = [
-    `Dear ${order.customerName},`,
-    "",
-    `This is an update regarding your order ${order.orderNumber} from ${order.business.name}.`,
-    "",
-    `Current status: ${label}.`,
-    "",
-    `You may view your order details at any time:`,
-    trackUrl,
-    "",
-    "If you have questions, please contact the seller using the details on your order page.",
-    "",
-    "Kind regards,",
-    order.business.name,
-    "(via CartFlow)",
-  ].join("\n");
-
-  const html = renderEmailLayout({
-    preview: `Order ${order.orderNumber} is ${label}`,
-    title: "Order status update",
-    bodyHtml: [
-      paragraph(`Dear ${order.customerName},`),
-      paragraph(
-        `This is an update regarding your order ${order.orderNumber} from ${order.business.name}.`,
-      ),
-      paragraph(`Current status: ${label}.`),
-      paragraph("You may view your order details at any time using the link below."),
-    ].join(""),
-    cta: { label: "View order", href: trackUrl },
-    footerNote: "If you have questions, please contact the seller via your order page.",
-  });
+  const { html, text } = await renderEmailTemplate(
+    OrderStatusEmail({
+      customerName: order.customerName,
+      storeName: order.business.name,
+      orderNumber: order.orderNumber,
+      statusLabel: label,
+      trackUrl,
+      appUrl,
+    }),
+  );
 
   if (customerEmail) {
     await sendNotification({
@@ -188,38 +144,18 @@ export async function notifyPaymentRejected(orderId: string, reason: string) {
 
   const customerEmail = order.customer?.email;
   const trackUrl = orderTrackUrl(order.business.slug, order.orderNumber);
+  const appUrl = getAppUrl();
 
-  const text = [
-    `Dear ${order.customerName},`,
-    "",
-    `We regret to inform you that the payment submitted for order ${order.orderNumber} from ${order.business.name} could not be approved.`,
-    "",
-    `Reason: ${reason}`,
-    "",
-    "Please upload a new payment receipt using your order page, or contact the seller for assistance.",
-    "",
-    trackUrl,
-    "",
-    "Kind regards,",
-    order.business.name,
-    "(via CartFlow)",
-  ].join("\n");
-
-  const html = renderEmailLayout({
-    preview: `Payment not approved for ${order.orderNumber}`,
-    title: "Payment not approved",
-    bodyHtml: [
-      paragraph(`Dear ${order.customerName},`),
-      paragraph(
-        `We regret to inform you that the payment submitted for order ${order.orderNumber} from ${order.business.name} could not be approved.`,
-      ),
-      paragraph(`Reason: ${reason}`),
-      paragraph(
-        "Please upload a new payment receipt using your order page, or contact the seller for assistance.",
-      ),
-    ].join(""),
-    cta: { label: "Upload new receipt", href: trackUrl },
-  });
+  const { html, text } = await renderEmailTemplate(
+    PaymentRejectedEmail({
+      customerName: order.customerName,
+      storeName: order.business.name,
+      orderNumber: order.orderNumber,
+      reason,
+      trackUrl,
+      appUrl,
+    }),
+  );
 
   if (customerEmail) {
     await sendNotification({
