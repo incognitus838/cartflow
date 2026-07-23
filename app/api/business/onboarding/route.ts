@@ -4,7 +4,6 @@ import { parseBankDetails } from "@/lib/business/bank";
 import { createBusinessForOwner } from "@/lib/business/create";
 import { resolveLogoFromBody } from "@/lib/business/resolve-logo";
 import { isDatabaseConfigured, prisma } from "@/lib/db";
-import { sendStoreSubmittedEmail } from "@/lib/email/transactional";
 import { canUserCreateStore } from "@/lib/team/stores";
 import { getBusinessForUser } from "@/lib/tenant";
 
@@ -69,20 +68,6 @@ export async function POST(request: Request) {
       ...session,
       businessId: business.id,
     });
-
-    const owner = await prisma.user.findUnique({
-      where: { id: session.userId },
-      select: { name: true, email: true },
-    });
-    if (owner) {
-      sendStoreSubmittedEmail({
-        ownerName: owner.name,
-        ownerEmail: owner.email,
-        storeName: business.name,
-        storeSlug: business.slug,
-        businessId: business.id,
-      });
-    }
 
     return NextResponse.json({
       ok: true,

@@ -102,65 +102,6 @@ export function sendWelcomeOwnerEmail(input: { name: string; email: string }) {
   });
 }
 
-export function sendStoreSubmittedEmail(input: {
-  ownerName: string;
-  ownerEmail: string;
-  storeName: string;
-  storeSlug: string;
-  businessId: string;
-}) {
-  queueTransactionalEmail(() => {
-    const appUrl = getAppUrl();
-    const dashboardUrl = `${appUrl}/dashboard`;
-    const subject = `${input.storeName} — application under review`;
-    const text = [
-      `Dear ${input.ownerName},`,
-      "",
-      `We confirm that your store application for "${input.storeName}" (/${input.storeSlug}) has been submitted successfully.`,
-      "",
-      "Our team will review your application, typically within 24 hours. Completing bank details, contact information, and catalog setup in your dashboard may help accelerate approval.",
-      "",
-      "Products, live orders, and your public storefront will unlock after approval.",
-      "",
-      `Dashboard: ${dashboardUrl}`,
-      "",
-      "Kind regards,",
-      "The CartFlow Team",
-    ].join("\n");
-
-    const html = renderEmailLayout({
-      preview: `${input.storeName} is under review`,
-      title: "Application under review",
-      bodyHtml: [
-        paragraph(`Dear ${input.ownerName},`),
-        paragraph(
-          `We confirm that your store application for ${input.storeName} (/${input.storeSlug}) has been submitted successfully.`,
-        ),
-        paragraph(
-          "Our team will review your application, typically within 24 hours. Completing the items below may assist a timely decision.",
-        ),
-        bulletList([
-          "Bank transfer details and contact information",
-          "Catalog categories and tags",
-          "Accurate store name and description",
-        ]),
-        paragraph(
-          "Products, live orders, and your public storefront will unlock after approval.",
-        ),
-      ].join(""),
-      cta: { label: "Open dashboard", href: dashboardUrl },
-    });
-
-    return {
-      recipient: input.ownerEmail,
-      subject,
-      body: text,
-      html,
-      businessId: input.businessId,
-    };
-  });
-}
-
 export function sendStoreApprovedEmail(input: {
   ownerName: string;
   ownerEmail: string;

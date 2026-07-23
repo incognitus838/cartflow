@@ -4,7 +4,7 @@ import { parseBankDetails } from "@/lib/business/bank";
 import { resolveLogoFromBody } from "@/lib/business/resolve-logo";
 import { registerOwnerWithStore } from "@/lib/business/register-owner";
 import { isDatabaseConfigured } from "@/lib/db";
-import { sendStoreSubmittedEmail, sendWelcomeOwnerEmail } from "@/lib/email/transactional";
+import { sendWelcomeOwnerEmail } from "@/lib/email/transactional";
 
 export const runtime = "nodejs";
 
@@ -73,13 +73,6 @@ export async function POST(request: Request) {
     });
 
     sendWelcomeOwnerEmail({ name: user.name, email: user.email });
-    sendStoreSubmittedEmail({
-      ownerName: user.name,
-      ownerEmail: user.email,
-      storeName: business.name,
-      storeSlug: business.slug,
-      businessId: business.id,
-    });
 
     return NextResponse.json({
       ok: true,
