@@ -15,6 +15,10 @@ export type BroadcastInput = BroadcastAudienceInput & {
   body: string;
   ctaLabel?: string;
   ctaHref?: string;
+  /** Final send list (subset of audience). Case-insensitive emails. */
+  includeEmails?: string[];
+  /** Remove these from audience before send. Ignored when includeEmails is set. */
+  excludeEmails?: string[];
 };
 
 export type {
@@ -39,13 +43,34 @@ export async function sendSellerBroadcast(input: BroadcastInput) {
   if (subject.length < 3) throw new Error("Subject must be at least 3 characters.");
   if (body.length < 10) throw new Error("Message body is too short.");
 
-  const recipients = await listSellerRecipients(input);
+  const audience = await listSellerRecipients(input);
+  const byEmail = new Map(
+    audience.map((r) => [r.email.trim().toLowerCase(), r] as const),
+  );
+
+  let recipients = audience;
+  if (input.includeEmails && input.includeEmails.length > 0) {
+    const include = new Set(
+      input.includeEmails.map((e) => e.trim().toLowerCase()).filter(Boolean),
+    );
+    recipients = [];
+    for (const email of include) {
+      const row = byEmail.get(email);
+      if (row) recipients.push(row);
+    }
+  } else if (input.excludeEmails && input.excludeEmails.length > 0) {
+    const exclude = new Set(
+      input.excludeEmails.map((e) => e.trim().toLowerCase()).filter(Boolean),
+    );
+    recipients = audience.filter((r) => !exclude.has(r.email.trim().toLowerCase()));
+  }
+
   if (recipients.length === 0) {
     return { sent: 0, failed: 0, total: 0, errors: [] as string[] };
   }
   if (recipients.length > 2000) {
     throw new Error(
-      `Audience is ${recipients.length} owners. Maximum 2,000 per send. Narrow the audience.`,
+      `Audience is ${recipients.length} owners. Maximum 2,000 per send. Narrow the audience or remove more addresses.`,
     );
   }
 

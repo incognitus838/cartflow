@@ -11,9 +11,7 @@ export const maxDuration = 300;
 const VALID_PLANS = Object.keys(PLANS) as BusinessPlan[];
 const VALID_APPROVAL: StoreApprovalStatus[] = ["PENDING", "APPROVED", "REJECTED"];
 
-function parseBody(data: Record<string, unknown>) {
-  const subject = typeof data.subject === "string" ? data.subject.trim() : "";
-  const body = typeof data.body === "string" ? data.body.trim() : "";
+function parseAudience(data: Record<string, unknown>) {
   const audienceRaw = typeof data.audience === "string" ? data.audience : "all_owners";
   const audience: "all_owners" | "plan" | "approval" =
     audienceRaw === "plan" || audienceRaw === "approval" ? audienceRaw : "all_owners";
@@ -26,8 +24,26 @@ function parseBody(data: Record<string, unknown>) {
     VALID_APPROVAL.includes(data.approvalStatus as StoreApprovalStatus)
       ? (data.approvalStatus as StoreApprovalStatus)
       : undefined;
+  return { audience, plan, approvalStatus };
+}
+
+function parseStringList(value: unknown): string[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const list = value
+    .filter((item): item is string => typeof item === "string")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return list.length ? list : undefined;
+}
+
+function parseBody(data: Record<string, unknown>) {
+  const subject = typeof data.subject === "string" ? data.subject.trim() : "";
+  const body = typeof data.body === "string" ? data.body.trim() : "";
+  const { audience, plan, approvalStatus } = parseAudience(data);
   const ctaLabel = typeof data.ctaLabel === "string" ? data.ctaLabel.trim() : undefined;
   const ctaHref = typeof data.ctaHref === "string" ? data.ctaHref.trim() : undefined;
+  const includeEmails = parseStringList(data.includeEmails);
+  const excludeEmails = parseStringList(data.excludeEmails);
 
   return {
     subject,
@@ -37,10 +53,12 @@ function parseBody(data: Record<string, unknown>) {
     approvalStatus,
     ctaLabel,
     ctaHref,
+    includeEmails,
+    excludeEmails,
   };
 }
 
-/** Preview audience size without sending. */
+/** Full audience list for the compose UI. */
 export async function GET(request: Request) {
   const auth = await requireApiAdmin();
   if (auth.error) return auth.error;
@@ -69,10 +87,11 @@ export async function GET(request: Request) {
 
   return NextResponse.json({
     count: recipients.length,
-    sample: recipients.slice(0, 5).map((r) => ({
+    recipients: recipients.map((r) => ({
       email: r.email,
       name: r.name,
       storeName: r.storeName,
+      businessId: r.businessId,
     })),
   });
 }
