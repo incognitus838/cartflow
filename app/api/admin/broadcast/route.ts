@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { BusinessPlan, StoreApprovalStatus } from "@prisma/client";
-import { listSellerRecipients, sendSellerBroadcast } from "@/lib/admin/broadcast";
+import { sendSellerBroadcast } from "@/lib/admin/broadcast";
+import { listSellerRecipients } from "@/lib/admin/broadcast-recipients";
 import { requireApiAdmin } from "@/lib/api/require-admin";
 import { PLANS } from "@/lib/plans";
 
@@ -61,8 +62,6 @@ export async function GET(request: Request) {
       : undefined;
 
   const recipients = await listSellerRecipients({
-    subject: "preview",
-    body: "preview body long enough",
     audience,
     plan,
     approvalStatus,

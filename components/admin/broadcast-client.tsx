@@ -1,8 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { Loader2, Mail, Send, Users } from "lucide-react";
 import { toast } from "sonner";
 import type { BusinessPlan, StoreApprovalStatus } from "@prisma/client";
+import { AdminKpiCard } from "@/components/admin/admin-kpi-card";
+import { AdminSectionHeader } from "@/components/admin/section-header";
 
 const PLANS: BusinessPlan[] = ["FREE", "STARTER", "PRO", "ENTERPRISE"];
 
@@ -24,6 +27,7 @@ export function AdminBroadcastClient({ initialAudienceCount }: Props) {
   const [sending, setSending] = useState(false);
   const [ctaLabel, setCtaLabel] = useState("Open dashboard");
   const [ctaHref, setCtaHref] = useState("");
+  const [lastResult, setLastResult] = useState<string | null>(null);
 
   const refreshCount = useCallback(async () => {
     setLoadingCount(true);
@@ -31,7 +35,9 @@ export function AdminBroadcastClient({ initialAudienceCount }: Props) {
       const params = new URLSearchParams({ audience });
       if (audience === "plan") params.set("plan", plan);
       if (audience === "approval") params.set("approvalStatus", approvalStatus);
-      const res = await fetch(`/api/admin/broadcast?${params.toString()}`);
+      const res = await fetch(`/api/admin/broadcast?${params.toString()}`, {
+        cache: "no-store",
+      });
       const data = (await res.json()) as { count?: number; error?: string };
       if (!res.ok) {
         toast.error(data.error || "Could not load audience");
@@ -69,6 +75,7 @@ export function AdminBroadcastClient({ initialAudienceCount }: Props) {
     if (!ok) return;
 
     setSending(true);
+    setLastResult(null);
     try {
       const res = await fetch("/api/admin/broadcast", {
         method: "POST",
@@ -93,10 +100,11 @@ export function AdminBroadcastClient({ initialAudienceCount }: Props) {
         toast.error(data.error || "Send failed");
         return;
       }
-      toast.success(
+      const summary =
         `Sent ${data.sent ?? 0} of ${data.total ?? 0}` +
-          (data.failed ? ` (${data.failed} failed)` : ""),
-      );
+        (data.failed ? ` (${data.failed} failed)` : "");
+      setLastResult(summary);
+      toast.success(summary);
     } catch {
       toast.error("Network error");
     } finally {
@@ -104,154 +112,206 @@ export function AdminBroadcastClient({ initialAudienceCount }: Props) {
     }
   }
 
+  const fieldClass = "cf-input w-full py-2.5 text-[13px]";
+  const labelClass = "mb-1.5 block text-[12px] font-medium text-[#86868b]";
+
   return (
-    <section className="cf-card space-y-5 p-5 sm:p-6" aria-labelledby="broadcast-compose">
-      <div>
-        <h2 id="broadcast-compose" className="text-[17px] font-semibold text-[#1d1d1f]">
-          Compose
+    <div className="space-y-6">
+      <section aria-labelledby="broadcast-audience-kpis">
+        <h2 id="broadcast-audience-kpis" className="sr-only">
+          Audience size
         </h2>
-        <p className="mt-1 text-[13px] text-[#86868b]">
-          Sent via Resend from the CartFlow platform address. Sequential delivery
-          (rate-limited) — large audiences may take a few minutes.
-        </p>
-      </div>
+        <ul className="grid list-none grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3" role="list">
+          <li>
+            <AdminKpiCard
+              label="Estimated recipients"
+              value={loadingCount ? "…" : count}
+              icon={Users}
+              tone="gold"
+            />
+          </li>
+          <li>
+            <AdminKpiCard
+              label="Delivery"
+              value="Resend"
+              icon={Mail}
+              tone="emerald"
+            />
+          </li>
+          <li className="sm:col-span-2 lg:col-span-1">
+            <AdminKpiCard
+              label="Cap per send"
+              value="2,000"
+              icon={Send}
+              tone="slate"
+            />
+          </li>
+        </ul>
+      </section>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div>
-          <label htmlFor="broadcast-audience" className="mb-1.5 block text-[12px] font-medium text-[#86868b]">
-            Audience
-          </label>
-          <select
-            id="broadcast-audience"
-            value={audience}
-            onChange={(e) => setAudience(e.target.value as Audience)}
-            className="cf-input w-full py-2 text-[13px]"
-          >
-            <option value="all_owners">All active store owners</option>
-            <option value="plan">By plan</option>
-            <option value="approval">By approval status</option>
-          </select>
-        </div>
-
-        {audience === "plan" ? (
-          <div>
-            <label htmlFor="broadcast-plan" className="mb-1.5 block text-[12px] font-medium text-[#86868b]">
-              Plan
-            </label>
-            <select
-              id="broadcast-plan"
-              value={plan}
-              onChange={(e) => setPlan(e.target.value as BusinessPlan)}
-              className="cf-input w-full py-2 text-[13px]"
-            >
-              {PLANS.map((p) => (
-                <option key={p} value={p}>
-                  {p}
-                </option>
-              ))}
-            </select>
-          </div>
-        ) : null}
-
-        {audience === "approval" ? (
-          <div>
-            <label htmlFor="broadcast-approval" className="mb-1.5 block text-[12px] font-medium text-[#86868b]">
-              Approval
-            </label>
-            <select
-              id="broadcast-approval"
-              value={approvalStatus}
-              onChange={(e) =>
-                setApprovalStatus(e.target.value as StoreApprovalStatus)
-              }
-              className="cf-input w-full py-2 text-[13px]"
-            >
-              <option value="PENDING">Pending</option>
-              <option value="APPROVED">Approved</option>
-              <option value="REJECTED">Rejected</option>
-            </select>
-          </div>
-        ) : null}
-      </div>
-
-      <p className="text-[13px] text-[#6e6e73]">
-        Estimated recipients:{" "}
-        <span className="font-semibold tabular-nums text-[#1d1d1f]">
-          {loadingCount ? "…" : count}
-        </span>
-      </p>
-
-      <div>
-        <label htmlFor="broadcast-subject" className="mb-1.5 block text-[12px] font-medium text-[#86868b]">
-          Subject
-        </label>
-        <input
-          id="broadcast-subject"
-          value={subject}
-          onChange={(e) => setSubject(e.target.value)}
-          placeholder="Important update from CartFlow"
-          maxLength={200}
-          className="cf-input w-full py-2.5 text-[13px]"
-        />
-      </div>
-
-      <div>
-        <label htmlFor="broadcast-body" className="mb-1.5 block text-[12px] font-medium text-[#86868b]">
-          Message
-        </label>
-        <textarea
-          id="broadcast-body"
-          value={body}
-          onChange={(e) => setBody(e.target.value)}
-          placeholder="Write your announcement. Separate paragraphs with a blank line."
-          rows={10}
-          className="cf-input min-h-[180px] w-full resize-y py-2.5 text-[13px] leading-relaxed"
-        />
-        <p className="mt-1.5 text-[11px] text-[#86868b]">
-          Plain text is fine; blank lines become paragraphs in the email.
-        </p>
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div>
-          <label htmlFor="broadcast-cta-label" className="mb-1.5 block text-[12px] font-medium text-[#86868b]">
-            Button label (optional)
-          </label>
-          <input
-            id="broadcast-cta-label"
-            value={ctaLabel}
-            onChange={(e) => setCtaLabel(e.target.value)}
-            placeholder="Open dashboard"
-            className="cf-input w-full py-2 text-[13px]"
+      <section className="cf-table-shell" aria-labelledby="broadcast-compose">
+        <div className="border-b border-black/[0.06] px-4 py-4 sm:px-5">
+          <AdminSectionHeader
+            id="broadcast-compose"
+            title="Compose message"
+            description="Plain text is fine. Blank lines become paragraphs in the email template."
           />
         </div>
-        <div>
-          <label htmlFor="broadcast-cta-href" className="mb-1.5 block text-[12px] font-medium text-[#86868b]">
-            Button link (optional)
-          </label>
-          <input
-            id="broadcast-cta-href"
-            value={ctaHref}
-            onChange={(e) => setCtaHref(e.target.value)}
-            placeholder="https://cartflow.com.ng/dashboard"
-            className="cf-input w-full py-2 text-[13px]"
-          />
-        </div>
-      </div>
 
-      <div className="flex flex-wrap items-center gap-3 pt-1">
-        <button
-          type="button"
-          onClick={() => void onSend()}
-          disabled={sending || count === 0}
-          className="btn-accent text-[13px] disabled:opacity-50"
-        >
-          {sending ? "Sending…" : "Send broadcast"}
-        </button>
-        <p className="text-[12px] text-[#86868b]">
-          Max 2,000 owners per send. Confirm before large blasts.
-        </p>
-      </div>
-    </section>
+        <div className="space-y-5 px-4 py-5 sm:px-5">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label htmlFor="broadcast-audience" className={labelClass}>
+                Audience
+              </label>
+              <select
+                id="broadcast-audience"
+                value={audience}
+                onChange={(e) => setAudience(e.target.value as Audience)}
+                className={fieldClass}
+              >
+                <option value="all_owners">All store owners</option>
+                <option value="plan">By plan</option>
+                <option value="approval">By approval status</option>
+              </select>
+            </div>
+
+            {audience === "plan" ? (
+              <div>
+                <label htmlFor="broadcast-plan" className={labelClass}>
+                  Plan
+                </label>
+                <select
+                  id="broadcast-plan"
+                  value={plan}
+                  onChange={(e) => setPlan(e.target.value as BusinessPlan)}
+                  className={fieldClass}
+                >
+                  {PLANS.map((p) => (
+                    <option key={p} value={p}>
+                      {p}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : null}
+
+            {audience === "approval" ? (
+              <div>
+                <label htmlFor="broadcast-approval" className={labelClass}>
+                  Approval
+                </label>
+                <select
+                  id="broadcast-approval"
+                  value={approvalStatus}
+                  onChange={(e) =>
+                    setApprovalStatus(e.target.value as StoreApprovalStatus)
+                  }
+                  className={fieldClass}
+                >
+                  <option value="PENDING">Pending</option>
+                  <option value="APPROVED">Approved</option>
+                  <option value="REJECTED">Rejected</option>
+                </select>
+              </div>
+            ) : (
+              <div className="flex items-end">
+                <p className="pb-2 text-[13px] text-[#6e6e73]">
+                  Unique owner emails only — multi-store owners get one message.
+                </p>
+              </div>
+            )}
+          </div>
+
+          <div>
+            <label htmlFor="broadcast-subject" className={labelClass}>
+              Subject
+            </label>
+            <input
+              id="broadcast-subject"
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              placeholder="Important update from CartFlow"
+              maxLength={200}
+              className={fieldClass}
+            />
+          </div>
+
+          <div>
+            <label htmlFor="broadcast-body" className={labelClass}>
+              Message
+            </label>
+            <textarea
+              id="broadcast-body"
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+              placeholder="Write your announcement. Separate paragraphs with a blank line."
+              rows={10}
+              className={`${fieldClass} min-h-[200px] resize-y leading-relaxed`}
+            />
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label htmlFor="broadcast-cta-label" className={labelClass}>
+                Button label (optional)
+              </label>
+              <input
+                id="broadcast-cta-label"
+                value={ctaLabel}
+                onChange={(e) => setCtaLabel(e.target.value)}
+                placeholder="Open dashboard"
+                className={fieldClass}
+              />
+            </div>
+            <div>
+              <label htmlFor="broadcast-cta-href" className={labelClass}>
+                Button link (optional)
+              </label>
+              <input
+                id="broadcast-cta-href"
+                value={ctaHref}
+                onChange={(e) => setCtaHref(e.target.value)}
+                placeholder="https://cartflow.com.ng/dashboard"
+                className={fieldClass}
+              />
+            </div>
+          </div>
+
+          {lastResult ? (
+            <p className="rounded-[var(--cf-radius-md)] border border-emerald-200 bg-emerald-50/80 px-3 py-2 text-[13px] text-emerald-900">
+              {lastResult}
+            </p>
+          ) : null}
+
+          <div className="flex flex-wrap items-center gap-3 border-t border-black/[0.06] pt-5">
+            <button
+              type="button"
+              onClick={() => void onSend()}
+              disabled={sending || count === 0}
+              className="cf-btn-inline cf-btn-inline-primary inline-flex items-center gap-2 disabled:opacity-50"
+            >
+              {sending ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+              ) : (
+                <Send className="h-3.5 w-3.5" aria-hidden />
+              )}
+              {sending ? "Sending…" : "Send broadcast"}
+            </button>
+            <button
+              type="button"
+              onClick={() => void refreshCount()}
+              disabled={loadingCount || sending}
+              className="cf-btn-inline cf-btn-inline-ghost text-[12px] disabled:opacity-50"
+            >
+              Refresh audience
+            </button>
+            <p className="text-[12px] text-[#86868b]">
+              Confirm before large blasts. Delivery is sequential to protect Resend limits.
+            </p>
+          </div>
+        </div>
+      </section>
+    </div>
   );
 }
