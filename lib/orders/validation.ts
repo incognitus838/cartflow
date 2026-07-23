@@ -16,6 +16,9 @@ function parseCheckoutFields(data: Record<string, unknown>): CheckoutInput | str
 
   if (!customerName || customerName.length < 2) return "Your name is required.";
   if (!customerPhone || customerPhone.length < 7) return "A valid phone number is required.";
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return "Enter a valid email address, or leave it blank.";
+  }
 
   const items = Array.isArray(data.items)
     ? data.items.map((row, index) => {

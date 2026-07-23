@@ -136,7 +136,7 @@ const samples: Sample[] = [
     }),
   },
   {
-    key: "6-order-status",
+    key: "6-order-paid",
     lane: "commerce",
     subject: "[Preview] Order CF-PREVIEW-001 — paid and confirmed",
     fromLane: "notification",
@@ -150,7 +150,49 @@ const samples: Sample[] = [
     }),
   },
   {
-    key: "7-payment-rejected",
+    key: "7-order-processing",
+    lane: "commerce",
+    subject: "[Preview] Order CF-PREVIEW-001 — being prepared",
+    fromLane: "notification",
+    element: OrderStatusEmail({
+      customerName: "Chioma Nwosu",
+      storeName: "Glow Beauty",
+      orderNumber: "CF-PREVIEW-001",
+      statusLabel: "being prepared",
+      trackUrl: `${appUrl}/glow-beauty/track?order=CF-PREVIEW-001`,
+      appUrl,
+    }),
+  },
+  {
+    key: "8-order-shipped",
+    lane: "commerce",
+    subject: "[Preview] Order CF-PREVIEW-001 — shipped",
+    fromLane: "notification",
+    element: OrderStatusEmail({
+      customerName: "Chioma Nwosu",
+      storeName: "Glow Beauty",
+      orderNumber: "CF-PREVIEW-001",
+      statusLabel: "shipped",
+      trackUrl: `${appUrl}/glow-beauty/track?order=CF-PREVIEW-001`,
+      appUrl,
+    }),
+  },
+  {
+    key: "9-order-delivered",
+    lane: "commerce",
+    subject: "[Preview] Order CF-PREVIEW-001 — delivered",
+    fromLane: "notification",
+    element: OrderStatusEmail({
+      customerName: "Chioma Nwosu",
+      storeName: "Glow Beauty",
+      orderNumber: "CF-PREVIEW-001",
+      statusLabel: "delivered",
+      trackUrl: `${appUrl}/glow-beauty/track?order=CF-PREVIEW-001`,
+      appUrl,
+    }),
+  },
+  {
+    key: "10-payment-rejected",
     lane: "commerce",
     subject: "[Preview] Payment not approved — CF-PREVIEW-001",
     fromLane: "notification",
@@ -209,7 +251,9 @@ async function main() {
   }
 
   console.log(`\nDone. Sent ${ok}/${samples.length}${fail ? `, failed ${fail}` : ""}.`);
-  console.log("Expect 7 emails in your inbox (subjects start with [Preview]).");
+  console.log(
+    `Expect ${samples.length} emails in your inbox (subjects start with [Preview]).`,
+  );
   if (fail) process.exit(1);
 }
 

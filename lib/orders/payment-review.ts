@@ -107,7 +107,7 @@ export async function reviewOrderPayment(
       }
     }
 
-    await notifyOrderStatusChange(order.id, "PAID");
+    await notifyOrderStatusChange(order.id, "PAID").catch(() => undefined);
     await logStoreActivity({
       businessId,
       action: "PAYMENT_APPROVED",
@@ -153,7 +153,7 @@ export async function reviewOrderPayment(
     return updated;
   });
 
-  await notifyPaymentRejected(order.id, reason);
+  await notifyPaymentRejected(order.id, reason).catch(() => undefined);
   await logStoreActivity({
     businessId,
     action: "PAYMENT_REJECTED",

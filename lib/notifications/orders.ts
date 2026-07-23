@@ -87,7 +87,19 @@ export async function notifyNewOrder(orderId: string) {
   }
 }
 
+/** Statuses that trigger a customer email when they change. */
+const CUSTOMER_STATUS_EMAILS: OrderStatus[] = [
+  "PAID",
+  "PROCESSING",
+  "SHIPPED",
+  "DELIVERED",
+  "CANCELLED",
+  "REFUNDED",
+];
+
 export async function notifyOrderStatusChange(orderId: string, newStatus: OrderStatus) {
+  if (!CUSTOMER_STATUS_EMAILS.includes(newStatus)) return;
+
   const order = await prisma.order.findUnique({
     where: { id: orderId },
     include: { business: true, customer: true },
@@ -95,7 +107,9 @@ export async function notifyOrderStatusChange(orderId: string, newStatus: OrderS
 
   if (!order || !order.business.notifyCustomerOnStatus) return;
 
-  const customerEmail = order.customer?.email;
+  const customerEmail = order.customer?.email?.trim();
+  if (!customerEmail) return;
+
   const label = statusLabel(newStatus);
   const trackUrl = orderTrackUrl(order.business.slug, order.orderNumber);
   const appUrl = getAppUrl();
@@ -111,17 +125,15 @@ export async function notifyOrderStatusChange(orderId: string, newStatus: OrderS
     }),
   );
 
-  if (customerEmail) {
-    await sendNotification({
-      businessId: order.businessId,
-      orderId: order.id,
-      channel: "EMAIL",
-      recipient: customerEmail,
-      subject: `Order ${order.orderNumber} — ${label}`,
-      body: text,
-      html,
-    });
-  }
+  await sendNotification({
+    businessId: order.businessId,
+    orderId: order.id,
+    channel: "EMAIL",
+    recipient: customerEmail,
+    subject: `Order ${order.orderNumber} — ${label}`,
+    body: text,
+    html,
+  });
 
   if (isSmsConfigured()) {
     await sendNotification({

@@ -228,7 +228,7 @@ export async function updateBusinessOrder(
   }
 
   if (input.status && input.status !== existing.status) {
-    await notifyOrderStatusChange(order.id, input.status);
+    await notifyOrderStatusChange(order.id, input.status).catch(() => undefined);
   }
 
   return order;
