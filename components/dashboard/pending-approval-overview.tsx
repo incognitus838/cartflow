@@ -91,7 +91,7 @@ export function PendingApprovalOverview({ storeName, checklist }: PendingApprova
             ok={checklist.hasCategories}
             label="Catalog type & categories configured"
             href="/dashboard/products/new"
-            action="Choose catalog type"
+            action={checklist.hasCategories ? "View catalog" : "Choose what you sell"}
           />
           <li className="flex items-start gap-3 rounded-[var(--cf-radius-md)] border border-black/[0.06] bg-[#fbfbfd] px-4 py-3">
             <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#e8a317]/15 text-[#9a6700]">
@@ -113,7 +113,8 @@ export function PendingApprovalOverview({ storeName, checklist }: PendingApprova
         <h2 className="text-[15px] font-semibold text-[#1d1d1f]">Locked until approval</h2>
         <p className="mt-2 text-[13px] text-[#86868b]">
           Adding products, processing orders, promotions, analytics, storefront preview, and sharing
-          your public store link.
+          your public store link. After approval you&apos;ll be guided to add products (quick add or
+          CSV).
         </p>
       </section>
     </div>

@@ -35,6 +35,10 @@ export async function POST(request: Request) {
   const phone = typeof body?.phone === "string" ? body.phone : undefined;
   const whatsapp = typeof body?.whatsapp === "string" ? body.whatsapp : undefined;
   const description = typeof body?.description === "string" ? body.description : undefined;
+  const sellTypeId =
+    typeof body?.sellTypeId === "string" && body.sellTypeId.trim()
+      ? body.sellTypeId.trim()
+      : null;
 
   if (!name || name.length < 2) {
     return NextResponse.json({ error: "Business name is required." }, { status: 400 });
@@ -62,6 +66,7 @@ export async function POST(request: Request) {
       bankName: bank.bankName,
       bankAccountName: bank.bankAccountName,
       bankAccountNumber: bank.bankAccountNumber,
+      sellTypeId,
     });
 
     await createSession({

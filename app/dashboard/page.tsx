@@ -9,10 +9,12 @@ import {
   Truck,
   Users,
 } from "lucide-react";
+import { FirstProductsSetup } from "@/components/dashboard/first-products-setup";
 import { PendingApprovalOverview } from "@/components/dashboard/pending-approval-overview";
 import { PageHeader } from "@/components/shared/page-header";
 import { buildPendingSetupChecklist, isPendingApproval } from "@/lib/business/approval";
 import { requireBusiness } from "@/lib/auth-server";
+import { catalogCategoryNames } from "@/lib/catalog/catalog-shared";
 import { resolveCatalogSettings } from "@/lib/catalog/settings";
 import { toNumber } from "@/lib/decimal";
 import { formatCurrency } from "@/lib/utils";
@@ -45,12 +47,14 @@ export default async function DashboardPage() {
     );
   }
 
-  const [stats, lowStockProducts] = await Promise.all([
+  const [stats, lowStockProducts, catalog] = await Promise.all([
     getBusinessStats(business.id),
     getLowStockProducts(business.id),
+    resolveCatalogSettings(business.id),
   ]);
 
   const storeUrl = absoluteStoreUrl(business.slug);
+  const defaultCategory = catalogCategoryNames(catalog)[0] || "General";
 
   const cards = [
     {
@@ -164,20 +168,13 @@ export default async function DashboardPage() {
       ) : null}
 
       {stats.productCount === 0 ? (
-        <section
-          aria-labelledby="first-product-cta"
-          className="mt-8 rounded-[var(--cf-radius-lg)] border border-black/[0.06] bg-white p-6"
-        >
-          <h2 id="first-product-cta" className="text-[15px] font-semibold tracking-tight text-[#1d1d1f]">
-            Next step: add your first product
-          </h2>
-          <p className="mt-2 text-[13px] text-[#86868b]">
-            Your store link is ready. Add products so customers can start ordering.
-          </p>
-          <Link href="/dashboard/products" className="btn-primary mt-4 inline-block">
-            Add products
-          </Link>
-        </section>
+        <div className="mt-8">
+          <FirstProductsSetup
+            currency={business.currency}
+            defaultCategory={defaultCategory}
+            initialCount={0}
+          />
+        </div>
       ) : null}
 
       <section aria-labelledby="customize-store" className="mt-8 cf-stat-card">

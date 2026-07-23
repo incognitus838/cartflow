@@ -1,3 +1,5 @@
+import { settingsFromSellType } from "@/lib/catalog/apply-sell-type";
+import { serializeCatalogSettings } from "@/lib/catalog/catalog-shared";
 import { prisma } from "@/lib/db";
 import { isValidSlug, suggestSlug } from "@/lib/slug";
 
@@ -13,6 +15,8 @@ type CreateBusinessInput = {
   bankName: string;
   bankAccountName: string;
   bankAccountNumber: string;
+  /** Onboarding “What do you sell?” — applies catalog categories. */
+  sellTypeId?: string | null;
 };
 
 export async function createBusinessForOwner(input: CreateBusinessInput) {
@@ -26,6 +30,15 @@ export async function createBusinessForOwner(input: CreateBusinessInput) {
   if (existing) {
     throw new Error("This store URL is already taken. Try another.");
   }
+
+  const catalogFromSell =
+    input.sellTypeId != null && input.sellTypeId !== ""
+      ? settingsFromSellType(input.sellTypeId)
+      : null;
+  const catalogSettings =
+    catalogFromSell && typeof catalogFromSell !== "string"
+      ? serializeCatalogSettings(catalogFromSell)
+      : undefined;
 
   return prisma.$transaction(async (tx) => {
     const now = new Date();
@@ -47,6 +60,7 @@ export async function createBusinessForOwner(input: CreateBusinessInput) {
         submittedAt: now,
         approvalPriority: "HIGH",
         subscriptionStatus: "TRIAL",
+        ...(catalogSettings ? { catalogSettings } : {}),
       },
     });
 

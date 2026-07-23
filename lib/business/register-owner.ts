@@ -1,4 +1,6 @@
 import type { Prisma } from "@prisma/client";
+import { settingsFromSellType } from "@/lib/catalog/apply-sell-type";
+import { serializeCatalogSettings } from "@/lib/catalog/catalog-shared";
 import { prisma } from "@/lib/db";
 import { isValidSlug, suggestSlug } from "@/lib/slug";
 
@@ -16,6 +18,7 @@ export type RegisterOwnerInput = {
   bankName: string;
   bankAccountName: string;
   bankAccountNumber: string;
+  sellTypeId?: string | null;
 };
 
 async function createBusinessInTx(
@@ -33,6 +36,15 @@ async function createBusinessInTx(
   if (existing) {
     throw new Error("This store URL is already taken. Try another.");
   }
+
+  const catalogFromSell =
+    input.sellTypeId != null && input.sellTypeId !== ""
+      ? settingsFromSellType(input.sellTypeId)
+      : null;
+  const catalogSettings =
+    catalogFromSell && typeof catalogFromSell !== "string"
+      ? serializeCatalogSettings(catalogFromSell)
+      : undefined;
 
   const now = new Date();
   const business = await tx.business.create({
@@ -53,6 +65,7 @@ async function createBusinessInTx(
       submittedAt: now,
       approvalPriority: "HIGH",
       subscriptionStatus: "TRIAL",
+      ...(catalogSettings ? { catalogSettings } : {}),
     },
   });
 
