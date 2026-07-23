@@ -2,7 +2,7 @@ const steps = [
   {
     step: "01",
     title: "Create your store",
-    description: "Sign up, name your business, and receive a refined URL — cartflow.app/your-shop.",
+    description: "Sign up, name your business, and receive a refined URL — cartflow.com.ng/your-shop.",
   },
   {
     step: "02",

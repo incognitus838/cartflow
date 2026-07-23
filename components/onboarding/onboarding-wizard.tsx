@@ -9,6 +9,7 @@ import {
   type LogoUploadValue,
 } from "@/components/shared/logo-upload-field";
 import { isValidSlug, suggestSlug } from "@/lib/slug";
+import { getPublicStoreHost } from "@/lib/storefront/paths";
 
 const CURRENCIES = [
   { code: "NGN", label: "Nigerian Naira (₦)" },
@@ -273,7 +274,7 @@ export function OnboardingWizard({ mode = "register" }: OnboardingWizardProps) {
             <div>
               <label className="mb-1.5 block text-sm font-medium text-slate-700">Store URL</label>
               <div className="flex items-center rounded-lg border border-slate-200 focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/20">
-                <span className="pl-3 text-sm text-slate-400">cartflow.app/</span>
+                <span className="pl-3 text-sm text-slate-400">{getPublicStoreHost()}/</span>
                 <input
                   value={slugTouched ? slug : previewSlug}
                   onChange={(e) => {
@@ -502,7 +503,9 @@ export function OnboardingWizard({ mode = "register" }: OnboardingWizardProps) {
             </div>
             <div className="rounded-xl bg-slate-50 p-4 text-sm text-slate-600">
               <p className="font-medium text-slate-900">Your store link</p>
-              <p className="mt-1 font-mono text-emerald-700">cartflow.app/{finalSlug}</p>
+              <p className="mt-1 font-mono text-emerald-700">
+                {getPublicStoreHost()}/{finalSlug}
+              </p>
               {submitAttempted && !slugValid ? (
                 <p className="mt-2 text-xs text-red-600">
                   {fieldErrors.slug ??

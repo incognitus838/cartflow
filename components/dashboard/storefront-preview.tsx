@@ -7,6 +7,7 @@ import { StorefrontThemeShell } from "@/components/storefront/storefront-theme-s
 import type { StorefrontCustomizerStore } from "@/components/dashboard/storefront-customizer";
 import type { StorefrontProfile } from "@/lib/business/storefront-profile-shared";
 import type { StorefrontProductCard } from "@/components/storefront/product-card";
+import { getPublicStoreHost } from "@/lib/storefront/paths";
 
 type StorefrontPreviewDraft = {
   profile: StorefrontProfile;
@@ -32,7 +33,7 @@ export function StorefrontPreview({ draft, viewport = "desktop" }: StorefrontPre
         <span className="cf-storefront-device-dot" aria-hidden />
         <span className="cf-storefront-device-dot" aria-hidden />
         <p className="mx-auto truncate text-center text-[11px] font-medium text-[#86868b]">
-          {store.slug}.cartflow.app
+          {getPublicStoreHost()}/{store.slug}
         </p>
       </div>
 

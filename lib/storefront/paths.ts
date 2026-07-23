@@ -45,6 +45,15 @@ export function getPublicAppBaseUrl() {
   return normalized || CANONICAL_APP_URL;
 }
 
+/** Hostname for store URL previews (e.g. cartflow.com.ng). */
+export function getPublicStoreHost() {
+  try {
+    return new URL(getPublicAppBaseUrl()).host;
+  } catch {
+    return "cartflow.com.ng";
+  }
+}
+
 export function storePath(storeSlug: string) {
   return `/${storeSlug}`;
 }
