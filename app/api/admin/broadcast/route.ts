@@ -27,13 +27,14 @@ function parseAudience(data: Record<string, unknown>) {
   return { audience, plan, approvalStatus };
 }
 
-function parseStringList(value: unknown): string[] | undefined {
-  if (!Array.isArray(value)) return undefined;
-  const list = value
+/** null = field omitted; string[] = explicit list (may be empty → send nobody). */
+function parseStringList(value: unknown): string[] | null {
+  if (value === undefined) return null;
+  if (!Array.isArray(value)) return null;
+  return value
     .filter((item): item is string => typeof item === "string")
     .map((s) => s.trim())
     .filter(Boolean);
-  return list.length ? list : undefined;
 }
 
 function parseBody(data: Record<string, unknown>) {
@@ -42,8 +43,11 @@ function parseBody(data: Record<string, unknown>) {
   const { audience, plan, approvalStatus } = parseAudience(data);
   const ctaLabel = typeof data.ctaLabel === "string" ? data.ctaLabel.trim() : undefined;
   const ctaHref = typeof data.ctaHref === "string" ? data.ctaHref.trim() : undefined;
-  const includeEmails = parseStringList(data.includeEmails);
-  const excludeEmails = parseStringList(data.excludeEmails);
+  // Prefer includeEmails when the key is present (UI always sends the curated list).
+  const hasInclude = Object.prototype.hasOwnProperty.call(data, "includeEmails");
+  const hasExclude = Object.prototype.hasOwnProperty.call(data, "excludeEmails");
+  const includeEmails = hasInclude ? (parseStringList(data.includeEmails) ?? []) : undefined;
+  const excludeEmails = hasExclude ? (parseStringList(data.excludeEmails) ?? []) : undefined;
 
   return {
     subject,

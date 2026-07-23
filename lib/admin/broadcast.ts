@@ -49,7 +49,8 @@ export async function sendSellerBroadcast(input: BroadcastInput) {
   );
 
   let recipients = audience;
-  if (input.includeEmails && input.includeEmails.length > 0) {
+  // When includeEmails is provided (including []), only that curated set is used.
+  if (input.includeEmails !== undefined) {
     const include = new Set(
       input.includeEmails.map((e) => e.trim().toLowerCase()).filter(Boolean),
     );
@@ -58,7 +59,7 @@ export async function sendSellerBroadcast(input: BroadcastInput) {
       const row = byEmail.get(email);
       if (row) recipients.push(row);
     }
-  } else if (input.excludeEmails && input.excludeEmails.length > 0) {
+  } else if (input.excludeEmails !== undefined) {
     const exclude = new Set(
       input.excludeEmails.map((e) => e.trim().toLowerCase()).filter(Boolean),
     );
@@ -66,6 +67,9 @@ export async function sendSellerBroadcast(input: BroadcastInput) {
   }
 
   if (recipients.length === 0) {
+    if (input.includeEmails !== undefined || input.excludeEmails !== undefined) {
+      throw new Error("No recipients left to send to. Add addresses back or change the audience.");
+    }
     return { sent: 0, failed: 0, total: 0, errors: [] as string[] };
   }
   if (recipients.length > 2000) {

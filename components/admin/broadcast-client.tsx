@@ -5,7 +5,6 @@ import { Loader2, Mail, RotateCcw, Search, Send, Users, X } from "lucide-react";
 import { toast } from "sonner";
 import type { BusinessPlan, StoreApprovalStatus } from "@prisma/client";
 import { AdminKpiCard } from "@/components/admin/admin-kpi-card";
-import { AdminSectionHeader } from "@/components/admin/section-header";
 
 const PLANS: BusinessPlan[] = ["FREE", "STARTER", "PRO", "ENTERPRISE"];
 
@@ -19,17 +18,17 @@ type RecipientRow = {
 };
 
 type Props = {
-  initialAudienceCount: number;
+  initialRecipients: RecipientRow[];
 };
 
-export function AdminBroadcastClient({ initialAudienceCount }: Props) {
+export function AdminBroadcastClient({ initialRecipients }: Props) {
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [audience, setAudience] = useState<Audience>("all_owners");
   const [plan, setPlan] = useState<BusinessPlan>("FREE");
   const [approvalStatus, setApprovalStatus] =
     useState<StoreApprovalStatus>("APPROVED");
-  const [recipients, setRecipients] = useState<RecipientRow[]>([]);
+  const [recipients, setRecipients] = useState<RecipientRow[]>(initialRecipients);
   const [removedKeys, setRemovedKeys] = useState<Set<string>>(new Set());
   const [listSearch, setListSearch] = useState("");
   const [loadingList, setLoadingList] = useState(false);
@@ -183,7 +182,7 @@ export function AdminBroadcastClient({ initialAudienceCount }: Props) {
   const fieldClass = "cf-input w-full py-2.5 text-[13px]";
   const labelClass = "mb-1.5 block text-[12px] font-medium text-[#86868b]";
   const sendCount = activeRecipients.length;
-  const totalLoaded = recipients.length || initialAudienceCount;
+  const totalLoaded = recipients.length;
 
   return (
     <div className="space-y-6">
@@ -224,11 +223,12 @@ export function AdminBroadcastClient({ initialAudienceCount }: Props) {
 
       <section className="cf-table-shell" aria-labelledby="broadcast-compose">
         <div className="border-b border-black/[0.06] px-4 py-4 sm:px-5">
-          <AdminSectionHeader
-            id="broadcast-compose"
-            title="Compose message"
-            description="Plain text is fine. Blank lines become paragraphs in the email template."
-          />
+          <h2 id="broadcast-compose" className="cf-page-title text-[17px]">
+            Compose message
+          </h2>
+          <p className="mt-1 text-[13px] text-[#86868b]">
+            Plain text is fine. Blank lines become paragraphs in the email template.
+          </p>
         </div>
 
         <div className="space-y-5 px-4 py-5 sm:px-5">
@@ -388,11 +388,15 @@ export function AdminBroadcastClient({ initialAudienceCount }: Props) {
 
       <section className="cf-table-shell" aria-labelledby="broadcast-recipients">
         <div className="flex flex-col gap-3 border-b border-black/[0.06] px-4 py-4 sm:flex-row sm:items-end sm:justify-between sm:px-5">
-          <AdminSectionHeader
-            id="broadcast-recipients"
-            title="Recipients"
-            description={`${sendCount} will receive · ${removedRecipients.length} removed · search then remove as needed`}
-          />
+          <div>
+            <h2 id="broadcast-recipients" className="cf-page-title text-[17px]">
+              Recipients
+            </h2>
+            <p className="mt-1 text-[13px] text-[#86868b]">
+              {sendCount} will receive · {removedRecipients.length} removed · search then remove
+              as needed
+            </p>
+          </div>
           <div className="flex flex-wrap items-center gap-2">
             <div className="relative min-w-[12rem] flex-1 sm:flex-none">
               <Search
