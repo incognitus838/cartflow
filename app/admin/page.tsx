@@ -19,6 +19,42 @@ export default async function AdminPage() {
           </Link>
         }
       />
+
+      <section
+        aria-label="Admin tools"
+        className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
+      >
+        <Link
+          href="/admin/broadcast"
+          className="rounded-[var(--cf-radius-lg)] border border-black/[0.06] bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+        >
+          <p className="text-[13px] font-semibold text-[#1d1d1f]">Email sellers</p>
+          <p className="mt-1 text-[12px] leading-relaxed text-[#86868b]">
+            Write a message, pick who receives it, remove addresses, choose a page for the
+            email button, send via Resend.
+          </p>
+        </Link>
+        <Link
+          href="/admin/stores"
+          className="rounded-[var(--cf-radius-lg)] border border-black/[0.06] bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+        >
+          <p className="text-[13px] font-semibold text-[#1d1d1f]">Bulk plan change</p>
+          <p className="mt-1 text-[12px] leading-relaxed text-[#86868b]">
+            On Stores: select many shops or filter by plan, then set FREE / STARTER / PRO /
+            ENTERPRISE at once.
+          </p>
+        </Link>
+        <Link
+          href="/admin/approvals"
+          className="rounded-[var(--cf-radius-lg)] border border-black/[0.06] bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+        >
+          <p className="text-[13px] font-semibold text-[#1d1d1f]">Store approvals</p>
+          <p className="mt-1 text-[12px] leading-relaxed text-[#86868b]">
+            Review bank, contact, and catalog before a storefront goes live.
+          </p>
+        </Link>
+      </section>
+
       <OverviewPanel
         stats={{
           businesses: stats.businesses,

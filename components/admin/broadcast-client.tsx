@@ -462,45 +462,61 @@ export function AdminBroadcastClient({ initialRecipients }: Props) {
           </div>
 
           <div className="space-y-4 rounded-[var(--cf-radius-md)] border border-black/[0.06] bg-[#fbfbfd] p-4">
-            <p className="text-[12px] font-medium uppercase tracking-wide text-[#86868b]">
-              Email button (optional)
-            </p>
+            <div>
+              <p className="text-[13px] font-semibold text-[#1d1d1f]">
+                Where should the email button go?
+              </p>
+              <p className="mt-0.5 text-[12px] text-[#86868b]">
+                Click a page below. Sellers tap the button in the email and land there.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => onCtaPresetChange("none")}
+                className={`rounded-full border px-3 py-1.5 text-[12px] font-medium transition-colors ${
+                  ctaLinkPreset === "none"
+                    ? "border-[#1d1d1f] bg-[#1d1d1f] text-white"
+                    : "border-black/[0.08] bg-white text-[#6e6e73] hover:border-black/20"
+                }`}
+              >
+                No button
+              </button>
+              {CTA_LINK_PRESETS.map((p) => {
+                const selected = ctaLinkPreset === p.id;
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => onCtaPresetChange(p.id)}
+                    className={`rounded-full border px-3 py-1.5 text-[12px] font-medium transition-colors ${
+                      selected
+                        ? "border-[#b8956a] bg-[#fffdf9] text-[#1d1d1f] ring-1 ring-[#b8956a]/40"
+                        : "border-black/[0.08] bg-white text-[#1d1d1f] hover:border-[#b8956a]/50"
+                    }`}
+                  >
+                    {p.label}
+                  </button>
+                );
+              })}
+              <button
+                type="button"
+                onClick={() => onCtaPresetChange("custom")}
+                className={`rounded-full border px-3 py-1.5 text-[12px] font-medium transition-colors ${
+                  ctaLinkPreset === "custom"
+                    ? "border-[#b8956a] bg-[#fffdf9] text-[#1d1d1f] ring-1 ring-[#b8956a]/40"
+                    : "border-black/[0.08] bg-white text-[#6e6e73] hover:border-black/20"
+                }`}
+              >
+                Custom link…
+              </button>
+            </div>
+
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label htmlFor="broadcast-cta-link" className={labelClass}>
-                  Button link
-                </label>
-                <select
-                  id="broadcast-cta-link"
-                  value={ctaLinkPreset}
-                  onChange={(e) => onCtaPresetChange(e.target.value)}
-                  className={fieldClass}
-                >
-                  <option value="none">No button</option>
-                  <optgroup label="Seller dashboard">
-                    {CTA_LINK_PRESETS.filter((p) => p.path.startsWith("/dashboard")).map(
-                      (p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.label} — {p.path}
-                        </option>
-                      ),
-                    )}
-                  </optgroup>
-                  <optgroup label="Public pages">
-                    {CTA_LINK_PRESETS.filter((p) => !p.path.startsWith("/dashboard")).map(
-                      (p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.label} — {p.path === "/" ? "/" : p.path}
-                        </option>
-                      ),
-                    )}
-                  </optgroup>
-                  <option value="custom">Custom URL…</option>
-                </select>
-              </div>
-              <div>
                 <label htmlFor="broadcast-cta-label" className={labelClass}>
-                  Button label
+                  Button text on the email
                 </label>
                 <input
                   id="broadcast-cta-label"
@@ -511,28 +527,33 @@ export function AdminBroadcastClient({ initialRecipients }: Props) {
                   className={`${fieldClass} disabled:opacity-50`}
                 />
               </div>
+              {ctaLinkPreset === "custom" ? (
+                <div>
+                  <label htmlFor="broadcast-cta-custom" className={labelClass}>
+                    Paste full web address
+                  </label>
+                  <input
+                    id="broadcast-cta-custom"
+                    type="url"
+                    value={ctaCustomUrl}
+                    onChange={(e) => setCtaCustomUrl(e.target.value)}
+                    placeholder="https://cartflow.com.ng/…"
+                    className={fieldClass}
+                  />
+                </div>
+              ) : (
+                <div>
+                  <p className={labelClass}>Opens this page</p>
+                  <p className="rounded-[var(--cf-radius-md)] border border-black/[0.06] bg-white px-3 py-2.5 text-[13px] text-[#1d1d1f]">
+                    {ctaLinkPreset === "none" ? (
+                      <span className="text-[#86868b]">No button in the email</span>
+                    ) : (
+                      <span className="break-all font-medium">{ctaHref}</span>
+                    )}
+                  </p>
+                </div>
+              )}
             </div>
-            {ctaLinkPreset === "custom" ? (
-              <div>
-                <label htmlFor="broadcast-cta-custom" className={labelClass}>
-                  Custom URL
-                </label>
-                <input
-                  id="broadcast-cta-custom"
-                  type="url"
-                  value={ctaCustomUrl}
-                  onChange={(e) => setCtaCustomUrl(e.target.value)}
-                  placeholder="https://cartflow.com.ng/…"
-                  className={fieldClass}
-                />
-              </div>
-            ) : null}
-            {ctaLinkPreset !== "none" && ctaHref ? (
-              <p className="text-[12px] text-[#6e6e73]">
-                Button will open:{" "}
-                <span className="break-all font-medium text-[#1d1d1f]">{ctaHref}</span>
-              </p>
-            ) : null}
           </div>
 
           {lastResult ? (
