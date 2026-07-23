@@ -5,8 +5,108 @@ import { Loader2, Mail, RotateCcw, Search, Send, Users, X } from "lucide-react";
 import { toast } from "sonner";
 import type { BusinessPlan, StoreApprovalStatus } from "@prisma/client";
 import { AdminKpiCard } from "@/components/admin/admin-kpi-card";
+import { getPublicAppBaseUrl } from "@/lib/storefront/paths";
 
 const PLANS: BusinessPlan[] = ["FREE", "STARTER", "PRO", "ENTERPRISE"];
+
+/** Seller-facing destinations for the email CTA button. */
+const CTA_LINK_PRESETS: Array<{
+  id: string;
+  label: string;
+  path: string;
+  buttonLabel: string;
+}> = [
+  {
+    id: "dashboard",
+    label: "Seller dashboard",
+    path: "/dashboard",
+    buttonLabel: "Open dashboard",
+  },
+  {
+    id: "orders",
+    label: "Orders",
+    path: "/dashboard/orders",
+    buttonLabel: "View orders",
+  },
+  {
+    id: "products",
+    label: "Products",
+    path: "/dashboard/products",
+    buttonLabel: "Manage products",
+  },
+  {
+    id: "catalog",
+    label: "Catalog",
+    path: "/dashboard/catalog",
+    buttonLabel: "Open catalog",
+  },
+  {
+    id: "storefront",
+    label: "Storefront editor",
+    path: "/dashboard/storefront",
+    buttonLabel: "Edit storefront",
+  },
+  {
+    id: "settings",
+    label: "Store settings",
+    path: "/dashboard/settings",
+    buttonLabel: "Open settings",
+  },
+  {
+    id: "billing",
+    label: "Billing & plan",
+    path: "/dashboard/billing",
+    buttonLabel: "View billing",
+  },
+  {
+    id: "analytics",
+    label: "Analytics",
+    path: "/dashboard/analytics",
+    buttonLabel: "View analytics",
+  },
+  {
+    id: "promotions",
+    label: "Promotions",
+    path: "/dashboard/promotions",
+    buttonLabel: "View promotions",
+  },
+  {
+    id: "stores",
+    label: "My stores",
+    path: "/dashboard/stores",
+    buttonLabel: "Manage stores",
+  },
+  {
+    id: "onboarding",
+    label: "Onboarding",
+    path: "/onboarding",
+    buttonLabel: "Continue setup",
+  },
+  {
+    id: "home",
+    label: "CartFlow homepage",
+    path: "/",
+    buttonLabel: "Visit CartFlow",
+  },
+  {
+    id: "login",
+    label: "Sign in",
+    path: "/login",
+    buttonLabel: "Sign in",
+  },
+  {
+    id: "faq",
+    label: "FAQ",
+    path: "/faq",
+    buttonLabel: "Read FAQ",
+  },
+  {
+    id: "demo",
+    label: "Demo store",
+    path: "/demo",
+    buttonLabel: "View demo",
+  },
+];
 
 type Audience = "all_owners" | "plan" | "approval";
 
@@ -21,6 +121,14 @@ type Props = {
   initialRecipients: RecipientRow[];
 };
 
+function resolveCtaHref(presetId: string, customUrl: string) {
+  if (presetId === "custom") return customUrl.trim();
+  if (presetId === "none") return "";
+  const preset = CTA_LINK_PRESETS.find((p) => p.id === presetId);
+  if (!preset) return "";
+  return `${getPublicAppBaseUrl()}${preset.path === "/" ? "" : preset.path}`;
+}
+
 export function AdminBroadcastClient({ initialRecipients }: Props) {
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
@@ -34,8 +142,28 @@ export function AdminBroadcastClient({ initialRecipients }: Props) {
   const [loadingList, setLoadingList] = useState(false);
   const [sending, setSending] = useState(false);
   const [ctaLabel, setCtaLabel] = useState("Open dashboard");
-  const [ctaHref, setCtaHref] = useState("");
+  const [ctaLinkPreset, setCtaLinkPreset] = useState("dashboard");
+  const [ctaCustomUrl, setCtaCustomUrl] = useState("");
   const [lastResult, setLastResult] = useState<string | null>(null);
+
+  const ctaHref = useMemo(
+    () => resolveCtaHref(ctaLinkPreset, ctaCustomUrl),
+    [ctaLinkPreset, ctaCustomUrl],
+  );
+
+  function onCtaPresetChange(id: string) {
+    setCtaLinkPreset(id);
+    if (id === "none") {
+      setCtaLabel("");
+      return;
+    }
+    if (id === "custom") {
+      if (!ctaLabel.trim()) setCtaLabel("Open link");
+      return;
+    }
+    const preset = CTA_LINK_PRESETS.find((p) => p.id === id);
+    if (preset) setCtaLabel(preset.buttonLabel);
+  }
 
   const emailKey = (email: string) => email.trim().toLowerCase();
 
@@ -134,6 +262,14 @@ export function AdminBroadcastClient({ initialRecipients }: Props) {
       toast.error("No recipients left — restore some or change audience");
       return;
     }
+    if (ctaLinkPreset === "custom" && !ctaCustomUrl.trim()) {
+      toast.error("Enter a custom URL for the button, or pick a page from the list");
+      return;
+    }
+    if (ctaLinkPreset !== "none" && ctaHref && !ctaLabel.trim()) {
+      toast.error("Add a button label, or choose “No button”");
+      return;
+    }
 
     const ok = window.confirm(
       `Send this email to ${activeRecipients.length} seller address(es)? This cannot be undone.`,
@@ -152,8 +288,9 @@ export function AdminBroadcastClient({ initialRecipients }: Props) {
           audience,
           plan: audience === "plan" ? plan : undefined,
           approvalStatus: audience === "approval" ? approvalStatus : undefined,
-          ctaLabel: ctaLabel.trim() || undefined,
-          ctaHref: ctaHref.trim() || undefined,
+          // Always send fields so empty = no CTA (not default dashboard).
+          ctaLabel: ctaLinkPreset === "none" ? "" : ctaLabel.trim(),
+          ctaHref: ctaLinkPreset === "none" ? "" : ctaHref.trim(),
           includeEmails: activeRecipients.map((r) => r.email),
         }),
       });
@@ -324,31 +461,78 @@ export function AdminBroadcastClient({ initialRecipients }: Props) {
             />
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label htmlFor="broadcast-cta-label" className={labelClass}>
-                Button label (optional)
-              </label>
-              <input
-                id="broadcast-cta-label"
-                value={ctaLabel}
-                onChange={(e) => setCtaLabel(e.target.value)}
-                placeholder="Open dashboard"
-                className={fieldClass}
-              />
+          <div className="space-y-4 rounded-[var(--cf-radius-md)] border border-black/[0.06] bg-[#fbfbfd] p-4">
+            <p className="text-[12px] font-medium uppercase tracking-wide text-[#86868b]">
+              Email button (optional)
+            </p>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label htmlFor="broadcast-cta-link" className={labelClass}>
+                  Button link
+                </label>
+                <select
+                  id="broadcast-cta-link"
+                  value={ctaLinkPreset}
+                  onChange={(e) => onCtaPresetChange(e.target.value)}
+                  className={fieldClass}
+                >
+                  <option value="none">No button</option>
+                  <optgroup label="Seller dashboard">
+                    {CTA_LINK_PRESETS.filter((p) => p.path.startsWith("/dashboard")).map(
+                      (p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.label} — {p.path}
+                        </option>
+                      ),
+                    )}
+                  </optgroup>
+                  <optgroup label="Public pages">
+                    {CTA_LINK_PRESETS.filter((p) => !p.path.startsWith("/dashboard")).map(
+                      (p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.label} — {p.path === "/" ? "/" : p.path}
+                        </option>
+                      ),
+                    )}
+                  </optgroup>
+                  <option value="custom">Custom URL…</option>
+                </select>
+              </div>
+              <div>
+                <label htmlFor="broadcast-cta-label" className={labelClass}>
+                  Button label
+                </label>
+                <input
+                  id="broadcast-cta-label"
+                  value={ctaLabel}
+                  onChange={(e) => setCtaLabel(e.target.value)}
+                  placeholder="Open dashboard"
+                  disabled={ctaLinkPreset === "none"}
+                  className={`${fieldClass} disabled:opacity-50`}
+                />
+              </div>
             </div>
-            <div>
-              <label htmlFor="broadcast-cta-href" className={labelClass}>
-                Button link (optional)
-              </label>
-              <input
-                id="broadcast-cta-href"
-                value={ctaHref}
-                onChange={(e) => setCtaHref(e.target.value)}
-                placeholder="https://cartflow.com.ng/dashboard"
-                className={fieldClass}
-              />
-            </div>
+            {ctaLinkPreset === "custom" ? (
+              <div>
+                <label htmlFor="broadcast-cta-custom" className={labelClass}>
+                  Custom URL
+                </label>
+                <input
+                  id="broadcast-cta-custom"
+                  type="url"
+                  value={ctaCustomUrl}
+                  onChange={(e) => setCtaCustomUrl(e.target.value)}
+                  placeholder="https://cartflow.com.ng/…"
+                  className={fieldClass}
+                />
+              </div>
+            ) : null}
+            {ctaLinkPreset !== "none" && ctaHref ? (
+              <p className="text-[12px] text-[#6e6e73]">
+                Button will open:{" "}
+                <span className="break-all font-medium text-[#1d1d1f]">{ctaHref}</span>
+              </p>
+            ) : null}
           </div>
 
           {lastResult ? (

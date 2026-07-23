@@ -80,10 +80,15 @@ export async function sendSellerBroadcast(input: BroadcastInput) {
 
   const appUrl = getAppUrl();
   const paragraphs = splitParagraphs(body);
+  // Empty label+href means no CTA button; omitted fields default to dashboard.
+  const hasCtaFields =
+    input.ctaLabel !== undefined || input.ctaHref !== undefined;
   const cta =
     input.ctaLabel && input.ctaHref
       ? { label: input.ctaLabel.trim(), href: input.ctaHref.trim() }
-      : { label: "Open dashboard", href: `${appUrl}/dashboard` };
+      : hasCtaFields
+        ? null
+        : { label: "Open dashboard", href: `${appUrl}/dashboard` };
 
   let sent = 0;
   let failed = 0;

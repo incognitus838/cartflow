@@ -23,7 +23,11 @@ export function SellerBroadcastEmail({
       eyebrow="Platform update"
       title={subjectTitle}
       appUrl={appUrl}
-      cta={cta ?? { label: "Open dashboard", href: `${appUrl}/dashboard` }}
+      cta={
+        cta === undefined
+          ? { label: "Open dashboard", href: `${appUrl}/dashboard` }
+          : cta || undefined
+      }
       footerNote="You are receiving this because you own a store on CartFlow."
     >
       <EmailParagraph>Dear {ownerName},</EmailParagraph>
