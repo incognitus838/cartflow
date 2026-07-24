@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "npx prisma generate && npx next dev --webpack -p 3001",
     "build": "npx next build --webpack",
-    "vercel-build": "prisma generate && node scripts/apply-approval-schema.mjs && node scripts/apply-product-sort-schema.mjs && node scripts/apply-product-media-schema.mjs && node scripts/apply-delivery-zones-schema.mjs && node scripts/apply-store-lifecycle-schema.mjs && next build --webpack",
+    "vercel-build": "prisma generate && node scripts/apply-approval-schema.mjs && node scripts/apply-product-sort-schema.mjs && node scripts/apply-product-media-schema.mjs && node scripts/apply-delivery-zones-schema.mjs && node scripts/apply-store-lifecycle-schema.mjs && node scripts/apply-admin-job-schema.mjs && next build --webpack",
     "db:store-lifecycle": "npx dotenv-cli -e .env.local -- node scripts/apply-store-lifecycle-schema.mjs",
     "start": "npx next start",
     "lint": "eslint",

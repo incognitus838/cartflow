@@ -145,6 +145,14 @@ export function AdminBroadcastClient({ initialRecipients }: Props) {
   const [ctaLinkPreset, setCtaLinkPreset] = useState("dashboard");
   const [ctaCustomUrl, setCtaCustomUrl] = useState("");
   const [lastResult, setLastResult] = useState<string | null>(null);
+  const [jobProgress, setJobProgress] = useState<{
+    percent: number;
+    processed: number;
+    total: number;
+    success: number;
+    failed: number;
+    status: string;
+  } | null>(null);
 
   const ctaHref = useMemo(
     () => resolveCtaHref(ctaLinkPreset, ctaCustomUrl),
@@ -278,6 +286,14 @@ export function AdminBroadcastClient({ initialRecipients }: Props) {
 
     setSending(true);
     setLastResult(null);
+    setJobProgress({
+      percent: 0,
+      processed: 0,
+      total: activeRecipients.length,
+      success: 0,
+      failed: 0,
+      status: "PENDING",
+    });
     try {
       const res = await fetch("/api/admin/broadcast", {
         method: "POST",
@@ -288,7 +304,6 @@ export function AdminBroadcastClient({ initialRecipients }: Props) {
           audience,
           plan: audience === "plan" ? plan : undefined,
           approvalStatus: audience === "approval" ? approvalStatus : undefined,
-          // Always send fields so empty = no CTA (not default dashboard).
           ctaLabel: ctaLinkPreset === "none" ? "" : ctaLabel.trim(),
           ctaHref: ctaLinkPreset === "none" ? "" : ctaHref.trim(),
           includeEmails: activeRecipients.map((r) => r.email),
@@ -296,21 +311,63 @@ export function AdminBroadcastClient({ initialRecipients }: Props) {
       });
       const data = (await res.json().catch(() => ({}))) as {
         error?: string;
-        sent?: number;
-        failed?: number;
+        jobId?: string;
         total?: number;
       };
-      if (!res.ok) {
+      if (!res.ok || !data.jobId) {
         toast.error(data.error || "Send failed");
+        setJobProgress(null);
         return;
       }
-      const summary =
-        `Sent ${data.sent ?? 0} of ${data.total ?? 0}` +
-        (data.failed ? ` (${data.failed} failed)` : "");
-      setLastResult(summary);
-      toast.success(summary);
+
+      toast.message("Broadcast queued — sending in the background…");
+      const jobId = data.jobId;
+
+      await new Promise<void>((resolve) => {
+        const poll = window.setInterval(() => {
+          void (async () => {
+            try {
+              const jr = await fetch(`/api/admin/broadcast/jobs/${jobId}`, {
+                cache: "no-store",
+              });
+              const jd = (await jr.json()) as {
+                job?: {
+                  status: string;
+                  percent: number;
+                  processed: number;
+                  total: number;
+                  success: number;
+                  failed: number;
+                };
+              };
+              if (!jr.ok || !jd.job) return;
+              setJobProgress({
+                percent: jd.job.percent,
+                processed: jd.job.processed,
+                total: jd.job.total,
+                success: jd.job.success,
+                failed: jd.job.failed,
+                status: jd.job.status,
+              });
+              if (jd.job.status === "COMPLETED" || jd.job.status === "FAILED") {
+                window.clearInterval(poll);
+                const summary =
+                  `Sent ${jd.job.success} of ${jd.job.total}` +
+                  (jd.job.failed ? ` (${jd.job.failed} failed)` : "");
+                setLastResult(summary);
+                if (jd.job.status === "COMPLETED") toast.success(summary);
+                else toast.error(summary || "Broadcast failed");
+                resolve();
+              }
+            } catch {
+              /* keep polling */
+            }
+          })();
+        }, 1200);
+      });
     } catch {
       toast.error("Network error");
+      setJobProgress(null);
     } finally {
       setSending(false);
     }
@@ -555,6 +612,29 @@ export function AdminBroadcastClient({ initialRecipients }: Props) {
               )}
             </div>
           </div>
+
+          {jobProgress && sending ? (
+            <div className="space-y-2 rounded-[var(--cf-radius-md)] border border-black/[0.06] bg-[#fbfbfd] p-3">
+              <div className="flex items-center justify-between text-[12px] text-[#6e6e73]">
+                <span>
+                  Sending… {jobProgress.processed}/{jobProgress.total}
+                </span>
+                <span className="font-medium tabular-nums text-[#1d1d1f]">
+                  {jobProgress.percent}%
+                </span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-black/[0.06]">
+                <div
+                  className="h-full rounded-full bg-[#1a7f5a] transition-[width] duration-300"
+                  style={{ width: `${jobProgress.percent}%` }}
+                />
+              </div>
+              <p className="text-[11px] text-[#86868b]">
+                {jobProgress.success} sent
+                {jobProgress.failed ? ` · ${jobProgress.failed} failed` : ""}
+              </p>
+            </div>
+          ) : null}
 
           {lastResult ? (
             <p className="rounded-[var(--cf-radius-md)] border border-emerald-200 bg-emerald-50/80 px-3 py-2 text-[13px] text-emerald-900">

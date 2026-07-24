@@ -5,12 +5,34 @@ import { resolveLogoFromBody } from "@/lib/business/resolve-logo";
 import { registerOwnerWithStore } from "@/lib/business/register-owner";
 import { isDatabaseConfigured } from "@/lib/db";
 import { sendWelcomeOwnerEmail } from "@/lib/email/transactional";
+import {
+  getClientIp,
+  pruneRateLimitBuckets,
+  rateLimit,
+  rateLimitHeaders,
+} from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
+
+const REGISTER_LIMIT = 8;
+const REGISTER_WINDOW_MS = 60 * 60 * 1000;
 
 export async function POST(request: Request) {
   if (!isDatabaseConfigured()) {
     return NextResponse.json({ error: "Database is not configured." }, { status: 503 });
+  }
+
+  pruneRateLimitBuckets();
+  const ip = getClientIp(request);
+  const limited = rateLimit(`register:${ip}`, {
+    limit: REGISTER_LIMIT,
+    windowMs: REGISTER_WINDOW_MS,
+  });
+  if (!limited.ok) {
+    return NextResponse.json(
+      { error: "Too many signup attempts from this network. Try again later." },
+      { status: 429, headers: rateLimitHeaders(limited, REGISTER_LIMIT) },
+    );
   }
 
   const body = await request.json().catch(() => null);

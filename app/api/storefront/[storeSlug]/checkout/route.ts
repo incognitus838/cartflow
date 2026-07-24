@@ -4,13 +4,35 @@ import { createGuestOrderWithNotify } from "@/lib/orders/create";
 import { buildDemoCheckoutReceipt } from "@/lib/orders/demo-receipt";
 import { parseCheckoutFormData } from "@/lib/orders/validation";
 import { getStorefrontBySlug } from "@/lib/queries/storefront";
+import {
+  getClientIp,
+  pruneRateLimitBuckets,
+  rateLimit,
+  rateLimitHeaders,
+} from "@/lib/rate-limit";
 import { parseReceiptFile } from "@/lib/uploads/receipt";
 
 export const runtime = "nodejs";
 
+const CHECKOUT_LIMIT = 30;
+const CHECKOUT_WINDOW_MS = 15 * 60 * 1000;
+
 type RouteContext = { params: Promise<{ storeSlug: string }> };
 
 export async function POST(request: Request, context: RouteContext) {
+  pruneRateLimitBuckets();
+  const ip = getClientIp(request);
+  const limited = rateLimit(`checkout:${ip}`, {
+    limit: CHECKOUT_LIMIT,
+    windowMs: CHECKOUT_WINDOW_MS,
+  });
+  if (!limited.ok) {
+    return NextResponse.json(
+      { error: "Too many checkout attempts. Please wait a few minutes and try again." },
+      { status: 429, headers: rateLimitHeaders(limited, CHECKOUT_LIMIT) },
+    );
+  }
+
   const { storeSlug } = await context.params;
   const store = await getStorefrontBySlug(storeSlug);
 

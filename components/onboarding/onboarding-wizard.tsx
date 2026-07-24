@@ -182,26 +182,26 @@ export function OnboardingWizard({ mode = "register" }: OnboardingWizardProps) {
       {isAddStore ? (
         <Link
           href="/dashboard/stores"
-          className="mb-4 inline-block text-sm font-medium text-slate-600 hover:text-slate-900"
+          className="mb-4 inline-block text-[13px] font-medium text-[#6e6e73] hover:text-[#1d1d1f]"
         >
           ← Back to my stores
         </Link>
       ) : (
-        <p className="mb-4 text-sm text-slate-600">
+        <p className="mb-4 text-[13px] text-[#6e6e73]">
           Already have an account?{" "}
-          <Link href="/login" className="font-medium text-emerald-700 hover:underline">
+          <Link href="/login" className="font-medium text-[#b8956a] hover:underline">
             Log in
           </Link>
         </p>
       )}
       <div className="mb-8">
-        <p className="text-sm font-medium text-emerald-700">
+        <p className="text-[12px] font-semibold uppercase tracking-wide text-[#b8956a]">
           Step {step} of {totalSteps}
         </p>
-        <h1 className="mt-2 text-2xl font-bold text-slate-900">
+        <h1 className="mt-2 cf-page-title text-[1.75rem]">
           {isAddStore ? "Add a new store" : "Start your store"}
         </h1>
-        <p className="mt-2 text-sm text-slate-600">
+        <p className="mt-2 text-[13px] text-[#6e6e73]">
           {isAddStore
             ? "Each store gets its own catalog, checkout link, and approval review."
             : "Your account is only created when you finish setup — nothing is saved until then."}
@@ -210,45 +210,45 @@ export function OnboardingWizard({ mode = "register" }: OnboardingWizardProps) {
           {Array.from({ length: totalSteps }, (_, i) => i + 1).map((n) => (
             <div
               key={n}
-              className={`h-1.5 flex-1 rounded-full ${n <= step ? "bg-emerald-500" : "bg-slate-200"}`}
+              className={`h-1.5 flex-1 rounded-full ${n <= step ? "bg-[#1a7f5a]" : "bg-black/[0.08]"}`}
             />
           ))}
         </div>
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="rounded-[var(--cf-radius-lg)] border border-black/[0.06] bg-white p-5 shadow-sm sm:p-6">
         {isRegister && step === stepAccount ? (
           <div className="space-y-4">
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-slate-700">Your full name</label>
+              <label className="mb-1.5 block text-[12px] font-medium text-[#86868b]">Your full name</label>
               <input
                 value={ownerName}
                 onChange={(e) => setOwnerName(e.target.value)}
                 autoComplete="name"
-                className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                className="cf-input w-full py-2.5 text-[13px]"
                 placeholder="Ada Okonkwo"
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-slate-700">Email</label>
+              <label className="mb-1.5 block text-[12px] font-medium text-[#86868b]">Email</label>
               <input
                 type="email"
                 value={ownerEmail}
                 onChange={(e) => setOwnerEmail(e.target.value)}
                 autoComplete="email"
-                className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                className="cf-input w-full py-2.5 text-[13px]"
                 placeholder="you@example.com"
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-slate-700">Password</label>
+              <label className="mb-1.5 block text-[12px] font-medium text-[#86868b]">Password</label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="new-password"
                 minLength={8}
-                className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                className="cf-input w-full py-2.5 text-[13px]"
                 placeholder="At least 8 characters"
               />
             </div>
@@ -266,32 +266,32 @@ export function OnboardingWizard({ mode = "register" }: OnboardingWizardProps) {
         {step === stepStore ? (
           <div className="space-y-4">
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-slate-700">
+              <label className="mb-1.5 block text-[12px] font-medium text-[#86868b]">
                 Business name
               </label>
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                className="cf-input w-full py-2.5 text-[13px]"
                 placeholder="Ada Styles"
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-slate-700">Store URL</label>
-              <div className="flex items-center rounded-lg border border-slate-200 focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/20">
-                <span className="pl-3 text-sm text-slate-400">{getPublicStoreHost()}/</span>
+              <label className="mb-1.5 block text-[12px] font-medium text-[#86868b]">Store URL</label>
+              <div className="flex items-center rounded-lg border border-black/[0.08] focus-within:border-[#b8956a] focus-within:ring-2 focus-within:ring-[#b8956a]/20">
+                <span className="pl-3 text-sm text-[#86868b]">{getPublicStoreHost()}/</span>
                 <input
                   value={slugTouched ? slug : previewSlug}
                   onChange={(e) => {
                     setSlugTouched(true);
                     setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""));
                   }}
-                  className="flex-1 border-0 bg-transparent py-2.5 pr-3 text-sm outline-none"
+                  className="flex-1 border-0 bg-transparent py-2.5 pr-3 text-[13px] text-[#1d1d1f] outline-none"
                   placeholder="ada-styles"
                 />
               </div>
               {slugTouched && slug && !isValidSlug(slug) ? (
-                <p className="mt-1.5 text-xs text-red-600">
+                <p className="mt-1.5 text-[12px] text-red-600">
                   Use 3–48 characters: lowercase letters, numbers, and hyphens.
                 </p>
               ) : null}
@@ -321,8 +321,8 @@ export function OnboardingWizard({ mode = "register" }: OnboardingWizardProps) {
         {step === stepSell ? (
           <div className="space-y-4">
             <div>
-              <h2 className="text-base font-semibold text-slate-900">What do you sell?</h2>
-              <p className="mt-1 text-sm text-slate-600">
+              <h2 className="text-[15px] font-semibold text-[#1d1d1f]">What do you sell?</h2>
+              <p className="mt-1 text-[13px] text-[#6e6e73]">
                 This shapes your store&apos;s look — you can change it anytime.
               </p>
             </div>
@@ -336,12 +336,12 @@ export function OnboardingWizard({ mode = "register" }: OnboardingWizardProps) {
                     onClick={() => setSellTypeId(type.id)}
                     className={`rounded-xl border px-4 py-3.5 text-left transition ${
                       selected
-                        ? "border-emerald-500 bg-emerald-50/80 ring-1 ring-emerald-500/30"
-                        : "border-slate-200 bg-white hover:border-slate-300"
+                        ? "border-[#1a7f5a]/50 bg-[#f6fdf9] ring-1 ring-[#1a7f5a]/25"
+                        : "border-black/[0.08] bg-white hover:border-black/15"
                     }`}
                   >
-                    <p className="text-[14px] font-semibold text-slate-900">{type.label}</p>
-                    <p className="mt-0.5 text-[12px] text-slate-500">{type.description}</p>
+                    <p className="text-[14px] font-semibold text-[#1d1d1f]">{type.label}</p>
+                    <p className="mt-0.5 text-[12px] text-[#86868b]">{type.description}</p>
                   </button>
                 );
               })}
@@ -370,7 +370,7 @@ export function OnboardingWizard({ mode = "register" }: OnboardingWizardProps) {
                   setSellTypeId(null);
                   setStep(stepBrand);
                 }}
-                className="text-center text-[13px] font-medium text-slate-500 hover:text-slate-800"
+                className="text-center text-[13px] font-medium text-[#86868b] hover:text-[#1d1d1f]"
               >
                 Skip for now
               </button>
@@ -381,11 +381,11 @@ export function OnboardingWizard({ mode = "register" }: OnboardingWizardProps) {
         {step === stepBrand ? (
           <div className="space-y-4">
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-slate-700">Currency</label>
+              <label className="mb-1.5 block text-[12px] font-medium text-[#86868b]">Currency</label>
               <select
                 value={currency}
                 onChange={(e) => setCurrency(e.target.value)}
-                className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                className="cf-input w-full py-2.5 text-[13px]"
               >
                 {CURRENCIES.map((c) => (
                   <option key={c.code} value={c.code}>
@@ -395,8 +395,8 @@ export function OnboardingWizard({ mode = "register" }: OnboardingWizardProps) {
               </select>
             </div>
             <div>
-              <label htmlFor="store-logo-upload" className="mb-1.5 block text-sm font-medium text-slate-700">
-                Store logo <span className="text-slate-400">(optional)</span>
+              <label htmlFor="store-logo-upload" className="mb-1.5 block text-[12px] font-medium text-[#86868b]">
+                Store logo <span className="text-[#86868b]">(optional)</span>
               </label>
               <LogoUploadField
                 id="store-logo-upload"
@@ -406,14 +406,14 @@ export function OnboardingWizard({ mode = "register" }: OnboardingWizardProps) {
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-slate-700">
-                Short description <span className="text-slate-400">(optional)</span>
+              <label className="mb-1.5 block text-[12px] font-medium text-[#86868b]">
+                Short description <span className="text-[#86868b]">(optional)</span>
               </label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={3}
-                className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                className="cf-input w-full py-2.5 text-[13px]"
                 placeholder="A short line about your brand"
               />
             </div>
@@ -439,24 +439,24 @@ export function OnboardingWizard({ mode = "register" }: OnboardingWizardProps) {
         {step === stepContact ? (
           <div className="space-y-4">
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-slate-700">
+              <label className="mb-1.5 block text-[12px] font-medium text-[#86868b]">
                 Phone / WhatsApp
               </label>
               <input
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                className="cf-input w-full py-2.5 text-[13px]"
                 placeholder="+2348012345678"
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-slate-700">
-                WhatsApp number <span className="text-slate-400">(if different)</span>
+              <label className="mb-1.5 block text-[12px] font-medium text-[#86868b]">
+                WhatsApp number <span className="text-[#86868b]">(if different)</span>
               </label>
               <input
                 value={whatsapp}
                 onChange={(e) => setWhatsapp(e.target.value)}
-                className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                className="cf-input w-full py-2.5 text-[13px]"
                 placeholder="Same as phone"
               />
             </div>
@@ -493,14 +493,14 @@ export function OnboardingWizard({ mode = "register" }: OnboardingWizardProps) {
             }}
           >
             <div>
-              <h2 className="text-sm font-semibold text-slate-900">Bank transfer details</h2>
-              <p className="mt-1 text-xs text-slate-500">
+              <h2 className="text-[14px] font-semibold text-[#1d1d1f]">Bank transfer details</h2>
+              <p className="mt-1 text-[12px] text-[#86868b]">
                 Customers pay you by bank transfer and upload a receipt. This is shown on your
                 checkout page.
               </p>
             </div>
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-slate-700">Bank name</label>
+              <label className="mb-1.5 block text-[12px] font-medium text-[#86868b]">Bank name</label>
               <input
                 required
                 value={bankName}
@@ -510,19 +510,19 @@ export function OnboardingWizard({ mode = "register" }: OnboardingWizardProps) {
                     setFieldErrors((current) => ({ ...current, bankName: undefined }));
                   }
                 }}
-                className={`w-full rounded-lg border px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500/20 ${
+                className={`cf-input w-full py-2.5 text-[13px] ${
                   showError("bankName")
-                    ? "border-red-300 focus:border-red-500"
-                    : "border-slate-200 focus:border-emerald-500"
+                    ? "border-red-400"
+                    : ""
                 }`}
                 placeholder="Your bank"
               />
               {showError("bankName") ? (
-                <p className="mt-1.5 text-xs text-red-600">{fieldErrors.bankName}</p>
+                <p className="mt-1.5 text-[12px] text-red-600">{fieldErrors.bankName}</p>
               ) : null}
             </div>
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-slate-700">Account name</label>
+              <label className="mb-1.5 block text-[12px] font-medium text-[#86868b]">Account name</label>
               <input
                 required
                 value={bankAccountName}
@@ -532,19 +532,19 @@ export function OnboardingWizard({ mode = "register" }: OnboardingWizardProps) {
                     setFieldErrors((current) => ({ ...current, bankAccountName: undefined }));
                   }
                 }}
-                className={`w-full rounded-lg border px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500/20 ${
+                className={`cf-input w-full py-2.5 text-[13px] ${
                   showError("bankAccountName")
-                    ? "border-red-300 focus:border-red-500"
-                    : "border-slate-200 focus:border-emerald-500"
+                    ? "border-red-400"
+                    : ""
                 }`}
                 placeholder="Name on the account"
               />
               {showError("bankAccountName") ? (
-                <p className="mt-1.5 text-xs text-red-600">{fieldErrors.bankAccountName}</p>
+                <p className="mt-1.5 text-[12px] text-red-600">{fieldErrors.bankAccountName}</p>
               ) : null}
             </div>
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-slate-700">
+              <label className="mb-1.5 block text-[12px] font-medium text-[#86868b]">
                 Account number
               </label>
               <input
@@ -556,39 +556,39 @@ export function OnboardingWizard({ mode = "register" }: OnboardingWizardProps) {
                     setFieldErrors((current) => ({ ...current, bankAccountNumber: undefined }));
                   }
                 }}
-                className={`w-full rounded-lg border px-3 py-2.5 font-mono text-sm outline-none focus:ring-2 focus:ring-emerald-500/20 ${
+                className={`cf-input w-full py-2.5 font-mono text-[13px] ${
                   showError("bankAccountNumber")
-                    ? "border-red-300 focus:border-red-500"
-                    : "border-slate-200 focus:border-emerald-500"
+                    ? "border-red-400"
+                    : ""
                 }`}
                 placeholder="10-digit account number"
                 inputMode="numeric"
               />
               {showError("bankAccountNumber") ? (
-                <p className="mt-1.5 text-xs text-red-600">{fieldErrors.bankAccountNumber}</p>
+                <p className="mt-1.5 text-[12px] text-red-600">{fieldErrors.bankAccountNumber}</p>
               ) : (
-                <p className="mt-1.5 text-xs text-slate-400">6–20 digits, numbers only</p>
+                <p className="mt-1.5 text-xs text-[#86868b]">6–20 digits, numbers only</p>
               )}
             </div>
-            <div className="rounded-xl bg-slate-50 p-4 text-sm text-slate-600">
-              <p className="font-medium text-slate-900">Your store link</p>
-              <p className="mt-1 font-mono text-emerald-700">
+            <div className="rounded-[var(--cf-radius-md)] bg-[#f5f5f7] p-4 text-[13px] text-[#6e6e73]">
+              <p className="font-medium text-[#1d1d1f]">Your store link</p>
+              <p className="mt-1 font-mono text-[#b8956a]">
                 {getPublicStoreHost()}/{finalSlug}
               </p>
               {sellTypeId ? (
-                <p className="mt-2 text-xs text-slate-500">
+                <p className="mt-2 text-[12px] text-[#86868b]">
                   Catalog: {SELL_TYPES.find((t) => t.id === sellTypeId)?.label}
                 </p>
               ) : null}
               {submitAttempted && !slugValid ? (
-                <p className="mt-2 text-xs text-red-600">
+                <p className="mt-2 text-[12px] text-red-600">
                   {fieldErrors.slug ??
                     `Store URL must be 3–48 characters. Go back to step ${stepStore} to edit it.`}
                 </p>
               ) : null}
             </div>
             {!bankStepValid && !submitAttempted ? (
-              <p className="text-xs text-amber-700">
+              <p className="text-[12px] text-amber-800">
                 Fill in all bank fields above to launch your store.
               </p>
             ) : null}

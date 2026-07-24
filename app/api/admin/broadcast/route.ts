@@ -1,6 +1,7 @@
+import { after } from "next/server";
 import { NextResponse } from "next/server";
 import type { BusinessPlan, StoreApprovalStatus } from "@prisma/client";
-import { sendSellerBroadcast } from "@/lib/admin/broadcast";
+import { enqueueSellerBroadcast, processBroadcastJob } from "@/lib/admin/broadcast-job";
 import { listSellerRecipients } from "@/lib/admin/broadcast-recipients";
 import { requireApiAdmin } from "@/lib/api/require-admin";
 import { PLANS } from "@/lib/plans";
@@ -27,7 +28,6 @@ function parseAudience(data: Record<string, unknown>) {
   return { audience, plan, approvalStatus };
 }
 
-/** null = field omitted; string[] = explicit list (may be empty → send nobody). */
 function parseStringList(value: unknown): string[] | null {
   if (value === undefined) return null;
   if (!Array.isArray(value)) return null;
@@ -43,7 +43,6 @@ function parseBody(data: Record<string, unknown>) {
   const { audience, plan, approvalStatus } = parseAudience(data);
   const ctaLabel = typeof data.ctaLabel === "string" ? data.ctaLabel.trim() : undefined;
   const ctaHref = typeof data.ctaHref === "string" ? data.ctaHref.trim() : undefined;
-  // Prefer includeEmails when the key is present (UI always sends the curated list).
   const hasInclude = Object.prototype.hasOwnProperty.call(data, "includeEmails");
   const hasExclude = Object.prototype.hasOwnProperty.call(data, "excludeEmails");
   const includeEmails = hasInclude ? (parseStringList(data.includeEmails) ?? []) : undefined;
@@ -100,6 +99,7 @@ export async function GET(request: Request) {
   });
 }
 
+/** Enqueue broadcast job and process after response. */
 export async function POST(request: Request) {
   const auth = await requireApiAdmin();
   if (auth.error) return auth.error;
@@ -122,8 +122,16 @@ export async function POST(request: Request) {
   }
 
   try {
-    const result = await sendSellerBroadcast(input);
-    return NextResponse.json({ ok: true, ...result });
+    const job = await enqueueSellerBroadcast(auth.session.userId, input);
+    after(() => {
+      void processBroadcastJob(job.id);
+    });
+    return NextResponse.json({
+      ok: true,
+      jobId: job.id,
+      total: job.total,
+      status: job.status,
+    });
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Broadcast failed." },

@@ -62,6 +62,7 @@ export function FirstProductsSetup({
   const [added, setAdded] = useState<AddedProduct[]>([]);
   const [loading, setLoading] = useState(false);
   const [csvBusy, setCsvBusy] = useState(false);
+  const [importProgress, setImportProgress] = useState<string | null>(null);
 
   const totalAdded = initialCount + added.length;
 
@@ -72,31 +73,28 @@ export function FirstProductsSetup({
     return currency;
   }, [currency]);
 
-  async function createOne(input: {
-    title: string;
-    price: number;
-    description?: string;
-  }) {
-    const res = await fetch("/api/products", {
+  async function bulkCreate(
+    products: Array<{ title: string; price: number; description?: string }>,
+  ) {
+    const res = await fetch("/api/products/bulk", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        title: input.title,
-        price: input.price,
-        description: input.description ?? "",
-        category: defaultCategory || "General",
-        status: "ACTIVE",
-        stock: 10,
-        lowStockThreshold: 3,
-        media: [],
-        variants: [],
+        defaultCategory: defaultCategory || "General",
+        products,
       }),
     });
-    const data = await res.json().catch(() => ({}));
+    const data = (await res.json().catch(() => ({}))) as {
+      error?: string;
+      created?: number;
+      failed?: number;
+      products?: AddedProduct[];
+      errors?: Array<{ index: number; title?: string; error: string }>;
+    };
     if (!res.ok) {
-      throw new Error(data.error || "Could not add product");
+      throw new Error(data.error || "Could not import products");
     }
-    return data.product as { id: string; title: string; price: number | string };
+    return data;
   }
 
   async function onQuickAdd(e: FormEvent) {
@@ -113,19 +111,16 @@ export function FirstProductsSetup({
     }
     setLoading(true);
     try {
-      const product = await createOne({ title: name, price: amount });
-      setAdded((prev) => [
-        ...prev,
-        {
-          id: product.id,
-          title: product.title,
-          price: Number(product.price),
-        },
-      ]);
-      setTitle("");
-      setPrice("");
-      toast.success(`Added “${product.title}”`);
-      router.refresh();
+      const data = await bulkCreate([{ title: name, price: amount }]);
+      if (data.products?.length) {
+        setAdded((prev) => [...prev, ...data.products!]);
+        setTitle("");
+        setPrice("");
+        toast.success(`Added “${data.products[0].title}”`);
+        router.refresh();
+      } else {
+        toast.error(data.errors?.[0]?.error || "Could not add product");
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not add product");
     } finally {
@@ -135,6 +130,7 @@ export function FirstProductsSetup({
 
   async function onCsvFile(file: File) {
     setCsvBusy(true);
+    setImportProgress("Reading file…");
     try {
       const text = await file.text();
       const rows = parseCsv(text);
@@ -147,30 +143,24 @@ export function FirstProductsSetup({
         return;
       }
 
-      let ok = 0;
-      let fail = 0;
-      for (const row of rows) {
-        try {
-          const product = await createOne(row);
-          setAdded((prev) => [
-            ...prev,
-            { id: product.id, title: product.title, price: Number(product.price) },
-          ]);
-          ok += 1;
-        } catch {
-          fail += 1;
-        }
+      setImportProgress(`Importing ${rows.length} products…`);
+      const data = await bulkCreate(rows);
+      if (data.products?.length) {
+        setAdded((prev) => [...prev, ...data.products!]);
       }
-      if (ok > 0) {
-        toast.success(`Imported ${ok} product${ok === 1 ? "" : "s"}${fail ? ` (${fail} failed)` : ""}`);
-        router.refresh();
-      } else {
-        toast.error("Import failed. Check your CSV and try again.");
+      toast.success(
+        `Imported ${data.created ?? 0} product${(data.created ?? 0) === 1 ? "" : "s"}` +
+          (data.failed ? ` (${data.failed} failed)` : ""),
+      );
+      if (data.errors?.[0]) {
+        toast.message(`First error: ${data.errors[0].error}`);
       }
-    } catch {
-      toast.error("Could not read that file");
+      router.refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not read that file");
     } finally {
       setCsvBusy(false);
+      setImportProgress(null);
     }
   }
 
@@ -184,7 +174,10 @@ export function FirstProductsSetup({
           <Sparkles className="h-5 w-5" strokeWidth={1.75} aria-hidden />
         </span>
         <div>
-          <h2 id="add-products-heading" className="text-[17px] font-semibold tracking-tight text-[#1d1d1f]">
+          <h2
+            id="add-products-heading"
+            className="text-[17px] font-semibold tracking-tight text-[#1d1d1f]"
+          >
             Add your products
           </h2>
           <p className="mt-1.5 text-[13px] leading-relaxed text-[#6e6e73]">
@@ -228,7 +221,10 @@ export function FirstProductsSetup({
       </div>
 
       {mode === "quick" ? (
-        <form onSubmit={(e) => void onQuickAdd(e)} className="mt-5 space-y-3 border-t border-black/[0.06] pt-5">
+        <form
+          onSubmit={(e) => void onQuickAdd(e)}
+          className="mt-5 space-y-3 border-t border-black/[0.06] pt-5"
+        >
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <label htmlFor="qp-title" className="mb-1.5 block text-[12px] font-medium text-[#86868b]">
@@ -276,8 +272,11 @@ export function FirstProductsSetup({
           <p className="text-[12px] text-[#86868b]">
             CSV columns: <span className="font-mono text-[#1d1d1f]">name, price</span> or{" "}
             <span className="font-mono text-[#1d1d1f]">name, price, description</span>. First row can
-            be a header.
+            be a header. Max 100 rows per upload.
           </p>
+          {importProgress ? (
+            <p className="text-[13px] font-medium text-[#1a7f5a]">{importProgress}</p>
+          ) : null}
           <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-black/[0.08] bg-white px-4 py-2.5 text-[13px] font-medium text-[#1d1d1f] hover:bg-[#f5f5f7]">
             {csvBusy ? (
               <Loader2 className="h-4 w-4 animate-spin" aria-hidden />

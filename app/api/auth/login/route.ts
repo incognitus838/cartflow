@@ -1,12 +1,34 @@
 import { NextResponse } from "next/server";
 import { createSession, verifyPassword } from "@/lib/auth";
 import { isDatabaseConfigured, prisma } from "@/lib/db";
+import {
+  getClientIp,
+  pruneRateLimitBuckets,
+  rateLimit,
+  rateLimitHeaders,
+} from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
+
+const LOGIN_LIMIT = 20;
+const LOGIN_WINDOW_MS = 15 * 60 * 1000;
 
 export async function POST(request: Request) {
   if (!isDatabaseConfigured()) {
     return NextResponse.json({ error: "Database is not configured." }, { status: 503 });
+  }
+
+  pruneRateLimitBuckets();
+  const ip = getClientIp(request);
+  const limited = rateLimit(`login:${ip}`, {
+    limit: LOGIN_LIMIT,
+    windowMs: LOGIN_WINDOW_MS,
+  });
+  if (!limited.ok) {
+    return NextResponse.json(
+      { error: "Too many login attempts. Try again in a few minutes." },
+      { status: 429, headers: rateLimitHeaders(limited, LOGIN_LIMIT) },
+    );
   }
 
   const body = await request.json().catch(() => null);
